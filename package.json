@@ -1,0 +1,37 @@
+{
+  "name": "toledo-sync",
+  "version": "0.1.0",
+  "description": "Local-first KU Leuven Toledo course material synchronizer",
+  "author": "Toledo Sync contributors",
+  "type": "module",
+  "main": "desktop/main.mjs",
+  "bin": {
+    "toledo-sync": "./src/cli.mjs"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/cli.mjs && node --check src/sync.mjs && node --check desktop/main.mjs && node --check desktop/preload.mjs",
+    "start": "node src/cli.mjs",
+    "desktop": "electron .",
+    "make:win": "electron-builder --win nsis portable"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright-core": "^1.55.0"
+  },
+  "license": "MIT",
+  "build": {
+    "appId": "be.kuleuven.toledosync",
+    "productName": "Toledo Sync",
+    "directories": { "output": "release" },
+    "files": ["desktop/**/*", "src/**/*", "package.json", "README.md", "docs/**/*"],
+    "win": { "target": ["nsis", "portable"] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+  },
+  "devDependencies": {
+    "electron": "^44.4.1",
+    "electron-builder": "^26.15.3"
+  }
+}
