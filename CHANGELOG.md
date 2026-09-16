@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6 — 2026-09-16
+
+- Reworked the Windows GUI around a compact linear flow: prepare space, sign in, discover courses, then synchronize.
+- Added step-state feedback and disabled actions until their prerequisites are complete.
+
 ## 0.1.5 — 2026-09-16
 
 - Added a single Toledo Sync icon across the Windows application window, taskbar, installer, shortcuts, and application header.

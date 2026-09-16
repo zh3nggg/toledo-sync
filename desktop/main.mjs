@@ -27,13 +27,14 @@ function notify(type, message) {
   mainWindow?.webContents.send('toledo:event', { type, message, at: new Date().toISOString() });
 }
 
-function present(config, configPath) {
+function present(config, configPath, authenticated = false) {
   return {
     configPath,
     vaultPath: config.vaultPath,
     outputRoot: config.download.outputRoot,
     materialsPlacement: config.download.materialsPlacement,
     materialsFolderName: config.download.materialsFolderName,
+    authenticated,
     academicYear: config.filters.academicYears[0] ?? '',
     courses: config.courses.map((course) => ({
       code: course.code, title: course.title, selected: course.selected,
@@ -46,7 +47,9 @@ async function currentConfig() {
   const settings = await readSettings();
   if (!settings.configPath) return null;
   const { config, configPath } = await loadConfig(settings.configPath);
-  return { config, configPath };
+  let authenticated = false;
+  try { await fs.access(statePath(config, 'auth', 'last-login.json')); authenticated = true; } catch { /* Login has not been verified yet. */ }
+  return { config, configPath, authenticated };
 }
 
 async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
@@ -71,8 +74,10 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
   if (!vaultPath || !outputRoot) throw new Error('Choose both the Obsidian Vault and the download root.');
   const configPath = defaultConfigPath(vaultPath);
   let config;
+  let authenticated = false;
   try {
     ({ config } = await loadConfig(configPath));
+    try { await fs.access(statePath(config, 'auth', 'last-login.json')); authenticated = true; } catch { /* Login is still required. */ }
     config.download.outputRoot = path.resolve(outputRoot);
     Object.assign(config.download, normalizeMaterialsLayout({ materialsPlacement, materialsFolderName }));
     config.filters.academicYears = [academicYear];
@@ -89,7 +94,7 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
     ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear, selectedCodes: initialSelectedCodes, materialsPlacement, materialsFolderName }));
   }
   await saveSettings({ configPath });
-  return present(config, configPath);
+  return present(config, configPath, authenticated);
 }
 
 async function startLogin() {
@@ -111,14 +116,14 @@ async function startLogin() {
       verifiedAt: new Date().toISOString(), url: result.url, title: result.title, browser: executablePath, profilePath
     });
     notify('success', 'Toledo login verified.');
-    return { title: result.title, url: result.url };
+    return { title: result.title, url: result.url, authenticated: true };
   } finally { await context.close(); }
 }
 
 function registerIpc() {
   ipcMain.handle('app:initial', async () => {
     const current = await currentConfig();
-    return { platform: process.platform, config: current ? present(current.config, current.configPath) : null };
+    return { platform: process.platform, config: current ? present(current.config, current.configPath, current.authenticated) : null };
   });
   ipcMain.handle('dialog:directory', async (_event, title) => {
     const result = await dialog.showOpenDialog(mainWindow, { title, properties: ['openDirectory', 'createDirectory'] });
@@ -133,7 +138,7 @@ function registerIpc() {
     const result = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true });
     const refreshed = await loadConfig(current.configPath);
     notify('success', 'Course discovery finished.');
-    return { config: present(refreshed.config, refreshed.configPath), matches: result.matches };
+    return { config: present(refreshed.config, refreshed.configPath, current.authenticated), matches: result.matches };
   });
   ipcMain.handle('toledo:sync', async (_event, courseCode = null) => {
     const current = await currentConfig();
@@ -148,7 +153,7 @@ function registerIpc() {
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1120, height: 760, minWidth: 930, minHeight: 620, show: false,
+    width: 980, height: 700, minWidth: 860, minHeight: 600, show: false,
     icon: path.join(__dirname, '..', 'assets', 'toledo-sync.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false }
   });
