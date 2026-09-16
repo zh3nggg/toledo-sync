@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.10 — 2026-09-16
+
+- Split update handling into a read-only update check and an explicit apply step in the Windows GUI.
+- Added course-level summaries for new, unchanged, locally modified, and failed files.
+- Preserved locally edited files by writing remote changes to hash-suffixed copies instead of overwriting them.
+- Added the matching CLI `check` preview command.
+
 ## 0.1.9 — 2026-09-16
 
 - Prevented long CLI lines, URLs, and Windows paths in the activity monitor from forcing horizontal layout overflow.

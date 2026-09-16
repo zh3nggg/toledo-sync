@@ -70,6 +70,14 @@ Use `--materials-in-course` with `init` or `configure` to place course content d
 
 ## Synchronize
 
+Preview remote changes first. This reads the remote files and compares their hashes without writing course material:
+
+```sh
+node src/cli.mjs check --config "/path/to/config.json"
+```
+
+The preview reports new, unchanged, locally modified, and failed files per course. A locally modified file is never overwritten; applying the update creates a hash-suffixed copy beside it.
+
 Test with one course first:
 
 ```sh

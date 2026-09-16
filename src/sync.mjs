@@ -132,22 +132,22 @@ async function collectUltraContent(context, baseUrl, courseId, maxItems = 1000) 
   return { records, files: [...files.values()] };
 }
 
-async function uniqueDestination(directory, fileName, digest) {
+export async function uniqueDestination(directory, fileName, digest) {
   const safeName = sanitizeFileName(fileName, `file-${digest.slice(0, 8)}`);
   const initial = path.join(directory, safeName);
   try {
     const existing = await fs.readFile(initial);
-    if (sha256(existing) === digest) return { path: initial, unchanged: true };
+    if (sha256(existing) === digest) return { path: initial, unchanged: true, localModified: false };
   } catch (error) {
-    if (error.code === 'ENOENT') return { path: initial, unchanged: false };
+    if (error.code === 'ENOENT') return { path: initial, unchanged: false, localModified: false };
     throw error;
   }
   const extension = path.extname(safeName);
   const stem = path.basename(safeName, extension);
-  return { path: path.join(directory, `${stem}-${digest.slice(0, 8)}${extension}`), unchanged: false };
+  return { path: path.join(directory, `${stem}-${digest.slice(0, 8)}${extension}`), unchanged: false, localModified: true };
 }
 
-async function downloadFile(context, link, outputDirectory, referer) {
+async function downloadFile(context, link, outputDirectory, referer, { dryRun = false } = {}) {
   await ensureDirectory(outputDirectory);
   const response = await context.request.get(link.href, {
     headers: { Referer: referer },
@@ -166,9 +166,9 @@ async function downloadFile(context, link, outputDirectory, referer) {
   const urlName = decodeURIComponent(path.basename(new URL(link.href).pathname));
   const candidateName = headerName || link.title || urlName || link.text || `file-${digest.slice(0, 8)}`;
   const destination = await uniqueDestination(outputDirectory, candidateName, digest);
-  if (!destination.unchanged) await fs.writeFile(destination.path, body);
+  if (!destination.unchanged && !dryRun) await fs.writeFile(destination.path, body);
   return {
-    status: destination.unchanged ? 'unchanged' : 'downloaded',
+    status: destination.unchanged ? 'unchanged' : destination.localModified ? 'local-modified' : dryRun ? 'new' : 'downloaded',
     url: link.href,
     file: path.relative(outputDirectory, destination.path),
     bytes: body.length,
@@ -177,7 +177,7 @@ async function downloadFile(context, link, outputDirectory, referer) {
   };
 }
 
-export async function syncCourses(config, selectedCode = null, onProgress = () => {}) {
+export async function syncCourses(config, selectedCode = null, onProgress = () => {}, { dryRun = false } = {}) {
   const requestedCourses = config.courses
     .filter((course) => selectedCode
       ? course.code.toLowerCase() === selectedCode.toLowerCase()
@@ -194,7 +194,7 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
   const runId = timestampForFile();
   const runResults = missing.map((course) => ({
     schemaVersion: 1,
-    status: 'skipped-unavailable',
+    status: dryRun ? 'not-discovered' : 'skipped-unavailable',
     course: { code: course.code, title: course.title, url: null },
     syncedAt: new Date().toISOString(),
     files: []
@@ -205,7 +205,7 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
       onProgress({ stage: 'course', course: course.code, message: `${course.code} ${course.title}: opening course` });
       const courseFolder = `${course.code} ${sanitizeFileName(course.title)}`;
       const outputDirectory = courseMaterialsPath(config, courseFolder);
-      const snapshotDirectory = statePath(config, 'snapshots', course.code, runId);
+      const snapshotDirectory = statePath(config, dryRun ? 'previews' : 'snapshots', course.code, runId);
       const manifestPath = statePath(config, 'manifests', `${course.code}.json`);
       await ensureDirectory(outputDirectory);
       await ensureDirectory(snapshotDirectory);
@@ -271,14 +271,16 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
         files,
         previousSync: previousManifest.syncedAt ?? null
       };
-      await writeJson(manifestPath, manifest);
-      await writeJson(path.join(snapshotDirectory, 'pages.json'), pageRecords);
+      if (!dryRun) {
+        await writeJson(manifestPath, manifest);
+        await writeJson(path.join(snapshotDirectory, 'pages.json'), pageRecords);
+      }
       runResults.push(manifest);
       onProgress({ stage: 'course-complete', course: course.code, message: `${course.code} ${course.title}: complete (${files.filter((file) => file.status === 'downloaded').length} new, ${files.filter((file) => file.status === 'unchanged').length} unchanged)` });
     }
   } finally {
     await context.close();
   }
-  await writeJson(statePath(config, 'runs', `${runId}.json`), runResults);
+  if (!dryRun) await writeJson(statePath(config, 'runs', `${runId}.json`), runResults);
   return runResults;
 }

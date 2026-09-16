@@ -40,6 +40,19 @@ function notify(type, message) {
   mainWindow?.webContents.send('toledo:event', { type, message, at: new Date().toISOString() });
 }
 
+function updateSummary(results) {
+  return results.map((result) => ({
+    code: result.course.code,
+    title: result.course.title,
+    status: result.status,
+    newCount: result.files.filter((file) => file.status === 'new' || file.status === 'downloaded').length,
+    unchangedCount: result.files.filter((file) => file.status === 'unchanged').length,
+    localModifiedCount: result.files.filter((file) => file.status === 'local-modified').length,
+    errorCount: result.files.filter((file) => file.status === 'error' || file.status === 'skipped-non-file').length,
+    files: result.files
+  }));
+}
+
 function present(config, configPath, authenticated = false, automation = {}) {
   return {
     configPath,
@@ -163,6 +176,22 @@ function registerIpc() {
     const result = await syncCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
     notify('success', 'Synchronization finished.');
     return result;
+  });
+  ipcMain.handle('toledo:check-updates', async (_event, courseCode = null) => {
+    const current = await currentConfig();
+    if (!current) throw new Error('Save the initial settings first.');
+    notify('info', courseCode ? `Checking updates for ${courseCode}…` : 'Checking selected courses for updates…');
+    const result = await syncCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message), { dryRun: true });
+    notify('success', 'Update check finished. No local material was changed.');
+    return { summaries: updateSummary(result), results: result };
+  });
+  ipcMain.handle('toledo:apply-updates', async (_event, courseCode = null) => {
+    const current = await currentConfig();
+    if (!current) throw new Error('Save the initial settings first.');
+    notify('info', courseCode ? `Applying updates for ${courseCode}…` : 'Applying checked updates…');
+    const result = await syncCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
+    notify('success', 'Updates written locally. Existing local files were preserved.');
+    return { summaries: updateSummary(result), results: result };
   });
   ipcMain.handle('path:open', async (_event, target) => shell.openPath(target));
 }

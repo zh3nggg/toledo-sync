@@ -41,6 +41,7 @@ Usage:
   toledo-sync list --config <config.json>
   toledo-sync login --config <config.json>
   toledo-sync discover --config <config.json>
+  toledo-sync check --config <config.json> [--course G0S96A]
   toledo-sync sync --config <config.json> [--course G0S96A]
   toledo-sync set-calendar --config <config.json>
   toledo-sync sync-calendar --config <config.json>
@@ -164,6 +165,15 @@ async function main() {
       const errors = result.files.filter((file) => file.status === 'error').length;
       console.log(`${result.course.code}: new ${downloaded}, unchanged ${unchanged}, errors ${errors}`);
     }
+    return;
+  }
+  if (command === 'check') {
+    const results = await syncCourses(config, options.course || null, (event) => console.log(event.message), { dryRun: true });
+    for (const result of results) {
+      const counts = result.files.reduce((summary, file) => { summary[file.status] = (summary[file.status] ?? 0) + 1; return summary; }, {});
+      console.log(`${result.course.code}: ${counts.new ?? 0} new, ${counts.unchanged ?? 0} unchanged, ${counts['local-modified'] ?? 0} locally modified, ${counts.error ?? 0} errors`);
+    }
+    console.log('Check complete: no course material was written. Run sync to apply the plan.');
     return;
   }
   if (command === 'set-calendar') {

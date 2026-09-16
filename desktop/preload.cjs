@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('toledo', {
   login: () => ipcRenderer.invoke('toledo:login'),
   discover: () => ipcRenderer.invoke('toledo:discover'),
   sync: (courseCode) => ipcRenderer.invoke('toledo:sync', courseCode),
+  checkUpdates: (courseCode) => ipcRenderer.invoke('toledo:check-updates', courseCode),
+  applyUpdates: (courseCode) => ipcRenderer.invoke('toledo:apply-updates', courseCode),
   openPath: (target) => ipcRenderer.invoke('path:open', target),
   onEvent: (listener) => ipcRenderer.on('toledo:event', (_event, payload) => listener(payload))
 });

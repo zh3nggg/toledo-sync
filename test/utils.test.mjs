@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { parseCalendarEvents } from '../src/calendar.mjs';
 import { courseMaterialsPath, createConfig } from '../src/config.mjs';
 import { extractAcademicYears, scoreCourseLink } from '../src/discover.mjs';
-import { extractUltraFileLinks, isLikelyFileLink } from '../src/sync.mjs';
+import { extractUltraFileLinks, isLikelyFileLink, uniqueDestination } from '../src/sync.mjs';
 import { sanitizeFileName } from '../src/utils.mjs';
 
 test('uses the selected download directory as the exact course root', () => {
@@ -21,6 +23,18 @@ test('allows direct course materials or a named materials subfolder', () => {
   const nested = createConfig(vault, { outputRoot: path.resolve('downloads'), materialsPlacement: 'subdirectory', materialsFolderName: 'Toledo materials' });
   assert.equal(courseMaterialsPath(nested, 'G0S96A Groups and Symmetries'), path.join(nested.download.outputRoot, 'G0S96A Groups and Symmetries', 'Toledo materials'));
   assert.throws(() => createConfig(vault, { outputRoot: path.resolve('downloads'), materialsFolderName: '../outside' }), /single, non-empty/);
+});
+
+test('plans a hash-suffixed copy when a local file was edited', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'toledo-plan-'));
+  try {
+    await fs.writeFile(path.join(directory, 'lecture.pdf'), 'local edit');
+    const destination = await uniqueDestination(directory, 'lecture.pdf', 'a'.repeat(64));
+    assert.equal(destination.unchanged, false);
+    assert.equal(destination.localModified, true);
+    assert.match(destination.path, /lecture-a{8}\.pdf$/);
+    assert.equal(await fs.readFile(path.join(directory, 'lecture.pdf'), 'utf8'), 'local edit');
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
 });
 
 test('sanitizes cross-platform filenames', () => {
