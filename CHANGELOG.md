@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 — 2026-09-16
+
+- Separated programme-course discovery from the selected sync scope in the Windows GUI.
+- Preserved a previously confirmed course URL when a later discovery run has no match.
+- Reworded GUI status as “discovered” or “not discovered” so it no longer suggests that a course is closed.
+
 ## 0.1.1 — 2026-09-16
 
 - Fixed the Windows GUI preload bridge so localized labels, buttons, directory selection, and Toledo controls load correctly.

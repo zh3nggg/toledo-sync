@@ -60,8 +60,9 @@ export async function discoverCourses(config, configPath, options = {}) {
 
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
     const matches = [];
-    for (const course of config.courses.filter((item) => item.selected)) {
-      course.url = null;
+    const coursesToDiscover = options.allCourses ? config.courses : config.courses.filter((item) => item.selected);
+    for (const course of coursesToDiscover) {
+      const previousUrl = course.url;
       const ranked = uniqueLinks
         .map((link) => ({ ...link, score: scoreCourseLink(course, link) }))
         .filter((link) => link.score > 0)
@@ -72,8 +73,16 @@ export async function discoverCourses(config, configPath, options = {}) {
         ?? safeCandidates[0];
       if (preferred) {
         course.url = preferred.href;
+      } else if (options.clearMissing) {
+        course.url = null;
       }
-      matches.push({ code: course.code, selectedUrl: course.url, candidates: ranked.slice(0, 5) });
+      matches.push({
+        code: course.code,
+        selectedUrl: course.url,
+        previousUrl,
+        status: preferred ? 'matched' : previousUrl ? 'retained-previous-match' : 'not-found',
+        candidates: ranked.slice(0, 5)
+      });
     }
     await saveConfig(configPath, config);
 

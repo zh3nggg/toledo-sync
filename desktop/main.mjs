@@ -35,7 +35,7 @@ function present(config, configPath) {
     academicYear: config.filters.academicYears[0] ?? '',
     courses: config.courses.map((course) => ({
       code: course.code, title: course.title, selected: course.selected,
-      available: Boolean(course.url), academicYear: course.academicYear
+      discovered: Boolean(course.url), academicYear: course.academicYear
     }))
   };
 }
@@ -74,9 +74,10 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
     config.download.outputRoot = path.resolve(outputRoot);
     config.filters.academicYears = [academicYear];
     for (const course of config.courses) {
+      const academicYearChanged = course.academicYear !== academicYear;
       course.academicYear = academicYear;
       course.selected = selectedCodes.includes(course.code);
-      if (!course.selected) course.url = null;
+      if (academicYearChanged) course.url = null;
     }
     await saveConfig(configPath, config);
   } catch (error) {
@@ -125,8 +126,8 @@ function registerIpc() {
   ipcMain.handle('toledo:discover', async () => {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
-    notify('info', 'Discovering selected courses…');
-    const result = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true });
+    notify('info', 'Discovering programme courses…');
+    const result = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true });
     const refreshed = await loadConfig(current.configPath);
     notify('success', 'Course discovery finished.');
     return { config: present(refreshed.config, refreshed.configPath), matches: result.matches };
