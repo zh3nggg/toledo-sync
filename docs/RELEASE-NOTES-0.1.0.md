@@ -26,7 +26,7 @@ First release of Toledo Sync.
 
 | File | SHA-256 |
 | --- | --- |
-| `Toledo Sync Setup 0.1.0.exe` | `23C3FB2AF5C2DCD6A3C58C5E41A58A57A46B6B6E347894ABCD69D94ECA9FD31C` |
-| `Toledo Sync 0.1.0.exe` | `9C7C913B8D43033D45A7A6229E92943A2E424F329C2C4B8CEC8AFD1BF4727969` |
+| `Toledo.Sync.Setup.0.1.0.exe` | `23C3FB2AF5C2DCD6A3C58C5E41A58A57A46B6B6E347894ABCD69D94ECA9FD31C` |
+| `Toledo.Sync.0.1.0.exe` | `9C7C913B8D43033D45A7A6229E92943A2E424F329C2C4B8CEC8AFD1BF4727969` |
 
 The executables are unsigned in this first release. Windows may show a SmartScreen warning until the project obtains a code-signing certificate.
