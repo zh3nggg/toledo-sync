@@ -12,6 +12,9 @@ Object.assign(translations.nl, { checkUpdates: 'Op updates controleren', applyUp
 Object.assign(translations.zh, { tabSpace: '学习空间', tabCourses: '登录与课程', tabUpdates: '更新中心', tabAutomation: '自动化', updateSafetyTitle: '更新是可预览的', updateSafetyText: '先检查会读取远程文件并比较内容，不会写入课程材料。本地修改文件会保留，应用时以带哈希的副本保存远程版本。' });
 Object.assign(translations.en, { tabSpace: 'Study space', tabCourses: 'Sign in & courses', tabUpdates: 'Update center', tabAutomation: 'Automation', updateSafetyTitle: 'Updates are previewable', updateSafetyText: 'Check first reads remote files and compares content without writing course material. Local edits are kept; applying an update saves the remote version beside them with a hash.' });
 Object.assign(translations.nl, { tabSpace: 'Studieruimte', tabCourses: 'Aanmelden & vakken', tabUpdates: 'Updatecentrum', tabAutomation: 'Automatisering', updateSafetyTitle: 'Updates zijn vooraf te bekijken', updateSafetyText: 'Eerst controleren leest externe bestanden en vergelijkt de inhoud zonder cursusmateriaal te schrijven. Lokale wijzigingen blijven behouden; toepassen bewaart de externe versie met een hash ernaast.' });
+Object.assign(translations.zh, { fileTreeTitle: '更新后的文件树', fileTreeEmpty: '检查更新后将在这里显示完整文件树。', treeAllCourses: '所有已检查课程', treeNew: '新增', treeUnchanged: '未变化', treeModified: '本地修改保护副本' });
+Object.assign(translations.en, { fileTreeTitle: 'Resulting file tree', fileTreeEmpty: 'The complete file tree will appear here after checking for updates.', treeAllCourses: 'All checked courses', treeNew: 'new', treeUnchanged: 'unchanged', treeModified: 'local edit preserved as copy' });
+Object.assign(translations.nl, { fileTreeTitle: 'Bestandsstructuur na update', fileTreeEmpty: 'De volledige bestandsstructuur verschijnt hier na het controleren.', treeAllCourses: 'Alle gecontroleerde vakken', treeNew: 'nieuw', treeUnchanged: 'ongewijzigd', treeModified: 'lokale wijziging als kopie behouden' });
 let locale = localStorage.getItem('toledo-locale') || (navigator.language.startsWith('nl') ? 'nl' : navigator.language.startsWith('zh') ? 'zh' : 'en');
 let state = { config: null, busy: false, authenticated: false, discoveryDone: false, activityLog: [], updatePlan: null };
 const $ = (selector) => document.querySelector(selector);
@@ -22,6 +25,24 @@ function status(message) { $('#status').textContent = message; }
 function result(value) { const summary = typeof value === 'string' ? value : JSON.stringify(value, null, 2); $('#results').textContent = `${state.activityLog.join('\n')}${state.activityLog.length ? '\n\n' : ''}${summary}`; $('#results').scrollTop = $('#results').scrollHeight; }
 function appendActivity(message) { const stamp = new Date().toLocaleTimeString(); state.activityLog.push(`[${stamp}] ${message}`); if (state.activityLog.length > 250) state.activityLog.shift(); $('#results').textContent = state.activityLog.join('\n'); $('#results').scrollTop = $('#results').scrollHeight; }
 function summaryText(summary) { if (!summary) return ''; if (summary.status === 'not-discovered') return t('summaryNotDiscovered'); const bits = []; if (summary.newCount) bits.push(`${summary.newCount} ${t('summaryNew')}`); if (summary.unchangedCount) bits.push(`${summary.unchangedCount} ${t('summaryUnchanged')}`); if (summary.localModifiedCount) bits.push(`${summary.localModifiedCount} ${t('summaryModified')}`); if (summary.errorCount) bits.push(`${summary.errorCount} ${t('summaryErrors')}`); return bits.length ? bits.join(' · ') : t('summaryNone'); }
+function renderFileTree() {
+  const select = $('#treeCourse'); const tree = $('#fileTree'); const summaries = Array.isArray(state.updatePlan) ? state.updatePlan : [];
+  const previous = select.value; select.replaceChildren(); select.append(new Option(t('treeAllCourses'), 'all'));
+  summaries.forEach((summary) => select.append(new Option(`${summary.code} ${summary.title}`, summary.code)));
+  select.value = summaries.some((summary) => summary.code === previous) || previous === 'all' ? previous : 'all';
+  const visible = select.value === 'all' ? summaries : summaries.filter((summary) => summary.code === select.value);
+  if (!visible.length) { tree.textContent = t('fileTreeEmpty'); return; }
+  const lines = [];
+  for (const summary of visible) {
+    lines.push(`📁 ${summary.code} ${summary.title}`);
+    const files = [...(summary.files || [])].filter((file) => file.file).sort((a, b) => a.file.localeCompare(b.file));
+    files.forEach((file, index) => {
+      const marker = file.status === 'new' ? '＋' : file.status === 'local-modified' ? '↪' : file.status === 'unchanged' ? '·' : '×';
+      lines.push(`${index === files.length - 1 ? '└──' : '├──'} ${marker} ${file.file}  [${file.status === 'new' ? t('treeNew') : file.status === 'local-modified' ? t('treeModified') : file.status === 'unchanged' ? t('treeUnchanged') : file.status}]`);
+    });
+  }
+  tree.textContent = lines.join('\n');
+}
 function setBusy(value) { state.busy = value; document.querySelectorAll('button:not(.tab)').forEach((button) => { button.disabled = value; }); if (!value && state.config) render(); }
 function render() {
   const config = state.config; $('#vaultPath').value = config?.vaultPath || ''; $('#outputRoot').value = config?.outputRoot || ''; $('#materialsPlacement').value = config?.materialsPlacement || 'subdirectory'; $('#materialsFolderName').value = config?.materialsFolderName || 'Materials'; const year = config?.academicYear || '2026-2027'; if (![...$('#academicYear').options].some((option) => option.value === year)) $('#academicYear').add(new Option(year, year)); $('#academicYear').value = year; $('#autoStart').checked = Boolean(config?.autoStart); $('#autoCheckOnLaunch').checked = Boolean(config?.autoCheckOnLaunch); $('#periodicCheckMinutes').value = String(config?.periodicCheckMinutes || 0); updateMaterialsFolderVisibility();
@@ -29,7 +50,7 @@ function render() {
   $('#authState').textContent = state.authenticated ? t('authComplete') : t('authRequired'); $('#authState').classList.toggle('complete', state.authenticated);
   $('#login').disabled = !hasConfig || state.busy; $('#discover').disabled = !hasConfig || !state.authenticated || state.busy; $('#checkUpdates').disabled = !hasSelected || !state.authenticated || state.busy; $('#applyUpdates').disabled = !hasActionablePlan || !state.authenticated || state.busy;
   $('#stepSetup').classList.toggle('complete', hasConfig); $('#stepAuth').classList.toggle('complete', state.authenticated); $('#stepDiscover').classList.toggle('complete', hasDiscovered); $('#stepSync').classList.toggle('active', hasSelected && state.discoveryDone); $('#discoverCard').classList.toggle('locked', !state.authenticated); $('#syncCard').classList.toggle('locked', !hasSelected || !state.discoveryDone);
-  const list = $('#courses'); list.replaceChildren();
+  renderFileTree(); const list = $('#courses'); list.replaceChildren();
   for (const course of config?.courses || []) {
     const node = $('#courseTemplate').content.firstElementChild.cloneNode(true); const checkbox = node.querySelector('input'); checkbox.checked = course.selected; checkbox.disabled = !state.discoveryDone || !course.discovered; checkbox.dataset.code = course.code;
     checkbox.addEventListener('change', () => { state.updatePlan = null; render(); });
@@ -57,6 +78,7 @@ $('#chooseVault').addEventListener('click', async () => { const folder = await w
 $('#chooseOutput').addEventListener('click', async () => { const folder = await window.toledo.chooseDirectory(t('chooseOutput')); if (folder) $('#outputRoot').value = folder; });
 $('#save').addEventListener('click', () => run(save)); $('#login').addEventListener('click', () => run(async () => { const value = await window.toledo.login(); state.authenticated = true; render(); return value; }));
 $('#saveAutomation').addEventListener('click', () => run(save));
+$('#treeCourse').addEventListener('change', renderFileTree);
 $('#discover').addEventListener('click', () => run(async () => { const value = await window.toledo.discover(); state.config = value.config; state.discoveryDone = true; state.updatePlan = null; render(); return value.matches; }));
 $('#checkUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.checkUpdates(null); state.updatePlan = value.summaries; render(); return value.summaries; })); $('#applyUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.applyUpdates(null); state.updatePlan = value.summaries; render(); return value.summaries; })); $('#openRoot').addEventListener('click', () => run(() => window.toledo.openPath($('#outputRoot').value)));
 if (!window.toledo) {
