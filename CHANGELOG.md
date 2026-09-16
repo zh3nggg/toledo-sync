@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.7 — 2026-09-16
+
+- Replaced free-form academic-year entry in the Windows GUI with a validated selection list.
+- Added detailed live activity logging for course discovery and synchronization, including course names, stages, file counts, filenames, and per-file results.
+
 ## 0.1.6 — 2026-09-16
 
 - Reworked the Windows GUI around a compact linear flow: prepare space, sign in, discover courses, then synchronize.

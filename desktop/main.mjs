@@ -135,7 +135,7 @@ function registerIpc() {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', 'Discovering programme courses…');
-    const result = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true });
+    const result = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
     const refreshed = await loadConfig(current.configPath);
     notify('success', 'Course discovery finished.');
     return { config: present(refreshed.config, refreshed.configPath, current.authenticated), matches: result.matches };
@@ -144,7 +144,7 @@ function registerIpc() {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Syncing ${courseCode}…` : 'Syncing selected courses…');
-    const result = await syncCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, courseCode);
+    const result = await syncCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
     notify('success', 'Synchronization finished.');
     return result;
   });

@@ -177,7 +177,7 @@ async function downloadFile(context, link, outputDirectory, referer) {
   };
 }
 
-export async function syncCourses(config, selectedCode = null) {
+export async function syncCourses(config, selectedCode = null, onProgress = () => {}) {
   const requestedCourses = config.courses
     .filter((course) => selectedCode
       ? course.code.toLowerCase() === selectedCode.toLowerCase()
@@ -199,8 +199,10 @@ export async function syncCourses(config, selectedCode = null) {
     syncedAt: new Date().toISOString(),
     files: []
   }));
+  for (const course of missing) onProgress({ stage: 'course-skipped', message: `${course.code}: no current course link; skipped` });
   try {
     for (const course of courses) {
+      onProgress({ stage: 'course', course: course.code, message: `${course.code} ${course.title}: opening course` });
       const courseFolder = `${course.code} ${sanitizeFileName(course.title)}`;
       const outputDirectory = courseMaterialsPath(config, courseFolder);
       const snapshotDirectory = statePath(config, 'snapshots', course.code, runId);
@@ -215,6 +217,7 @@ export async function syncCourses(config, selectedCode = null) {
       let contentRecords = [];
       let referer = course.url;
       try {
+        onProgress({ stage: 'scan', course: course.code, message: `${course.code}: reading course structure and locating files` });
         await page.goto(course.url, { waitUntil: 'domcontentloaded' });
         await page.waitForURL(ULTRA_COURSE_PATH, {
           timeout: config.sync?.navigationTimeoutMs ?? 45000,
@@ -238,6 +241,7 @@ export async function syncCourses(config, selectedCode = null) {
             if (isLikelyFileLink(link.href)) fileLinks.set(link.href, link);
           }
         }
+        onProgress({ stage: 'files-found', course: course.code, message: `${course.code}: found ${fileLinks.size} material file${fileLinks.size === 1 ? '' : 's'}` });
         await fs.writeFile(path.join(snapshotDirectory, 'last-page.html'), await page.content(), 'utf8');
         await page.screenshot({ path: path.join(snapshotDirectory, 'last-page.png'), fullPage: true });
         await writeJson(path.join(snapshotDirectory, 'content-tree.json'), contentRecords);
@@ -246,14 +250,17 @@ export async function syncCourses(config, selectedCode = null) {
       }
 
       const files = [];
-      for (const link of fileLinks.values()) {
+      const materialLinks = [...fileLinks.values()];
+      for (const [index, link] of materialLinks.entries()) {
         const linkDirectory = path.join(outputDirectory, ...(link.pathSegments ?? []).map((segment) => sanitizeFileName(segment)));
+        onProgress({ stage: 'download', course: course.code, message: `${course.code}: downloading ${index + 1}/${materialLinks.length} — ${link.title || path.basename(new URL(link.href).pathname)}` });
         try {
           const result = await downloadFile(context, link, linkDirectory, referer);
           if (result.file) result.file = path.relative(outputDirectory, path.join(linkDirectory, result.file));
           files.push(result);
+          onProgress({ stage: 'downloaded', course: course.code, message: `${course.code}: ${result.status} — ${result.file || link.title || 'material'}` });
         }
-        catch (error) { files.push({ status: 'error', url: link.href, error: error.message }); }
+        catch (error) { files.push({ status: 'error', url: link.href, error: error.message }); onProgress({ stage: 'error', course: course.code, message: `${course.code}: error downloading ${link.title || 'material'} — ${error.message}` }); }
       }
       const manifest = {
         schemaVersion: 1,
@@ -267,6 +274,7 @@ export async function syncCourses(config, selectedCode = null) {
       await writeJson(manifestPath, manifest);
       await writeJson(path.join(snapshotDirectory, 'pages.json'), pageRecords);
       runResults.push(manifest);
+      onProgress({ stage: 'course-complete', course: course.code, message: `${course.code} ${course.title}: complete (${files.filter((file) => file.status === 'downloaded').length} new, ${files.filter((file) => file.status === 'unchanged').length} unchanged)` });
     }
   } finally {
     await context.close();

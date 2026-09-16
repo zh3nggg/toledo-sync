@@ -4,16 +4,17 @@ const translations = {
   nl: { tagline: 'Lokale synchronisatie van KU Leuven Toledo-cursusmateriaal', language: 'Taal', setupStep: 'Ruimte voorbereiden', setupStepHint: 'Locaties kiezen', authStep: 'Aanmelden', authStepHint: 'KU Leuven verbinden', discoverStep: 'Cursussen zoeken', discoverStepHint: 'Lijst van dit jaar lezen', syncStep: 'Synchroniseren', syncStepHint: 'Geselecteerd materiaal downloaden', setupTitle: 'Je studieruimte voorbereiden', setupText: 'Kies de Vault, downloadhoofdmap en cursusindeling voordat je aanmeldt.', authTitle: 'Aanmelden bij Toledo', authText: 'Machtig met KU Leuven SSO/MFA. Je wachtwoord blijft op de officiële aanmeldpagina.', authRequired: 'Aanmelding vereist', authComplete: 'Aangemeld', vault: 'Obsidian Vault', downloadRoot: 'Downloadhoofdmap', downloadHint: 'Voorbeeld: D:\\Courses\\2026-2027\\G0S96A Groups and Symmetries', materialsPlacement: 'Locatie van cursusmateriaal', materialsInCourse: 'Rechtstreeks in de cursusmap', materialsInSubdirectory: 'In een uniform benoemde materiaalmap', materialsFolderName: 'Naam van materiaalmap', materialsFolderHint: 'Bijvoorbeeld: Cursusmateriaal of Bronnen. Alleen gebruikt in mapmodus.', choose: 'Map kiezen', academicYear: 'Academiejaar', saveSettings: 'Opslaan en doorgaan', openDownloadRoot: 'Downloadmap openen', coursesTitle: 'Cursussen kiezen', coursesText: 'Zoek eerst alle cursussen en selecteer daarna wat je wilt synchroniseren.', discover: 'Alle cursussen zoeken', syncTitle: 'Cursusmateriaal synchroniseren', syncText: 'Alleen geselecteerde cursussen met een gevonden link worden gesynchroniseerd.', login: 'Aanmelden bij Toledo', syncSelected: 'Geselecteerde synchroniseren', activity: 'Activiteitsmonitor', discovered: 'Gevonden · klaar voor synchronisatie', notDiscovered: 'Niet gevonden', saved: 'Instellingen opgeslagen. Ga door met aanmelden.', chooseVault: 'Obsidian Vault kiezen', chooseOutput: 'Downloadhoofdmap kiezen', syncing: 'Bezig…', error: 'Fout' }
 };
 let locale = localStorage.getItem('toledo-locale') || (navigator.language.startsWith('nl') ? 'nl' : navigator.language.startsWith('zh') ? 'zh' : 'en');
-let state = { config: null, busy: false, authenticated: false, discoveryDone: false };
+let state = { config: null, busy: false, authenticated: false, discoveryDone: false, activityLog: [] };
 const $ = (selector) => document.querySelector(selector);
 const t = (key) => translations[locale][key] || key;
 function setText() { document.documentElement.lang = locale; document.title = 'Toledo Sync'; document.querySelectorAll('[data-i18n]').forEach((node) => { node.textContent = t(node.dataset.i18n); }); }
 function updateMaterialsFolderVisibility() { $('#materialsFolderField').hidden = $('#materialsPlacement').value !== 'subdirectory'; }
 function status(message) { $('#status').textContent = message; }
-function result(value) { $('#results').textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2); }
+function result(value) { const summary = typeof value === 'string' ? value : JSON.stringify(value, null, 2); $('#results').textContent = `${state.activityLog.join('\n')}${state.activityLog.length ? '\n\n' : ''}${summary}`; $('#results').scrollTop = $('#results').scrollHeight; }
+function appendActivity(message) { const stamp = new Date().toLocaleTimeString(); state.activityLog.push(`[${stamp}] ${message}`); if (state.activityLog.length > 250) state.activityLog.shift(); $('#results').textContent = state.activityLog.join('\n'); $('#results').scrollTop = $('#results').scrollHeight; }
 function setBusy(value) { state.busy = value; document.querySelectorAll('button').forEach((button) => { button.disabled = value; }); if (!value && state.config) render(); }
 function render() {
-  const config = state.config; $('#vaultPath').value = config?.vaultPath || ''; $('#outputRoot').value = config?.outputRoot || ''; $('#materialsPlacement').value = config?.materialsPlacement || 'subdirectory'; $('#materialsFolderName').value = config?.materialsFolderName || 'Materials'; $('#academicYear').value = config?.academicYear || '2026-2027'; updateMaterialsFolderVisibility();
+  const config = state.config; $('#vaultPath').value = config?.vaultPath || ''; $('#outputRoot').value = config?.outputRoot || ''; $('#materialsPlacement').value = config?.materialsPlacement || 'subdirectory'; $('#materialsFolderName').value = config?.materialsFolderName || 'Materials'; const year = config?.academicYear || '2026-2027'; if (![...$('#academicYear').options].some((option) => option.value === year)) $('#academicYear').add(new Option(year, year)); $('#academicYear').value = year; updateMaterialsFolderVisibility();
   const hasConfig = Boolean(config?.vaultPath && config?.outputRoot); const hasDiscovered = state.discoveryDone && (config?.courses || []).some((course) => course.discovered); const hasSelected = (config?.courses || []).some((course) => course.selected && course.discovered);
   $('#authState').textContent = state.authenticated ? t('authComplete') : t('authRequired'); $('#authState').classList.toggle('complete', state.authenticated);
   $('#login').disabled = !hasConfig || state.busy; $('#discover').disabled = !hasConfig || !state.authenticated || state.busy; $('#sync').disabled = !hasSelected || !state.authenticated || state.busy;
@@ -32,7 +33,7 @@ async function save() {
   state.config = await window.toledo.saveConfig({ vaultPath: $('#vaultPath').value, outputRoot: $('#outputRoot').value, materialsPlacement: $('#materialsPlacement').value, materialsFolderName: $('#materialsFolderName').value.trim(), academicYear: $('#academicYear').value.trim(), selectedCodes }); state.authenticated = state.config.authenticated;
   render(); status(t('saved'));
 }
-async function run(operation) { try { setBusy(true); status(t('syncing')); const value = await operation(); result(value); } catch (error) { status(`${t('error')}: ${error.message}`); } finally { setBusy(false); } }
+async function run(operation) { try { setBusy(true); appendActivity(t('syncing')); status(t('syncing')); const value = await operation(); result(value); } catch (error) { appendActivity(`${t('error')}: ${error.message}`); status(`${t('error')}: ${error.message}`); } finally { setBusy(false); } }
 setText();
 $('#language').value = locale; $('#language').addEventListener('change', (event) => { locale = event.target.value; localStorage.setItem('toledo-locale', locale); setText(); render(); });
 $('#materialsPlacement').addEventListener('change', updateMaterialsFolderVisibility);
@@ -44,6 +45,6 @@ $('#sync').addEventListener('click', () => run(() => window.toledo.sync(null)));
 if (!window.toledo) {
   status('Desktop bridge could not start. Please reinstall the application.');
 } else {
-  window.toledo.onEvent((event) => status(event.message));
+  window.toledo.onEvent((event) => { appendActivity(event.message); status(event.message); });
   (async () => { const initial = await window.toledo.initial(); $('#platform').textContent = initial.platform === 'win32' ? 'Windows' : initial.platform; state.config = initial.config; state.authenticated = Boolean(initial.config?.authenticated); render(); })();
 }

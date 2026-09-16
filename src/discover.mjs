@@ -43,9 +43,11 @@ export function extractAcademicYears(value) {
 }
 
 export async function discoverCourses(config, configPath, options = {}) {
+  const report = typeof options.onProgress === 'function' ? options.onProgress : () => {};
   const { context, executablePath, profilePath } = await launchBrowser(config);
   try {
     const page = context.pages()[0] ?? await context.newPage();
+    report({ stage: 'discover', message: 'Opening Toledo course list…' });
     await page.goto(config.portalUrl, { waitUntil: 'domcontentloaded' });
     if (!options.auto) {
       await ask('在浏览器中完成登录并打开显示本学期课程列表的页面，然后回到此窗口按 Enter：');
@@ -59,9 +61,11 @@ export async function discoverCourses(config, configPath, options = {}) {
     })).filter((link) => link.href));
 
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
+    report({ stage: 'discover', message: `Course list loaded; checking ${config.courses.length} configured courses` });
     const matches = [];
     const coursesToDiscover = options.allCourses ? config.courses : config.courses.filter((item) => item.selected);
     for (const course of coursesToDiscover) {
+      report({ stage: 'course', course: course.code, message: `Checking ${course.code} ${course.title}…` });
       const previousUrl = course.url;
       const ranked = uniqueLinks
         .map((link) => ({ ...link, score: scoreCourseLink(course, link) }))
@@ -83,6 +87,7 @@ export async function discoverCourses(config, configPath, options = {}) {
         status: preferred ? 'matched' : previousUrl ? 'retained-previous-match' : 'not-found',
         candidates: ranked.slice(0, 5)
       });
+      report({ stage: 'course-result', course: course.code, message: `${course.code}: ${preferred ? 'current-year link found' : previousUrl ? 'kept previous link' : 'no current-year link found'}` });
     }
     await saveConfig(configPath, config);
 
