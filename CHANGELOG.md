@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3 — 2026-09-16
+
+- Kept the activity monitor visible at the bottom of the Windows GUI while settings and course selection scroll independently.
+
 ## 0.1.2 — 2026-09-16
 
 - Separated programme-course discovery from the selected sync scope in the Windows GUI.
