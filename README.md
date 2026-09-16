@@ -1,134 +1,175 @@
 # Toledo Sync
 
-Local-first synchronizer for KU Leuven Toledo/Blackboard course materials. It uses a dedicated local Chrome, Edge, or Chromium profile, so KU Leuven credentials are entered only in the university login page.
+**把 KU Leuven Toledo 中“需要你学习的材料”，变成你自己掌控、可长期整理的本地课程库。**
 
-## Interfaces
+[中文](#中文) · [English](#english) · [Nederlands](#nederlands)
 
-| Platform | Interface | Status |
+## 中文
+
+### 适合什么场景？
+
+Toledo 适合发布课程内容，却不一定适合成为整个学期的学习工作台：材料分散在不同课程、课程页会随学年变化、文件夹层级不统一，而你又可能想把文件连同 Obsidian 笔记、复习计划和个人知识库放在一起。
+
+Toledo Sync 面向以下使用方式：
+
+- 你只想保存**本学年、自己选择的课程**，而非把 Toledo 的所有历史课程全部下载。
+- 你希望课程材料直接进入自己指定的硬盘目录，并按课程和 Toledo 原始层级归档。
+- 你使用 Obsidian 或其他本地学习系统，希望课程材料能成为长期、可搜索、可备份的学习资产。
+- 你需要先同步讲义、习题、公式表等资料，再据此规划复习，而不必逐门课程手动下载。
+
+### 产品承诺
+
+| 你控制什么 | Toledo Sync 如何处理 |
+| --- | --- |
+| 下载范围 | 只同步你勾选的课程和学年。 |
+| 下载位置 | 你选择的目录就是根目录；课程文件夹直接创建在其中。 |
+| 历史课程 | 当前学年课程尚未开放时会跳过，不会用同编号旧课替代。 |
+| 文件变化 | 通过 SHA-256 识别未变化文件，重复同步不制造副本。 |
+| 登录凭据 | 密码和 MFA 只在 KU Leuven 官方登录页面完成。 |
+| 学习资料 | 下载本地副本；不会提交作业、参加测验、发送消息或改变 Toledo 内容。 |
+
+### 一次典型同步
+
+```text
+选择 Vault 和下载根目录
+        ↓
+登录 Toledo（一次）
+        ↓
+发现本学年已开放课程
+        ↓
+勾选课程并同步
+        ↓
+本地课程库 + 你的 Obsidian 笔记与学习计划
+```
+
+例如，选择 `D:\Study\Leuven 2026 Fall` 作为根目录后：
+
+```text
+D:\Study\Leuven 2026 Fall\
+├── G0S96A Groups and Symmetries\
+│   └── 原始资料\
+│       └── … Toledo 的课程层级 …
+└── G0R16A Semiconductor Physics\
+    └── 原始资料\
+```
+
+程序不会额外创建名为“课程材料”的中间目录。
+
+### 使用方式
+
+| 系统 | 推荐入口 | 状态 |
+| --- | --- | --- |
+| Windows 10/11 | 三语桌面应用（中文／English／Nederlands）或 CLI | 已支持 |
+| macOS | CLI | 已支持 |
+| Linux | CLI | 已支持 |
+
+**Windows 用户：** 从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载 `Toledo.Sync.Setup.<version>.exe`。安装版适合长期使用；便携版适合不希望安装软件的场景。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
+
+**macOS、Linux 与高级用户：** 参阅 [完整 CLI 指南](docs/CLI.md)，其中包括安装、登录、课程发现、筛选、同步、日历和故障排查。
+
+### 当前支持范围
+
+支持 Blackboard Ultra 的普通文件夹、学习模块、独立文件和 Ultra Document 内嵌附件。只下载当前登录用户可见的资料。
+
+第三方教学工具内部的文件、受保护流媒体、尚未发布内容，以及需要互动操作才能导出的内容，可能暂时无法直接同步。Toledo 改版后也可能需要更新适配逻辑。
+
+### 隐私与安全
+
+- 浏览器会话保存在本机 `~/.toledo-sync/`，不在 Obsidian Vault 中。
+- 课程清单、同步记录和快照保存在 `<Vault>/_codex/toledo-sync/`。
+- 不要将 `~/.toledo-sync/` 提交到 Git 或同步到公开云盘。
+
+---
+
+## English
+
+### The problem it solves
+
+Toledo is where course content is published; it is not always where a semester is best managed. Materials are spread across courses, content structures differ, and course availability changes with the academic year. Toledo Sync turns the subset of Toledo that matters to you into a local, structured course library that can sit alongside Obsidian notes, revision plans, and backups.
+
+It is designed for students who want to keep **only their chosen courses for a chosen academic year**, preserve the Toledo structure locally, and stop downloading every lecture note and exercise sheet by hand.
+
+### What you stay in control of
+
+| Your decision | Toledo Sync behavior |
+| --- | --- |
+| Scope | Syncs only selected courses and academic years. |
+| Location | Uses the exact folder you select as the download root. |
+| Historic courses | Skips unavailable current-year courses instead of substituting an older course with the same code. |
+| Repeat runs | Uses SHA-256 to avoid duplicate copies of unchanged files. |
+| Credentials | KU Leuven password and MFA stay on KU Leuven sign-in pages. |
+| Toledo actions | Reads visible learning material only; it never submits, posts, tests, or modifies content. |
+
+### Product flow
+
+```text
+Choose Vault and download root → sign in once → discover current courses
+→ select courses → synchronize into your local study system
+```
+
+### Get started
+
+| Platform | Recommended interface | Status |
 | --- | --- | --- |
 | Windows 10/11 | Desktop app in 中文, English, Nederlands; CLI | Supported |
 | macOS | CLI | Supported |
 | Linux | CLI | Supported |
 
-The Windows desktop application wraps the same synchronization core as the CLI. It provides folder selection, Toledo login, course selection, discovery, and background sync. See the [Windows desktop-app guide](docs/GUI-WINDOWS.md).
+For Windows, download the current installer from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest), then follow the [desktop-app guide](docs/GUI-WINDOWS.md). For Windows, macOS, and Linux CLI setup, use the [complete CLI guide](docs/CLI.md).
 
-For the complete command-line tutorial, including setup, login, discovery, selection, sync, calendar, troubleshooting, and security, see [docs/CLI.md](docs/CLI.md).
+### Current scope and privacy
 
-## Supported systems
+Blackboard Ultra folders, learning modules, direct files, and attachments embedded in Ultra Documents are supported. External teaching tools, protected streaming media, unpublished content, and content requiring extra interaction can require further adapters.
 
-- Windows 10/11
-- macOS with Google Chrome, Microsoft Edge, or Chromium
-- Linux with Google Chrome, Microsoft Edge, or Chromium
-- Node.js 20 or newer
+Authentication state stays locally in `~/.toledo-sync/`; Vault-side manifests and snapshots stay in `<Vault>/_codex/toledo-sync/`. Do not commit or publicly cloud-sync browser session data.
 
-## Security model
+---
 
-- The program never asks for or stores your KU Leuven password.
-- SSO and MFA are completed manually in a visible browser window.
-- Browser data remains in `~/.toledo-sync/browser-profile`; session authentication state is stored in `~/.toledo-sync/auth-state.json`, both outside the Obsidian Vault.
-- The private calendar URL remains under `~/.toledo-sync/secrets`.
-- Course materials go to the logical course-material directory in the Vault.
-- Snapshots, manifests, caches, and logs go under the Vault's `_codex/toledo-sync` directory.
+## Nederlands
 
-Do not sync `~/.toledo-sync` through Obsidian, Git, or a public cloud folder.
+### Voor welk probleem?
 
-## Install
+Toledo is de plaats waar cursusmateriaal wordt gepubliceerd, maar niet altijd de beste werkplek om een heel semester te organiseren. Materiaal staat verspreid over cursussen, de structuur verschilt per vak en de beschikbaarheid verandert per academiejaar. Toledo Sync maakt van het deel van Toledo dat voor jou relevant is een lokale, gestructureerde cursusbibliotheek naast je Obsidian-notities, studieplanning en back-ups.
+
+De toepassing is bedoeld voor studenten die alleen hun **geselecteerde vakken van een gekozen academiejaar** willen bewaren, de Toledo-structuur lokaal willen behouden en niet elk document handmatig willen downloaden.
+
+### Jij houdt de regie
+
+| Jouw keuze | Gedrag van Toledo Sync |
+| --- | --- |
+| Bereik | Synchroniseert alleen geselecteerde vakken en academiejaren. |
+| Locatie | Gebruikt exact de gekozen map als downloadhoofdmap. |
+| Historische vakken | Slaat een niet-beschikbaar huidig vak over en vervangt het niet door een oud vak met dezelfde code. |
+| Herhaald synchroniseren | Gebruikt SHA-256 om dubbele kopieën van ongewijzigde bestanden te vermijden. |
+| Aanmeldgegevens | KU Leuven-wachtwoord en MFA blijven op de officiële KU Leuven-aanmeldpagina. |
+| Acties in Toledo | Leest alleen zichtbaar cursusmateriaal; dient niets in en wijzigt geen Toledo-inhoud. |
+
+### Aan de slag
+
+| Platform | Aanbevolen interface | Status |
+| --- | --- | --- |
+| Windows 10/11 | Desktopapp in 中文, English, Nederlands; CLI | Ondersteund |
+| macOS | CLI | Ondersteund |
+| Linux | CLI | Ondersteund |
+
+Download voor Windows de meest recente installer via de [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest) en volg de [handleiding voor de desktopapp](docs/GUI-WINDOWS.md). Voor de CLI op Windows, macOS en Linux is er de [volledige CLI-handleiding](docs/CLI.md).
+
+### Huidige ondersteuning en privacy
+
+Blackboard Ultra-mappen, leermodules, gewone bestanden en bijlagen in Ultra Documents worden ondersteund. Externe leertools, beveiligde streamingmedia, niet-gepubliceerde inhoud en inhoud die extra interactie vereist, kunnen een bijkomende adapter nodig hebben.
+
+Aanmeldstatus blijft lokaal in `~/.toledo-sync/`; manifesten en snapshots in de Vault staan in `<Vault>/_codex/toledo-sync/`. Zet browsersessies niet in Git of een openbare cloudmap.
+
+---
+
+## For contributors / 开发者
 
 ```sh
 npm install
-npm link
+npm test
+npm run check
 ```
 
-`npm link` is optional; commands can also be run as `node src/cli.mjs ...`.
+Run the CLI with `node src/cli.mjs help`. On Windows, start the desktop app with `npm run desktop`; build its installer and portable executable with `npm run make:win`.
 
-## First setup
-
-```sh
-toledo-sync init --vault "/path/to/SemiCon" \
-  --output "/path/for/course-materials" \
-  --academic-year 2026-2027 \
-  --courses G0S96A,G0S83A,G0S90A,G0R16A,H06A8A,H0G03A,G0R94A
-toledo-sync login --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
-toledo-sync discover --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
-```
-
-If an earlier SSO attempt ended on an error page, start a clean login request for the dedicated profile:
-
-```sh
-toledo-sync login --config "/path/to/config.json" --fresh
-```
-
-The command now detects successful return to the Toledo portal automatically; no terminal confirmation is needed.
-
-On Windows, if a supervised terminal does not display the browser, launch the interactive helper in a normal PowerShell window:
-
-```powershell
-.\scripts\login-windows.ps1 -ConfigPath "D:\path\to\config.json" -Fresh
-```
-
-If the Toledo landing page already displays the course list, discovery can run without pausing:
-
-```sh
-toledo-sync discover --config "/path/to/config.json" --auto
-```
-
-The download root can be anywhere the current user can write: inside the Vault, on another disk, or on an external drive. Each course is created directly beneath the exact path passed to `--output`; the program does not insert a `课程材料` or other intermediate directory. It is independent from the `_codex` state directory.
-
-Change the output directory or selection later:
-
-```sh
-toledo-sync configure --config "/path/to/config.json" \
-  --output "/another/course-folder" \
-  --academic-year 2026-2027 \
-  --courses G0S96A,G0S83A
-
-toledo-sync list --config "/path/to/config.json"
-```
-
-Bulk synchronization processes only courses marked `[x]` and matching the academic-year filter. It never treats every course visible in Toledo as selected. Passing `--course CODE` performs an explicit one-course run.
-
-Selected courses whose current-year cards are still unavailable are reported as skipped during a bulk run. The tool does not substitute an older academic-year course with the same code.
-
-After discovery, inspect `config.json`. Each course should have the correct Toledo URL. Ambiguous matches remain unset rather than being guessed.
-
-## Synchronize
-
-Synchronize one course first:
-
-```sh
-toledo-sync sync --config "/path/to/SemiCon/_codex/toledo-sync/config.json" --course G0S96A
-```
-
-Synchronize all configured fall courses:
-
-```sh
-toledo-sync sync --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
-```
-
-## Calendar
-
-In Blackboard Calendar, use **Calendar Settings → Share Calendar**, then:
-
-```sh
-toledo-sync set-calendar --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
-toledo-sync sync-calendar --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
-```
-
-The raw calendar is saved as `toledo.ics`; normalized event metadata is saved as `events.json`.
-
-## Current limitations
-
-- Blackboard Ultra course folders, file items, and files embedded inside Ultra Documents are supported. Content hidden behind external tools or custom interactive actions may need an additional adapter.
-- The synchronizer downloads files visible to the signed-in student. It does not submit assignments, take tests, or bypass access controls.
-- Protected streaming media and external learning tools may expose links rather than downloadable files.
-- A Toledo redesign may require selector updates. Discovery evidence is retained under `_codex/toledo-sync/discovery` for diagnosis.
-
-## Build the Windows desktop app
-
-```powershell
-npm install
-npm run desktop
-npm run make:win
-```
-
-`make:win` produces an installer and a portable executable in `release/`. The app bundles Electron; users need Node.js only to run from source. It still uses an installed Chrome, Edge, or Chromium for KU Leuven SSO/MFA.
+The project is licensed under the [MIT License](LICENSE).
