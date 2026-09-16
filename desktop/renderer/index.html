@@ -13,29 +13,29 @@
     </header>
     <main>
       <nav class="steps" aria-label="Workflow"><div class="step" id="stepSetup"><span>1</span><div><b data-i18n="setupStep"></b><small data-i18n="setupStepHint"></small></div></div><div class="step" id="stepAuth"><span>2</span><div><b data-i18n="authStep"></b><small data-i18n="authStepHint"></small></div></div><div class="step" id="stepDiscover"><span>3</span><div><b data-i18n="discoverStep"></b><small data-i18n="discoverStepHint"></small></div></div><div class="step" id="stepSync"><span>4</span><div><b data-i18n="syncStep"></b><small data-i18n="syncStepHint"></small></div></div></nav>
+      <nav class="tabs" aria-label="Sections"><button class="tab active" data-tab="space" data-i18n="tabSpace"></button><button class="tab" data-tab="courses" data-i18n="tabCourses"></button><button class="tab" data-tab="updates" data-i18n="tabUpdates"></button><button class="tab" data-tab="automation" data-i18n="tabAutomation"></button></nav>
       <div class="content-scroll">
-        <section class="card settings">
+        <section class="tab-panel active" data-panel="space"><section class="card settings">
           <div class="section-heading"><div><span class="eyebrow" data-i18n="setupStep"></span><h2 data-i18n="setupTitle"></h2><p data-i18n="setupText"></p></div><span id="platform"></span></div>
           <div class="field"><label data-i18n="vault"></label><div><input id="vaultPath" readonly /><button class="secondary" id="chooseVault" data-i18n="choose"></button></div></div>
           <div class="field"><label data-i18n="downloadRoot"></label><div><input id="outputRoot" readonly /><button class="secondary" id="chooseOutput" data-i18n="choose"></button></div><small data-i18n="downloadHint"></small></div>
           <div class="field short"><label data-i18n="materialsPlacement"></label><select id="materialsPlacement"><option value="course-root" data-i18n="materialsInCourse"></option><option value="subdirectory" data-i18n="materialsInSubdirectory"></option></select></div>
           <div class="field short" id="materialsFolderField"><label data-i18n="materialsFolderName"></label><input id="materialsFolderName" /><small data-i18n="materialsFolderHint"></small></div>
           <div class="field short"><label data-i18n="academicYear"></label><select id="academicYear"><option value="2025-2026">2025–2026</option><option value="2026-2027" selected>2026–2027</option><option value="2027-2028">2027–2028</option><option value="2028-2029">2028–2029</option></select></div>
-          <div class="automation"><h3 data-i18n="automationTitle"></h3><p data-i18n="automationText"></p><label class="toggle"><input id="autoStart" type="checkbox" /><span data-i18n="autoStart"></span></label><label class="toggle"><input id="autoCheckOnLaunch" type="checkbox" /><span data-i18n="autoCheckOnLaunch"></span></label><div class="field short"><label data-i18n="periodicCheck"></label><select id="periodicCheckMinutes"><option value="0" data-i18n="periodicOff"></option><option value="30" data-i18n="periodic30"></option><option value="60" data-i18n="periodic60"></option><option value="360" data-i18n="periodic360"></option><option value="1440" data-i18n="periodic1440"></option></select></div></div>
           <div class="actions"><button id="save" data-i18n="saveSettings"></button><button class="secondary" id="openRoot" data-i18n="openDownloadRoot"></button></div>
-        </section>
-        <section class="card auth-card" id="authCard">
+        </section></section>
+        <section class="tab-panel" data-panel="courses"><section class="card auth-card" id="authCard">
           <div class="section-heading"><div><span class="eyebrow" data-i18n="authStep"></span><h2 data-i18n="authTitle"></h2><p data-i18n="authText"></p></div><span class="auth-state" id="authState" data-i18n="authRequired"></span></div>
           <div class="actions"><button id="login" data-i18n="login"></button></div>
-        </section>
-        <section class="card course-card" id="discoverCard">
+        </section><section class="card course-card" id="discoverCard">
           <div class="section-heading"><div><span class="eyebrow" data-i18n="discoverStep"></span><h2 data-i18n="coursesTitle"></h2><p data-i18n="coursesText"></p></div><button class="secondary" id="discover" data-i18n="discover"></button></div>
           <div id="courses" class="courses"></div>
-        </section>
-        <section class="card workflow" id="syncCard">
+        </section></section>
+        <section class="tab-panel" data-panel="updates"><section class="card workflow" id="syncCard">
           <div><span class="eyebrow" data-i18n="syncStep"></span><h2 data-i18n="syncTitle"></h2><p data-i18n="syncText"></p></div>
           <div class="actions"><button class="secondary" id="checkUpdates" data-i18n="checkUpdates"></button><button id="applyUpdates" data-i18n="applyUpdates"></button></div>
-        </section>
+        </section><section class="card update-guide"><h3 data-i18n="updateSafetyTitle"></h3><p data-i18n="updateSafetyText"></p></section></section>
+        <section class="tab-panel" data-panel="automation"><section class="card automation"><h2 data-i18n="automationTitle"></h2><p data-i18n="automationText"></p><label class="toggle"><input id="autoStart" type="checkbox" /><span data-i18n="autoStart"></span></label><label class="toggle"><input id="autoCheckOnLaunch" type="checkbox" /><span data-i18n="autoCheckOnLaunch"></span></label><div class="field short"><label data-i18n="periodicCheck"></label><select id="periodicCheckMinutes"><option value="0" data-i18n="periodicOff"></option><option value="30" data-i18n="periodic30"></option><option value="60" data-i18n="periodic60"></option><option value="360" data-i18n="periodic360"></option><option value="1440" data-i18n="periodic1440"></option></select></div><div class="actions"><button id="saveAutomation" data-i18n="saveSettings"></button></div></section></section>
       </div>
       <section class="card activity" aria-label="Activity monitor"><div class="monitor-heading"><h2 data-i18n="activity"></h2><div id="status" role="status" aria-live="polite"></div></div><pre id="results" aria-live="polite"></pre></section>
     </main>
