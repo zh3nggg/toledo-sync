@@ -9,6 +9,7 @@ main { width: min(980px, 100%); flex: 1; min-height: 0; margin: 0 auto; padding:
 .card { background: rgba(255,255,255,.98); border: 1px solid #e0e7ef; border-radius: 12px; padding: 16px 18px; box-shadow: 0 4px 18px #25496b0a; }
 .section-heading, .workflow { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
 .eyebrow { display: block; color: #0875b1; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 750; margin-bottom: 4px; }
+.automation { margin-top: 14px; padding-top: 12px; border-top: 1px solid #edf1f5; }.automation h3 { margin: 0 0 3px; font-size: 13px; }.automation > p { font-size: 12px; }.toggle { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 12px; color: #31405b; }.toggle input { width: 16px; height: 16px; margin: 0; }
 .field { margin-top: 11px; } .field > label { font-size: 12px; font-weight: 650; display: block; margin-bottom: 5px; color: #31405b; }
 .field > div { display: flex; gap: 8px; } .field small { display: block; color: #66758e; margin-top: 6px; } .field.short { max-width: 250px; }
 input, select, button { border-radius: 7px; font: inherit; } input, select { width: 100%; padding: 8px 9px; border: 1px solid #c9d4e3; color: #172033; background: #fbfcfe; }

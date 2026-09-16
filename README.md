@@ -26,6 +26,7 @@ Toledo Sync 面向以下使用方式：
 | 课程内布局 | 可选直接放入课程文件夹，或放入你自定义名称的材料子文件夹。 |
 | 历史课程 | 当前学年课程尚未开放时会跳过，不会用同编号旧课替代。 |
 | 文件变化 | 通过 SHA-256 识别未变化文件，重复同步不制造副本。 |
+| 自动更新 | 可选开机启动、启动时检查，以及 30 分钟到每天的周期检查。 |
 | 登录凭据 | 密码和 MFA 只在 KU Leuven 官方登录页面完成。 |
 | 学习资料 | 下载本地副本；不会提交作业、参加测验、发送消息或改变 Toledo 内容。 |
 
@@ -99,6 +100,7 @@ It is designed for students who want to keep **only their chosen courses for a c
 | Course layout | Places material directly in each course folder or in a subfolder with your chosen name. |
 | Historic courses | Skips unavailable current-year courses instead of substituting an older course with the same code. |
 | Repeat runs | Uses SHA-256 to avoid duplicate copies of unchanged files. |
+| Automatic updates | Optionally starts with Windows, checks on launch, and runs a schedule while open. |
 | Credentials | KU Leuven password and MFA stay on KU Leuven sign-in pages. |
 | Toledo actions | Reads visible learning material only; it never submits, posts, tests, or modifies content. |
 
@@ -144,6 +146,7 @@ De toepassing is bedoeld voor studenten die alleen hun **geselecteerde vakken va
 | Cursusindeling | Plaatst materiaal rechtstreeks in elke cursusmap of in een submap met jouw eigen naam. |
 | Historische vakken | Slaat een niet-beschikbaar huidig vak over en vervangt het niet door een oud vak met dezelfde code. |
 | Herhaald synchroniseren | Gebruikt SHA-256 om dubbele kopieën van ongewijzigde bestanden te vermijden. |
+| Automatische updates | Optioneel starten met Windows, controleren bij openen en periodiek controleren zolang de app open is. |
 | Aanmeldgegevens | KU Leuven-wachtwoord en MFA blijven op de officiële KU Leuven-aanmeldpagina. |
 | Acties in Toledo | Leest alleen zichtbaar cursusmateriaal; dient niets in en wijzigt geen Toledo-inhoud. |
 

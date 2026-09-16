@@ -93,6 +93,8 @@ Files are grouped under:
 
 Repeated runs compare SHA-256 hashes and report unchanged files without writing duplicates. Unavailable selected courses are shown as `skipped`.
 
+During discovery and synchronization, the CLI also prints the current course, stage, file count, filename, and per-file result so a long run has visible progress.
+
 ## Calendar (optional)
 
 In Toledo Calendar, open **Calendar Settings → Share Calendar**. Then run:

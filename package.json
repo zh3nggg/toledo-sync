@@ -1,6 +1,6 @@
 {
   "name": "toledo-sync",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Local-first KU Leuven Toledo course material synchronizer",
   "author": "Toledo Sync contributors",
   "type": "module",

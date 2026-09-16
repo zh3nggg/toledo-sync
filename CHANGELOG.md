@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.8 — 2026-09-16
+
+- Added optional Windows startup, launch-time update checks, and scheduled update checks.
+- Persisted automation settings locally and routed automatic discovery and synchronization through the live activity monitor.
+
 ## 0.1.7 — 2026-09-16
 
 - Replaced free-form academic-year entry in the Windows GUI with a validated selection list.

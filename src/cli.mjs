@@ -147,13 +147,13 @@ async function main() {
     return;
   }
   if (command === 'discover') {
-    const result = await discoverCourses(config, configPath, { auto: Boolean(options.auto) });
+    const result = await discoverCourses(config, configPath, { auto: Boolean(options.auto), onProgress: (event) => console.log(event.message) });
     for (const match of result.matches) console.log(`${match.code}: ${match.selectedUrl ?? '未匹配'}`);
     console.log(`Discovery evidence: ${result.runDirectory}`);
     return;
   }
   if (command === 'sync') {
-    const results = await syncCourses(config, options.course || null);
+    const results = await syncCourses(config, options.course || null, (event) => console.log(event.message));
     for (const result of results) {
       if (result.status === 'skipped-unavailable') {
         console.log(`${result.course.code}: skipped (not currently available in Toledo)`);

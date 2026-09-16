@@ -10,6 +10,8 @@ import { syncCourses } from '../src/sync.mjs';
 import { writeJson } from '../src/utils.mjs';
 
 let mainWindow;
+let automationTimer = null;
+let automationRunning = false;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 const settingsPath = () => path.join(app.getPath('userData'), 'settings.json');
@@ -20,14 +22,25 @@ async function readSettings() {
 
 async function saveSettings(settings) {
   await fs.mkdir(path.dirname(settingsPath()), { recursive: true });
-  await fs.writeFile(settingsPath(), `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+  const existing = await readSettings();
+  await fs.writeFile(settingsPath(), `${JSON.stringify({ ...existing, ...settings }, null, 2)}\n`, 'utf8');
+}
+
+function normalizeAutomation(settings = {}) {
+  const allowedIntervals = [0, 30, 60, 360, 1440];
+  const periodicCheckMinutes = Number(settings.periodicCheckMinutes);
+  return {
+    autoStart: Boolean(settings.autoStart),
+    autoCheckOnLaunch: Boolean(settings.autoCheckOnLaunch),
+    periodicCheckMinutes: allowedIntervals.includes(periodicCheckMinutes) ? periodicCheckMinutes : 0
+  };
 }
 
 function notify(type, message) {
   mainWindow?.webContents.send('toledo:event', { type, message, at: new Date().toISOString() });
 }
 
-function present(config, configPath, authenticated = false) {
+function present(config, configPath, authenticated = false, automation = {}) {
   return {
     configPath,
     vaultPath: config.vaultPath,
@@ -35,6 +48,7 @@ function present(config, configPath, authenticated = false) {
     materialsPlacement: config.download.materialsPlacement,
     materialsFolderName: config.download.materialsFolderName,
     authenticated,
+    ...normalizeAutomation(automation),
     academicYear: config.filters.academicYears[0] ?? '',
     courses: config.courses.map((course) => ({
       code: course.code, title: course.title, selected: course.selected,
@@ -49,7 +63,7 @@ async function currentConfig() {
   const { config, configPath } = await loadConfig(settings.configPath);
   let authenticated = false;
   try { await fs.access(statePath(config, 'auth', 'last-login.json')); authenticated = true; } catch { /* Login has not been verified yet. */ }
-  return { config, configPath, authenticated };
+  return { config, configPath, authenticated, automation: normalizeAutomation(settings) };
 }
 
 async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
@@ -69,7 +83,7 @@ function ensureWindows() {
   if (process.platform !== 'win32') throw new Error('The desktop app is currently published for Windows. Use the CLI on macOS and Linux.');
 }
 
-async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName }) {
+async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName, autoStart, autoCheckOnLaunch, periodicCheckMinutes }) {
   ensureWindows();
   if (!vaultPath || !outputRoot) throw new Error('Choose both the Obsidian Vault and the download root.');
   const configPath = defaultConfigPath(vaultPath);
@@ -93,8 +107,10 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
     const initialSelectedCodes = selectedCodes.length ? selectedCodes : FALL_2026_COURSES.map((course) => course.code);
     ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear, selectedCodes: initialSelectedCodes, materialsPlacement, materialsFolderName }));
   }
-  await saveSettings({ configPath });
-  return present(config, configPath, authenticated);
+  const automation = normalizeAutomation({ autoStart, autoCheckOnLaunch, periodicCheckMinutes });
+  await saveSettings({ configPath, ...automation });
+  await configureAutomation(automation);
+  return present(config, configPath, authenticated, automation);
 }
 
 async function startLogin() {
@@ -123,7 +139,7 @@ async function startLogin() {
 function registerIpc() {
   ipcMain.handle('app:initial', async () => {
     const current = await currentConfig();
-    return { platform: process.platform, config: current ? present(current.config, current.configPath, current.authenticated) : null };
+    return { platform: process.platform, config: current ? present(current.config, current.configPath, current.authenticated, current.automation) : null };
   });
   ipcMain.handle('dialog:directory', async (_event, title) => {
     const result = await dialog.showOpenDialog(mainWindow, { title, properties: ['openDirectory', 'createDirectory'] });
@@ -138,7 +154,7 @@ function registerIpc() {
     const result = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
     const refreshed = await loadConfig(current.configPath);
     notify('success', 'Course discovery finished.');
-    return { config: present(refreshed.config, refreshed.configPath, current.authenticated), matches: result.matches };
+    return { config: present(refreshed.config, refreshed.configPath, current.authenticated, current.automation), matches: result.matches };
   });
   ipcMain.handle('toledo:sync', async (_event, courseCode = null) => {
     const current = await currentConfig();
@@ -149,6 +165,52 @@ function registerIpc() {
     return result;
   });
   ipcMain.handle('path:open', async (_event, target) => shell.openPath(target));
+}
+
+async function runAutomaticCheck(reason) {
+  if (automationRunning) return;
+  automationRunning = true;
+  try {
+    const current = await currentConfig();
+    if (!current) return;
+    if (!current.authenticated) {
+      notify('info', `${reason}: automatic check skipped; sign in to Toledo first.`);
+      return;
+    }
+    notify('info', `${reason}: checking for course updates…`);
+    const discovered = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
+    const refreshed = await loadConfig(current.configPath);
+    notify('progress', `${reason}: discovery finished; synchronizing selected courses…`);
+    await syncCourses({ ...refreshed.config, browser: { ...refreshed.config.browser, headless: true } }, null, (event) => notify('progress', event.message));
+    notify('success', `${reason}: update check finished.`);
+    return discovered;
+  } catch (error) {
+    notify('error', `${reason}: automatic check failed — ${error.message}`);
+  } finally {
+    automationRunning = false;
+  }
+}
+
+async function configureAutomation(automation) {
+  const normalized = normalizeAutomation(automation);
+  if (process.platform === 'win32') {
+    app.setLoginItemSettings({
+      openAtLogin: normalized.autoStart,
+      path: process.execPath,
+      args: app.isPackaged ? [] : [app.getAppPath()]
+    });
+  }
+  if (automationTimer) clearInterval(automationTimer);
+  automationTimer = normalized.periodicCheckMinutes > 0
+    ? setInterval(() => { void runAutomaticCheck('Scheduled check'); }, normalized.periodicCheckMinutes * 60 * 1000)
+    : null;
+}
+
+async function initializeAutomation() {
+  const current = await currentConfig();
+  if (!current) return;
+  await configureAutomation(current.automation);
+  if (current.automation.autoCheckOnLaunch) setTimeout(() => { void runAutomaticCheck('Startup check'); }, 1200);
 }
 
 async function createWindow() {
@@ -164,6 +226,7 @@ async function createWindow() {
 app.whenReady().then(async () => {
   registerIpc();
   await createWindow();
+  await initializeAutomation();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
