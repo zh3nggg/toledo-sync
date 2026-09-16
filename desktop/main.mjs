@@ -243,8 +243,11 @@ async function initializeAutomation() {
 }
 
 async function createWindow() {
+  const demoMode = process.env.TOLEDO_DEMO === '1';
   mainWindow = new BrowserWindow({
-    width: 860, height: 660, minWidth: 720, minHeight: 540, useContentSize: true, show: false,
+    width: demoMode ? 1280 : 860, height: demoMode ? 720 : 660,
+    minWidth: demoMode ? 1280 : 720, minHeight: demoMode ? 720 : 540,
+    resizable: !demoMode, autoHideMenuBar: demoMode, useContentSize: true, show: false,
     icon: path.join(__dirname, '..', 'assets', 'toledo-sync.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false }
   });
