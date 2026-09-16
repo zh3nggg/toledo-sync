@@ -12,6 +12,27 @@ npm install
 
 You can run every command as `node src/cli.mjs …`. `npm link` is optional if you want the shorter `toledo-sync …` command.
 
+## Interactive mode (recommended on macOS/Linux)
+
+You do not need to edit JSON or memorize flags. Start the wizard with:
+
+```sh
+node src/cli.mjs
+# or, after npm link:
+toledo-sync
+```
+
+The wizard asks for the Vault, exact download root, academic year, and material layout. It then opens the KU Leuven login page, discovers courses, lets you select courses by number or code, and offers **Check updates** before **Apply updates**. A later run reuses the saved configuration and presents the same update flow. Paths are entered using the native format for your system (`/Users/...` on macOS, `/home/...` on Linux, `C:\\...` on Windows).
+
+You can also start it explicitly, or point it at an existing configuration:
+
+```sh
+toledo-sync interactive
+toledo-sync interactive --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
+```
+
+The wizard is deliberately available on Windows, macOS, and Linux. The Windows desktop application remains available for users who prefer a graphical interface.
+
 ## First-time setup
 
 Choose two directories:
