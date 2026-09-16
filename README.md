@@ -23,6 +23,7 @@ Toledo Sync 面向以下使用方式：
 | --- | --- |
 | 下载范围 | 只同步你勾选的课程和学年。 |
 | 下载位置 | 你选择的目录就是根目录；课程文件夹直接创建在其中。 |
+| 课程内布局 | 可选直接放入课程文件夹，或放入你自定义名称的材料子文件夹。 |
 | 历史课程 | 当前学年课程尚未开放时会跳过，不会用同编号旧课替代。 |
 | 文件变化 | 通过 SHA-256 识别未变化文件，重复同步不制造副本。 |
 | 登录凭据 | 密码和 MFA 只在 KU Leuven 官方登录页面完成。 |
@@ -47,10 +48,10 @@ Toledo Sync 面向以下使用方式：
 ```text
 D:\Study\Leuven 2026 Fall\
 ├── G0S96A Groups and Symmetries\
-│   └── 原始资料\
+│   └── Course materials\
 │       └── … Toledo 的课程层级 …
 └── G0R16A Semiconductor Physics\
-    └── 原始资料\
+    └── Course materials\
 ```
 
 程序不会额外创建名为“课程材料”的中间目录。
@@ -95,6 +96,7 @@ It is designed for students who want to keep **only their chosen courses for a c
 | --- | --- |
 | Scope | Syncs only selected courses and academic years. |
 | Location | Uses the exact folder you select as the download root. |
+| Course layout | Places material directly in each course folder or in a subfolder with your chosen name. |
 | Historic courses | Skips unavailable current-year courses instead of substituting an older course with the same code. |
 | Repeat runs | Uses SHA-256 to avoid duplicate copies of unchanged files. |
 | Credentials | KU Leuven password and MFA stay on KU Leuven sign-in pages. |
@@ -139,6 +141,7 @@ De toepassing is bedoeld voor studenten die alleen hun **geselecteerde vakken va
 | --- | --- |
 | Bereik | Synchroniseert alleen geselecteerde vakken en academiejaren. |
 | Locatie | Gebruikt exact de gekozen map als downloadhoofdmap. |
+| Cursusindeling | Plaatst materiaal rechtstreeks in elke cursusmap of in een submap met jouw eigen naam. |
 | Historische vakken | Slaat een niet-beschikbaar huidig vak over en vervangt het niet door een oud vak met dezelfde code. |
 | Herhaald synchroniseren | Gebruikt SHA-256 om dubbele kopieën van ongewijzigde bestanden te vermijden. |
 | Aanmeldgegevens | KU Leuven-wachtwoord en MFA blijven op de officiële KU Leuven-aanmeldpagina. |

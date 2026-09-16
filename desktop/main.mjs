@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
-import { defaultConfigPath, initializeConfig, loadConfig, saveConfig, statePath } from '../src/config.mjs';
+import { defaultConfigPath, initializeConfig, loadConfig, normalizeMaterialsLayout, saveConfig, statePath } from '../src/config.mjs';
 import { FALL_2026_COURSES } from '../src/constants.mjs';
 import { launchBrowser } from '../src/browser.mjs';
 import { discoverCourses } from '../src/discover.mjs';
@@ -32,6 +32,8 @@ function present(config, configPath) {
     configPath,
     vaultPath: config.vaultPath,
     outputRoot: config.download.outputRoot,
+    materialsPlacement: config.download.materialsPlacement,
+    materialsFolderName: config.download.materialsFolderName,
     academicYear: config.filters.academicYears[0] ?? '',
     courses: config.courses.map((course) => ({
       code: course.code, title: course.title, selected: course.selected,
@@ -64,7 +66,7 @@ function ensureWindows() {
   if (process.platform !== 'win32') throw new Error('The desktop app is currently published for Windows. Use the CLI on macOS and Linux.');
 }
 
-async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes }) {
+async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName }) {
   ensureWindows();
   if (!vaultPath || !outputRoot) throw new Error('Choose both the Obsidian Vault and the download root.');
   const configPath = defaultConfigPath(vaultPath);
@@ -72,6 +74,7 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
   try {
     ({ config } = await loadConfig(configPath));
     config.download.outputRoot = path.resolve(outputRoot);
+    Object.assign(config.download, normalizeMaterialsLayout({ materialsPlacement, materialsFolderName }));
     config.filters.academicYears = [academicYear];
     for (const course of config.courses) {
       const academicYearChanged = course.academicYear !== academicYear;
@@ -83,7 +86,7 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
     const initialSelectedCodes = selectedCodes.length ? selectedCodes : FALL_2026_COURSES.map((course) => course.code);
-    ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear, selectedCodes: initialSelectedCodes }));
+    ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear, selectedCodes: initialSelectedCodes, materialsPlacement, materialsFolderName }));
   }
   await saveSettings({ configPath });
   return present(config, configPath);

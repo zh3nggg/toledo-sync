@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { initializeConfig, loadConfig, saveConfig, statePath } from './config.mjs';
+import { initializeConfig, loadConfig, normalizeMaterialsLayout, saveConfig, statePath } from './config.mjs';
 import { launchBrowser } from './browser.mjs';
 import { discoverCourses } from './discover.mjs';
 import { ask } from './prompt.mjs';
@@ -25,15 +25,17 @@ async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
 }
 
 const HELP = `
-Toledo Sync 0.1.0
+Toledo Sync 0.1.4
 
 Usage:
   toledo-sync init --vault <Obsidian vault>
                    --output <download root>
+                   [--materials-in-course | --materials-subdirectory <name>]
                    [--academic-year 2026-2027]
                    [--courses G0S96A,G0S83A,...]
   toledo-sync configure --config <config.json>
                         [--output <download directory>]
+                        [--materials-in-course | --materials-subdirectory <name>]
                         [--academic-year 2026-2027]
                         [--courses G0S96A,G0S83A,...]
   toledo-sync list --config <config.json>
@@ -45,6 +47,15 @@ Usage:
 
 The login command never asks for your KU Leuven password. Complete SSO/MFA in the browser.
 `;
+
+function layoutOptions(options) {
+  if (options['materials-in-course'] && options['materials-subdirectory']) {
+    throw new Error('Choose either --materials-in-course or --materials-subdirectory, not both.');
+  }
+  if (options['materials-in-course']) return { materialsPlacement: 'course-root' };
+  if (options['materials-subdirectory']) return { materialsPlacement: 'subdirectory', materialsFolderName: String(options['materials-subdirectory']) };
+  return {};
+}
 
 async function main() {
   const { positional, options } = parseArgs(process.argv.slice(2));
@@ -61,10 +72,12 @@ async function main() {
     const result = await initializeConfig(options.vault, options.config && path.resolve(options.config), {
       outputRoot: options.output,
       academicYear: options['academic-year'],
-      selectedCodes
+      selectedCodes,
+      ...layoutOptions(options)
     });
     console.log(`Created config: ${result.configPath}`);
     console.log(`Download directory: ${result.config.download.outputRoot}`);
+    console.log(`Course materials: ${result.config.download.materialsPlacement === 'course-root' ? 'directly in each course folder' : `in each course folder/${result.config.download.materialsFolderName}`}`);
     console.log('Next: run login, then discover.');
     return;
   }
@@ -72,6 +85,9 @@ async function main() {
   const { config, configPath } = await loadConfig(options.config);
   if (command === 'configure') {
     if (options.output) config.download.outputRoot = path.resolve(options.output);
+    if (options['materials-in-course'] || options['materials-subdirectory']) {
+      Object.assign(config.download, normalizeMaterialsLayout({ ...config.download, ...layoutOptions(options) }));
+    }
     if (options['academic-year']) {
       config.filters.academicYears = [String(options['academic-year'])];
     }
@@ -84,12 +100,14 @@ async function main() {
     await saveConfig(configPath, config);
     console.log(`Updated config: ${configPath}`);
     console.log(`Download directory: ${config.download.outputRoot}`);
+    console.log(`Course materials: ${config.download.materialsPlacement === 'course-root' ? 'directly in each course folder' : `in each course folder/${config.download.materialsFolderName}`}`);
     console.log(`Academic year: ${config.filters.academicYears.join(', ')}`);
     console.log(`Selected courses: ${config.courses.filter((course) => course.selected).map((course) => course.code).join(', ') || 'none'}`);
     return;
   }
   if (command === 'list') {
     console.log(`Download directory: ${config.download.outputRoot}`);
+    console.log(`Course materials: ${config.download.materialsPlacement === 'course-root' ? 'directly in each course folder' : `in each course folder/${config.download.materialsFolderName}`}`);
     console.log(`Academic-year filter: ${config.filters.academicYears.join(', ')}`);
     for (const course of config.courses.sort((left, right) => left.order - right.order)) {
       console.log(`${course.selected ? '[x]' : '[ ]'} ${course.code} ${course.title} (${course.academicYear})${course.url ? ` -> ${course.url}` : ''}`);

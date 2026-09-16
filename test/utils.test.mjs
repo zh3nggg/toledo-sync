@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { parseCalendarEvents } from '../src/calendar.mjs';
-import { createConfig } from '../src/config.mjs';
+import { courseMaterialsPath, createConfig } from '../src/config.mjs';
 import { extractAcademicYears, scoreCourseLink } from '../src/discover.mjs';
 import { extractUltraFileLinks, isLikelyFileLink } from '../src/sync.mjs';
 import { sanitizeFileName } from '../src/utils.mjs';
@@ -12,6 +12,15 @@ test('uses the selected download directory as the exact course root', () => {
   const config = createConfig(path.resolve('vault'), { outputRoot });
   assert.equal(config.download.outputRoot, outputRoot);
   assert.throws(() => createConfig(path.resolve('vault')), /--output/);
+});
+
+test('allows direct course materials or a named materials subfolder', () => {
+  const vault = path.resolve('vault');
+  const direct = createConfig(vault, { outputRoot: path.resolve('downloads'), materialsPlacement: 'course-root' });
+  assert.equal(courseMaterialsPath(direct, 'G0S96A Groups and Symmetries'), path.join(direct.download.outputRoot, 'G0S96A Groups and Symmetries'));
+  const nested = createConfig(vault, { outputRoot: path.resolve('downloads'), materialsPlacement: 'subdirectory', materialsFolderName: 'Toledo materials' });
+  assert.equal(courseMaterialsPath(nested, 'G0S96A Groups and Symmetries'), path.join(nested.download.outputRoot, 'G0S96A Groups and Symmetries', 'Toledo materials'));
+  assert.throws(() => createConfig(vault, { outputRoot: path.resolve('downloads'), materialsFolderName: '../outside' }), /single, non-empty/);
 });
 
 test('sanitizes cross-platform filenames', () => {

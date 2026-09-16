@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { FILE_EXTENSIONS } from './constants.mjs';
 import { launchBrowser } from './browser.mjs';
-import { materialsPath, statePath } from './config.mjs';
+import { courseMaterialsPath, statePath } from './config.mjs';
 import {
   contentDispositionFileName, ensureDirectory, readJson, sanitizeFileName,
   sha256, timestampForFile, writeJson
@@ -202,7 +202,7 @@ export async function syncCourses(config, selectedCode = null) {
   try {
     for (const course of courses) {
       const courseFolder = `${course.code} ${sanitizeFileName(course.title)}`;
-      const outputDirectory = materialsPath(config, courseFolder, '原始资料');
+      const outputDirectory = courseMaterialsPath(config, courseFolder);
       const snapshotDirectory = statePath(config, 'snapshots', course.code, runId);
       const manifestPath = statePath(config, 'manifests', `${course.code}.json`);
       await ensureDirectory(outputDirectory);

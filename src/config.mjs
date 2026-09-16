@@ -4,6 +4,18 @@ import path from 'node:path';
 import { DEFAULT_PORTAL_URL, FALL_2026_COURSES } from './constants.mjs';
 import { ensureDirectory, readJson, stableId, writeJson } from './utils.mjs';
 
+const DEFAULT_MATERIALS_DIRECTORY = 'Materials';
+const LEGACY_MATERIALS_DIRECTORY = '原始资料';
+
+export function normalizeMaterialsLayout(download, { preserveLegacyDefault = false } = {}) {
+  const placement = download?.materialsPlacement === 'course-root' ? 'course-root' : 'subdirectory';
+  const name = String(download?.materialsFolderName ?? (preserveLegacyDefault ? LEGACY_MATERIALS_DIRECTORY : DEFAULT_MATERIALS_DIRECTORY)).trim();
+  if (!name || name === '.' || name === '..' || /[\\/\u0000-\u001f]/.test(name)) {
+    throw new Error('Materials folder name must be a single, non-empty folder name.');
+  }
+  return { materialsPlacement: placement, materialsFolderName: name };
+}
+
 export function defaultConfigPath(vaultPath) {
   return path.join(path.resolve(vaultPath), '_codex', 'toledo-sync', 'config.json');
 }
@@ -18,7 +30,11 @@ export function createConfig(vaultPath, options = {}) {
     portalUrl: DEFAULT_PORTAL_URL,
     vaultPath: resolvedVault,
     download: {
-      outputRoot: path.resolve(options.outputRoot)
+      outputRoot: path.resolve(options.outputRoot),
+      ...normalizeMaterialsLayout({
+        materialsPlacement: options.materialsPlacement,
+        materialsFolderName: options.materialsFolderName
+      })
     },
     filters: {
       academicYears: [academicYear]
@@ -66,6 +82,9 @@ export async function loadConfig(configPath) {
   if (config.schemaVersion !== 2) throw new Error(`Unsupported config schema: ${config.schemaVersion}`);
   config.vaultPath = path.resolve(config.vaultPath);
   config.download.outputRoot = path.resolve(config.download.outputRoot);
+  Object.assign(config.download, normalizeMaterialsLayout(config.download, {
+    preserveLegacyDefault: config.download.materialsPlacement === undefined && config.download.materialsFolderName === undefined
+  }));
   return { config, configPath: resolvedPath };
 }
 
@@ -79,6 +98,13 @@ export function statePath(config, ...parts) {
 
 export function materialsPath(config, ...parts) {
   return path.join(config.download.outputRoot, ...parts);
+}
+
+export function courseMaterialsPath(config, courseFolder) {
+  const download = normalizeMaterialsLayout(config.download);
+  return download.materialsPlacement === 'course-root'
+    ? materialsPath(config, courseFolder)
+    : materialsPath(config, courseFolder, download.materialsFolderName);
 }
 
 export function localSecretPath(configPath) {

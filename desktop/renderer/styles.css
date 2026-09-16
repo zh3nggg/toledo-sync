@@ -9,7 +9,7 @@ main { width: min(1100px, 100%); flex: 1; min-height: 0; margin: 0 auto; padding
 .section-heading, .workflow { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
 .field { margin-top: 17px; } .field > label { font-size: 13px; font-weight: 650; display: block; margin-bottom: 7px; color: #31405b; }
 .field > div { display: flex; gap: 8px; } .field small { display: block; color: #66758e; margin-top: 6px; } .field.short { max-width: 250px; }
-input, select, button { border-radius: 7px; font: inherit; } input { width: 100%; padding: 9px 10px; border: 1px solid #c9d4e3; color: #172033; background: #fbfcfe; }
+input, select, button { border-radius: 7px; font: inherit; } input, select { width: 100%; padding: 9px 10px; border: 1px solid #c9d4e3; color: #172033; background: #fbfcfe; }
 button { cursor: pointer; border: 1px solid #0069a8; padding: 9px 13px; background: #006eaf; color: white; font-weight: 600; white-space: nowrap; } button:hover { background: #005c94; } button:disabled { opacity: .55; cursor: wait; }
 button.secondary { background: white; color: #005c94; border-color: #b9cadc; } button.secondary:hover { background: #edf5fb; }.actions { display: flex; gap: 9px; margin-top: 18px; flex-wrap: wrap; }
 .language { display: flex; gap: 8px; align-items: center; font-size: 13px; }.language select { padding: 6px; border: 0; background: white; color: #172033; }

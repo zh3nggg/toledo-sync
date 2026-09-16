@@ -18,6 +18,7 @@ Choose two directories:
 
 1. `--vault`: your Obsidian Vault. Sync state, manifests, and snapshots are stored in `<vault>/_codex/toledo-sync/`.
 2. `--output`: the exact course download root. Course folders are created directly inside it; no extra intermediate directory is added.
+3. Choose the in-course layout: `--materials-in-course` stores Toledo folders directly inside each course folder. `--materials-subdirectory "Course materials"` stores them in a consistently named subfolder. If omitted, new configurations use `Materials`.
 
 ```sh
 node src/cli.mjs init \
@@ -58,11 +59,14 @@ node src/cli.mjs list --config "/path/to/config.json"
 
 node src/cli.mjs configure --config "/path/to/config.json" \
   --output "/another/download/root" \
+  --materials-subdirectory "Course materials" \
   --academic-year 2026-2027 \
   --courses G0S96A,G0R16A
 ```
 
 Changing `--output` changes the future download location; it does not move existing course folders.
+
+Use `--materials-in-course` with `init` or `configure` to place course content directly in `G0S96A Groups and Symmetries/`. Use `--materials-subdirectory <name>` to place it in `G0S96A Groups and Symmetries/<name>/`. The two options are mutually exclusive and only affect future downloads; they do not move existing files.
 
 ## Synchronize
 
@@ -83,7 +87,7 @@ Files are grouped under:
 ```text
 <output root>/
 └── G0S96A Groups and Symmetries/
-    └── 原始资料/
+    └── Materials/                 # or a name you chose; omit this level in direct mode
         └── … Toledo folder structure …
 ```
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4 — 2026-09-16
+
+- Added a configurable course-material layout for the GUI and CLI: store files directly in the course folder or in a user-named materials subfolder.
+- Kept existing installations on their prior subfolder name until the user changes the setting.
+
 ## 0.1.3 — 2026-09-16
 
 - Kept the activity monitor visible at the bottom of the Windows GUI while settings and course selection scroll independently.
