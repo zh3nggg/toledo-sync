@@ -215,7 +215,7 @@ async function initializeAutomation() {
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 980, height: 700, minWidth: 860, minHeight: 600, show: false,
+    width: 860, height: 660, minWidth: 720, minHeight: 540, useContentSize: true, show: false,
     icon: path.join(__dirname, '..', 'assets', 'toledo-sync.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false }
   });
