@@ -28,11 +28,16 @@ async function save() {
   render(); status(t('saved'));
 }
 async function run(operation) { try { setBusy(true); status(t('syncing')); const value = await operation(); result(value); } catch (error) { status(`${t('error')}: ${error.message}`); } finally { setBusy(false); } }
+setText();
 $('#language').value = locale; $('#language').addEventListener('change', (event) => { locale = event.target.value; localStorage.setItem('toledo-locale', locale); setText(); render(); });
 $('#chooseVault').addEventListener('click', async () => { const folder = await window.toledo.chooseDirectory(t('chooseVault')); if (folder) $('#vaultPath').value = folder; });
 $('#chooseOutput').addEventListener('click', async () => { const folder = await window.toledo.chooseDirectory(t('chooseOutput')); if (folder) $('#outputRoot').value = folder; });
 $('#save').addEventListener('click', () => run(save)); $('#login').addEventListener('click', () => run(() => window.toledo.login()));
 $('#discover').addEventListener('click', () => run(async () => { const value = await window.toledo.discover(); state.config = value.config; render(); return value.matches; }));
 $('#sync').addEventListener('click', () => run(() => window.toledo.sync(null))); $('#openRoot').addEventListener('click', () => run(() => window.toledo.openPath($('#outputRoot').value)));
-window.toledo.onEvent((event) => status(event.message));
-(async () => { setText(); const initial = await window.toledo.initial(); $('#platform').textContent = initial.platform === 'win32' ? 'Windows' : initial.platform; state.config = initial.config; render(); })();
+if (!window.toledo) {
+  status('Desktop bridge could not start. Please reinstall the application.');
+} else {
+  window.toledo.onEvent((event) => status(event.message));
+  (async () => { const initial = await window.toledo.initial(); $('#platform').textContent = initial.platform === 'win32' ? 'Windows' : initial.platform; state.config = initial.config; render(); })();
+}

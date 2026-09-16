@@ -145,7 +145,7 @@ function registerIpc() {
 async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1120, height: 760, minWidth: 930, minHeight: 620, show: false,
-    webPreferences: { preload: path.join(__dirname, 'preload.mjs'), contextIsolation: true, sandbox: true, nodeIntegration: false }
+    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false }
   });
   await mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   mainWindow.show();
