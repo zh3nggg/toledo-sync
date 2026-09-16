@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5 — 2026-09-16
+
+- Added a single Toledo Sync icon across the Windows application window, taskbar, installer, shortcuts, and application header.
+
 ## 0.1.4 — 2026-09-16
 
 - Added a configurable course-material layout for the GUI and CLI: store files directly in the course folder or in a user-named materials subfolder.

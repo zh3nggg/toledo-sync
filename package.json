@@ -1,6 +1,6 @@
 {
   "name": "toledo-sync",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Local-first KU Leuven Toledo course material synchronizer",
   "author": "Toledo Sync contributors",
   "type": "module",
@@ -26,8 +26,9 @@
     "appId": "be.kuleuven.toledosync",
     "productName": "Toledo Sync",
     "directories": { "output": "release" },
-    "files": ["desktop/**/*", "src/**/*", "package.json", "README.md", "docs/**/*"],
-    "win": { "target": ["nsis", "portable"] },
+    "files": ["assets/**/*", "desktop/**/*", "src/**/*", "package.json", "README.md", "docs/**/*"],
+    "icon": "assets/toledo-sync.ico",
+    "win": { "target": ["nsis", "portable"], "icon": "assets/toledo-sync.ico" },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
   },
   "devDependencies": {

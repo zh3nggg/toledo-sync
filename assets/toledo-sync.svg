@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">Toledo Sync</title>
+  <rect x="12" y="12" width="232" height="232" rx="52" fill="#005f9e"/>
+  <rect x="51" y="48" width="112" height="150" rx="18" fill="#ffffff"/>
+  <path d="M137 48v33h26z" fill="#b8e4f7"/>
+  <path d="M77 92h60M77 119h60M77 146h35" stroke="#005f9e" stroke-width="13" stroke-linecap="round"/>
+  <path d="M183 121c16 11 25 32 19 52-7 25-33 40-58 33" fill="none" stroke="#7fe0ff" stroke-width="16" stroke-linecap="round"/>
+  <path d="m160 217-27-10 19-22z" fill="#7fe0ff"/>
+  <path d="M70 89c7-25 33-40 58-33 18 5 31 19 35 36" fill="none" stroke="#7fe0ff" stroke-width="16" stroke-linecap="round"/>
+  <path d="m97 39 27 10-19 22z" fill="#7fe0ff"/>
+</svg>
