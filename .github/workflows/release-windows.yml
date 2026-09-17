@@ -28,11 +28,26 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            release/*.exe
-      - name: Retry release asset upload with GitHub CLI
+            release/Toledo Sync Setup *.exe
+      - name: Retry installer upload with GitHub CLI
         if: steps.release.outcome == 'failure'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ github.ref_name }}" release/*.exe --clobber --repo "${{ github.repository }}"
+          $installer = Get-ChildItem release -Filter 'Toledo Sync Setup *.exe'
+          gh release upload "${{ github.ref_name }}" $installer.FullName --clobber --repo "${{ github.repository }}"
+      - uses: softprops/action-gh-release@v2
+        id: portable-release
+        continue-on-error: true
+        with:
+          files: |
+            release/Toledo Sync *.exe
+      - name: Retry portable upload with GitHub CLI
+        if: steps.portable-release.outcome == 'failure'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $portable = Get-ChildItem release -Filter 'Toledo Sync *.exe' | Where-Object { $_.Name -notlike 'Toledo Sync Setup *' }
+          gh release upload "${{ github.ref_name }}" $portable.FullName --clobber --repo "${{ github.repository }}"
