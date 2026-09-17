@@ -36,7 +36,7 @@ export function discoverPortalCourses(links, academicYear) {
     const score = (years.includes(academicYear) ? 20 : 0)
       + (link.text ? 10 : 0)
       + (/learningUnits\/ultraLink|redirectType=nautilus&courseId=/i.test(link.href) ? 20 : 0);
-    candidates.push({ code, title, academicYear, url: link.href, score, source: link });
+    candidates.push({ code, title, academicYear: years[0] ?? academicYear, url: link.href, score, source: link });
   }
   const byCode = new Map();
   for (const candidate of candidates) {
@@ -123,7 +123,7 @@ export async function discoverCourses(config, configPath, options = {}) {
         ...course,
         term: previous?.term ?? `${academicYear}-toledo`,
         aliases: [...new Set([...(previous?.aliases ?? []), course.title])],
-        selected: previous?.academicYear === academicYear ? Boolean(previous.selected) : false,
+        selected: academicYear ? previous?.academicYear === academicYear && Boolean(previous.selected) : Boolean(previous?.selected),
         url: course.url
       };
     });

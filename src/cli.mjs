@@ -25,18 +25,18 @@ async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
 }
 
 const HELP = `
-Toledo Sync 0.1.15
+Toledo Sync 0.1.16
 
 Usage:
   toledo-sync init --vault <Obsidian vault>
                    --output <download root>
                    [--materials-in-course | --materials-subdirectory <name>]
-                   [--academic-year 2026-2027]
+                   [--academic-year 2026-2027|all]
                    [--courses G0S96A,G0S83A,...]
   toledo-sync configure --config <config.json>
                         [--output <download directory>]
                         [--materials-in-course | --materials-subdirectory <name>]
-                        [--academic-year 2026-2027]
+                        [--academic-year 2026-2027|all]
                         [--courses G0S96A,G0S83A,...]
   toledo-sync list --config <config.json>
   toledo-sync login --config <config.json>
@@ -53,7 +53,11 @@ Interactive mode:
 The login command never asks for your KU Leuven password. Complete SSO/MFA in the browser.
 `;
 
-const ACADEMIC_YEARS = ['2025-2026', '2026-2027', '2027-2028', '2028-2029'];
+const ACADEMIC_YEARS = ['不限（全部学年）', '2025-2026', '2026-2027', '2027-2028', '2028-2029'];
+const normalizeAcademicYearOption = (value) => {
+  if (value === undefined || value === null) return value;
+  return ['all', 'any', '*', '不限', '不限（全部学年）'].includes(String(value).trim().toLowerCase()) ? '' : String(value).trim();
+};
 
 async function runLogin(config) {
   const { context, executablePath, profilePath, authStatePath } = await launchBrowser(config);
@@ -87,7 +91,7 @@ async function runInteractive(options = {}) {
   try { ({ config } = await loadConfig(configPath)); } catch (error) {
     if (error.code !== 'ENOENT' && !/Pass --config/.test(error.message)) throw error;
     const outputRoot = await askWithDefault('下载根目录（课程文件夹将直接创建在此目录下）', path.join(process.cwd(), 'Toledo courses'));
-    const academicYear = await choose('学年', ACADEMIC_YEARS, 1);
+    const academicYear = normalizeAcademicYearOption(await choose('学年', ACADEMIC_YEARS, 2));
     const layout = await choose('课程内材料布局', ['直接放在课程文件夹', '放入自定义材料子文件夹'], 1);
     const materialsFolderName = layout === '放入自定义材料子文件夹'
       ? await askWithDefault('材料子文件夹名称', 'Materials') : undefined;
@@ -169,7 +173,7 @@ async function main() {
     const selectedCodes = options.courses ? String(options.courses).split(',').map((value) => value.trim()).filter(Boolean) : undefined;
     const result = await initializeConfig(options.vault, options.config && path.resolve(options.config), {
       outputRoot: options.output,
-      academicYear: options['academic-year'],
+      academicYear: normalizeAcademicYearOption(options['academic-year']),
       selectedCodes,
       ...layoutOptions(options)
     });
@@ -187,7 +191,7 @@ async function main() {
       Object.assign(config.download, normalizeMaterialsLayout({ ...config.download, ...layoutOptions(options) }));
     }
     if (options['academic-year']) {
-      const academicYear = String(options['academic-year']);
+      const academicYear = normalizeAcademicYearOption(options['academic-year']);
       if (config.filters.academicYears[0] !== academicYear) config.courses = [];
       config.filters.academicYears = [academicYear];
     }

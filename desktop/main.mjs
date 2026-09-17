@@ -107,8 +107,8 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
     try { await fs.access(statePath(config, 'auth', 'last-login.json')); authenticated = true; } catch { /* Login is still required. */ }
     config.download.outputRoot = path.resolve(outputRoot);
     Object.assign(config.download, normalizeMaterialsLayout({ materialsPlacement, materialsFolderName }));
-    const previousAcademicYear = config.filters.academicYears[0];
-    config.filters.academicYears = [academicYear];
+    const previousAcademicYear = config.filters.academicYears[0] ?? '';
+    config.filters.academicYears = academicYear ? [academicYear] : [];
     if (previousAcademicYear !== academicYear) {
       // The course list is populated from Toledo after the year changes. Keeping
       // the seed list here made the GUI appear to support only the bundled year.

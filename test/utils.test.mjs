@@ -88,6 +88,8 @@ test('enumerates Toledo course links instead of relying on the bundled course li
   const courses = discoverPortalCourses(links, '2025-2026');
   assert.deepEqual(courses.map((course) => course.code), ['H0G03A']);
   assert.equal(courses[0].url, links[0].href);
+  const unrestricted = discoverPortalCourses(links, '');
+  assert.deepEqual(new Set(unrestricted.map((course) => course.code)), new Set(['H0G03A', 'G0R16A']));
 });
 
 test('parses folded iCalendar events', () => {
