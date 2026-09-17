@@ -28,7 +28,8 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            release/Toledo Sync Setup *.exe
+            release/*.exe
+          fail_on_unmatched_files: true
       - name: Retry installer upload with GitHub CLI
         if: steps.release.outcome == 'failure'
         shell: pwsh
@@ -41,8 +42,8 @@ jobs:
         id: portable-release
         continue-on-error: true
         with:
-          files: |
-            release/Toledo Sync *.exe
+          files: release/*.exe
+          fail_on_unmatched_files: true
       - name: Retry portable upload with GitHub CLI
         if: steps.portable-release.outcome == 'failure'
         shell: pwsh
