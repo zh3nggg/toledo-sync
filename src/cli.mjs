@@ -25,7 +25,7 @@ async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
 }
 
 const HELP = `
-Toledo Sync 0.1.16
+Toledo Sync 0.1.17
 
 Usage:
   toledo-sync init --vault <Obsidian vault>

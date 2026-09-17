@@ -53,11 +53,17 @@ function render() {
   renderFileTree(); const list = $('#courses'); list.replaceChildren();
   for (const course of config?.courses || []) {
     const node = $('#courseTemplate').content.firstElementChild.cloneNode(true); const checkbox = node.querySelector('input'); checkbox.checked = course.selected; checkbox.disabled = !state.discoveryDone || !course.discovered; checkbox.dataset.code = course.code;
-    checkbox.addEventListener('change', () => { state.updatePlan = null; render(); });
+    checkbox.addEventListener('change', () => {
+      // Keep the in-memory selection before rebuilding the course cards.
+      // Otherwise render() immediately restored the value from the old config.
+      course.selected = checkbox.checked;
+      state.updatePlan = null;
+      render();
+    });
     node.querySelector('strong').textContent = course.code; node.querySelector('.course-main span').textContent = course.title;
     node.querySelector('.update-summary').textContent = summaryText(state.updatePlan?.find((summary) => summary.code === course.code));
     const availability = node.querySelector('.availability'); availability.textContent = course.discovered ? t('discovered') : t('notDiscovered'); availability.classList.toggle('available', course.discovered);
-    const syncButton = node.querySelector('button'); syncButton.disabled = !state.authenticated || !state.discoveryDone || !course.discovered || state.busy; syncButton.title = `${t('checkCourse')}: ${course.code}`; syncButton.addEventListener('click', () => run(async () => { const value = await window.toledo.checkUpdates(course.code); state.updatePlan = value.summaries; render(); return value.summaries; }));
+    const syncButton = node.querySelector('button'); syncButton.disabled = !state.authenticated || !state.discoveryDone || !course.discovered || state.busy; syncButton.title = `${t('checkCourse')}: ${course.code}`; syncButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); run(async () => { const value = await window.toledo.checkUpdates(course.code); state.updatePlan = value.summaries; render(); return value.summaries; }); });
     list.append(node);
   }
 }
