@@ -65,7 +65,7 @@ D:\Study\Leuven 2026 Fall\
 | macOS | CLI | 已支持 |
 | Linux | CLI | 已支持 |
 
-**Windows 用户：** 从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载 `Toledo.Sync.Setup.<version>.exe`。安装版适合长期使用；便携版适合不希望安装软件的场景。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
+**Windows 用户：** 请始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载当前版本。长期使用请选择 `Toledo.Sync.Setup.<version>.exe`；不想安装时请选择 `Toledo.Sync.<version>.exe` 便携版。不要从旧版本 Release 下载。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
 
 **macOS、Linux 与高级用户：** 参阅 [完整 CLI 指南](docs/CLI.md)。CLI 默认是交互式向导：运行 `toledo-sync` 后按提示选择 Vault、下载目录、学年和课程，不需要编辑配置文件。向导会先登录和发现课程，再提供“检查更新 → 应用更新”两步流程；熟悉命令行后仍可使用完整参数。
 
@@ -119,7 +119,7 @@ Choose Vault and download root → sign in once → discover current courses
 | macOS | CLI | Supported |
 | Linux | CLI | Supported |
 
-For Windows, download the current installer from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest), then follow the [desktop-app guide](docs/GUI-WINDOWS.md). On macOS and Linux, run `toledo-sync` (or `node src/cli.mjs`) to open the interactive wizard: it asks for paths and choices, opens SSO/MFA in a browser, and guides discovery and safe update application without requiring JSON editing. The [complete CLI guide](docs/CLI.md) also documents every command and flag.
+For Windows, always download the current installer from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.<version>.exe` for a normal installation or `Toledo.Sync.<version>.exe` for the portable build; older release assets should not be used. Then follow the [desktop-app guide](docs/GUI-WINDOWS.md). On macOS and Linux, run `toledo-sync` (or `node src/cli.mjs`) to open the interactive wizard: it asks for paths and choices, opens SSO/MFA in a browser, and guides discovery and safe update application without requiring JSON editing. The [complete CLI guide](docs/CLI.md) also documents every command and flag.
 
 ### Current scope and privacy
 
@@ -158,7 +158,7 @@ De toepassing is bedoeld voor studenten die alleen hun **geselecteerde vakken va
 | macOS | CLI | Ondersteund |
 | Linux | CLI | Ondersteund |
 
-Download voor Windows de meest recente installer via de [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest) en volg de [handleiding voor de desktopapp](docs/GUI-WINDOWS.md). Op macOS en Linux start `toledo-sync` de interactieve wizard: kies paden, academiejaar en vakken in prompts; daarna begeleidt de wizard de aanmelding, ontdekking en veilige controle/toepassing van updates. JSON bewerken is niet nodig. De [volledige CLI-handleiding](docs/CLI.md) bevat ook alle opdrachten en opties.
+Download voor Windows altijd de huidige installer via de [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Gebruik `Toledo.Sync.Setup.<version>.exe` voor een normale installatie of `Toledo.Sync.<version>.exe` als portable versie; gebruik geen assets uit oudere releases. Volg daarna de [handleiding voor de desktopapp](docs/GUI-WINDOWS.md). Op macOS en Linux start `toledo-sync` de interactieve wizard: kies paden, academiejaar en vakken in prompts; daarna begeleidt de wizard de aanmelding, ontdekking en veilige controle/toepassing van updates. JSON bewerken is niet nodig. De [volledige CLI-handleiding](docs/CLI.md) bevat ook alle opdrachten en opties.
 
 ### Huidige ondersteuning en privacy
 
