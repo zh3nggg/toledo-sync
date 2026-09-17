@@ -5,6 +5,51 @@ import { saveConfig, statePath } from './config.mjs';
 import { ask } from './prompt.mjs';
 import { ensureDirectory, normalizeText, timestampForFile, writeJson } from './utils.mjs';
 
+const COURSE_CODE_PATTERN = /\b[A-Z]\d[A-Z0-9]{4,}\b/gi;
+const COURSE_LINK_PATTERN = /learningUnits\/ultraLink|redirectType=nautilus&courseId=|\/ultra\/courses?\/|[?&](?:courseId|course_id)=/i;
+
+export function extractCourseCode(value) {
+  return String(value ?? '').match(COURSE_CODE_PATTERN)?.[0]?.toUpperCase() ?? null;
+}
+
+export function courseTitleFromText(value, code) {
+  let title = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (code) title = title.replace(new RegExp(`\\b${code}\\b`, 'ig'), ' ');
+  title = title.replace(/\b20\d{2}\s*[-/]\s*(?:20\d{2}|\d{2})\b/g, ' ')
+    .replace(/\b\d{4}\b/g, ' ')
+    .replace(/^[\s|:;–—-]+|[\s|:;–—-]+$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return title || code || 'Toledo course';
+}
+
+export function discoverPortalCourses(links, academicYear) {
+  const candidates = [];
+  for (const link of links ?? []) {
+    const haystack = `${link.text ?? ''} ${link.context ?? ''} ${link.title ?? ''} ${link.href ?? ''}`;
+    const code = extractCourseCode(haystack);
+    if (!code || !COURSE_LINK_PATTERN.test(String(link.href ?? ''))) continue;
+    const years = extractAcademicYears(haystack);
+    if (academicYear && years.length && !years.includes(academicYear)) continue;
+    const titleSource = extractCourseCode(link.text) ? link.text : `${link.text ?? ''} ${link.context ?? ''} ${link.title ?? ''}`;
+    const title = courseTitleFromText(titleSource, code);
+    const score = (years.includes(academicYear) ? 20 : 0)
+      + (link.text ? 10 : 0)
+      + (/learningUnits\/ultraLink|redirectType=nautilus&courseId=/i.test(link.href) ? 20 : 0);
+    candidates.push({ code, title, academicYear, url: link.href, score, source: link });
+  }
+  const byCode = new Map();
+  for (const candidate of candidates) {
+    const previous = byCode.get(candidate.code);
+    if (!previous || candidate.score > previous.score || (candidate.score === previous.score && candidate.title.length > previous.title.length)) {
+      byCode.set(candidate.code, candidate);
+    }
+  }
+  return [...byCode.values()]
+    .sort((left, right) => left.title.localeCompare(right.title, undefined, { sensitivity: 'base' }))
+    .map(({ score, source, ...course }, index) => ({ ...course, order: index + 1 }));
+}
+
 export function scoreCourseLink(course, link) {
   const haystack = normalizeText(`${link.text} ${link.title} ${link.href}`);
   if (!haystack) return 0;
@@ -54,14 +99,38 @@ export async function discoverCourses(config, configPath, options = {}) {
     }
     await page.waitForTimeout(config.sync?.settleTimeMs ?? 2500);
 
-    const links = await page.locator('a[href]').evaluateAll((anchors) => anchors.map((anchor) => ({
-      href: anchor.href,
-      text: (anchor.innerText || anchor.textContent || '').trim(),
-      title: (anchor.getAttribute('aria-label') || anchor.getAttribute('title') || '').trim()
-    })).filter((link) => link.href));
+    const links = await page.locator('a[href]').evaluateAll((anchors) => anchors.map((anchor) => {
+      const ownText = (anchor.innerText || anchor.textContent || '').trim();
+      const container = anchor.closest('[data-testid*="course" i], [class*="course" i], li, article')
+        ?? anchor.parentElement;
+      const containerText = (container?.innerText || '').trim();
+      return {
+        href: anchor.href,
+        text: ownText,
+        context: containerText,
+        title: (anchor.getAttribute('aria-label') || anchor.getAttribute('title') || '').trim()
+      };
+    }).filter((link) => link.href));
 
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
-    report({ stage: 'discover', message: `Course list loaded; checking ${config.courses.length} configured courses` });
+    const academicYear = config.filters?.academicYears?.[0] ?? '';
+    const portalCourses = discoverPortalCourses(uniqueLinks, academicYear);
+    report({ stage: 'discover', message: `Course list loaded; found ${portalCourses.length} Toledo courses for ${academicYear || 'the selected year'}` });
+    const previousByCode = new Map(config.courses.map((course) => [course.code.toUpperCase(), course]));
+    const discoveredCourses = portalCourses.map((course) => {
+      const previous = previousByCode.get(course.code.toUpperCase());
+      return {
+        ...course,
+        term: previous?.term ?? `${academicYear}-toledo`,
+        aliases: [...new Set([...(previous?.aliases ?? []), course.title])],
+        selected: previous?.academicYear === academicYear ? Boolean(previous.selected) : false,
+        url: course.url
+      };
+    });
+    // A transient empty page (for example while Toledo is still loading) must
+    // never erase the last known course list. A non-empty result is the only
+    // point at which the configured list is replaced.
+    if (discoveredCourses.length) config.courses = discoveredCourses;
     const matches = [];
     const coursesToDiscover = options.allCourses ? config.courses : config.courses.filter((item) => item.selected);
     for (const course of coursesToDiscover) {
@@ -97,7 +166,8 @@ export async function discoverCourses(config, configPath, options = {}) {
     await page.screenshot({ path: path.join(runDirectory, 'page.png'), fullPage: true });
     await writeJson(path.join(runDirectory, 'links.json'), uniqueLinks);
     await writeJson(path.join(runDirectory, 'matches.json'), matches);
-    return { matches, runDirectory, executablePath, profilePath };
+    await writeJson(path.join(runDirectory, 'courses.json'), discoveredCourses);
+    return { matches, courses: discoveredCourses, runDirectory, executablePath, profilePath };
   } finally {
     await context.close();
   }

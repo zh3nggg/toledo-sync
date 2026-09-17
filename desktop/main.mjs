@@ -107,12 +107,16 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
     try { await fs.access(statePath(config, 'auth', 'last-login.json')); authenticated = true; } catch { /* Login is still required. */ }
     config.download.outputRoot = path.resolve(outputRoot);
     Object.assign(config.download, normalizeMaterialsLayout({ materialsPlacement, materialsFolderName }));
+    const previousAcademicYear = config.filters.academicYears[0];
     config.filters.academicYears = [academicYear];
-    for (const course of config.courses) {
-      const academicYearChanged = course.academicYear !== academicYear;
-      course.academicYear = academicYear;
-      course.selected = selectedCodes.includes(course.code);
-      if (academicYearChanged) course.url = null;
+    if (previousAcademicYear !== academicYear) {
+      // The course list is populated from Toledo after the year changes. Keeping
+      // the seed list here made the GUI appear to support only the bundled year.
+      config.courses = [];
+    } else {
+      for (const course of config.courses) {
+        course.selected = selectedCodes.includes(course.code);
+      }
     }
     await saveConfig(configPath, config);
   } catch (error) {

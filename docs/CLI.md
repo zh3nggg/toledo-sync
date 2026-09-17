@@ -71,7 +71,7 @@ node src/cli.mjs login --config "/path/to/config.json" --fresh
 node src/cli.mjs discover --config "/path/to/config.json" --auto
 ```
 
-Discovery only accepts reliable matches for the configured academic year. If the current-year course card is unavailable, the URL remains unset; the tool never silently substitutes a prior-year course with the same code.
+Discovery reads the signed-in Toledo course list directly, extracts the course code/title/link, and filters explicit academic-year labels against the configured year. It never silently substitutes a prior-year course with the same code. If Toledo is still loading and no course link is visible, the previous list is retained rather than erased.
 
 ## Inspect and change selection
 

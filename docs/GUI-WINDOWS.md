@@ -12,7 +12,7 @@ The Windows desktop app packages the same synchronization core as the CLI. It is
    - **Update center**: first **Check for updates**, review each course summary, then **Download checked updates**.
    - **Automation**: Windows startup, launch checks, and periodic checks.
 6. Select **Log in to Toledo** in the second tab. Complete KU Leuven SSO/MFA in the Chrome, Edge, or Chromium window.
-7. Select **Discover courses**. Current-year unavailable cards remain marked unavailable instead of matching older courses.
+7. Select **Discover courses**. Toledo Sync reads the signed-in Toledo course list for the selected academic year and replaces the previous year’s list; it does not rely on a bundled course catalogue or silently match an older course with the same code.
 8. In **Update center**, preview changes before applying them. Existing local edits are preserved and remote replacements receive a hash suffix; the app does not delete extra local files.
 
 The app needs Node.js only when run from source. Installed release builds include the runtime, but still use an installed Chrome, Edge, or Chromium for KU Leuven login.

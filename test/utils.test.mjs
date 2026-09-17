@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseCalendarEvents } from '../src/calendar.mjs';
 import { courseMaterialsPath, createConfig } from '../src/config.mjs';
-import { extractAcademicYears, scoreCourseLink } from '../src/discover.mjs';
+import { courseTitleFromText, discoverPortalCourses, extractAcademicYears, extractCourseCode, scoreCourseLink } from '../src/discover.mjs';
 import { extractUltraFileLinks, isLikelyFileLink, uniqueDestination } from '../src/sync.mjs';
 import { sanitizeFileName } from '../src/utils.mjs';
 
@@ -74,6 +74,20 @@ test('extracts and enforces explicit academic years', () => {
   assert.deepEqual(extractAcademicYears('ULTRA-B-KUL-G0S83a-2526'), ['2025-2026']);
   const course = { code: 'G0S96A', title: 'Groups and Symmetries', aliases: [], academicYear: '2026-2027' };
   assert.equal(scoreCourseLink(course, { text: '2025-2026 G0S96A Groups and Symmetries', title: '', href: 'https://example.edu/ultra/courses/old' }), 0);
+});
+
+test('enumerates Toledo course links instead of relying on the bundled course list', () => {
+  const links = [
+    { href: 'https://toledo.example/learningUnits/ultraLink?batchUid=abc', text: 'H0G03A Emergent Quantum Phenomena 2025-2026', title: '' },
+    { href: 'https://toledo.example/learningUnits/ultraLink?batchUid=def', text: 'G0R16A Semiconductor Physics 2026-2027', title: '' },
+    { href: 'https://toledo.example/portal/calendar', text: 'Calendar', title: '' },
+    { href: 'https://toledo.example/learningUnits/ultraLink?batchUid=old', text: 'H0G03A Emergent Quantum Phenomena 2024-2025', title: '' }
+  ];
+  assert.equal(extractCourseCode(links[0].text), 'H0G03A');
+  assert.equal(courseTitleFromText(links[0].text, 'H0G03A'), 'Emergent Quantum Phenomena');
+  const courses = discoverPortalCourses(links, '2025-2026');
+  assert.deepEqual(courses.map((course) => course.code), ['H0G03A']);
+  assert.equal(courses[0].url, links[0].href);
 });
 
 test('parses folded iCalendar events', () => {

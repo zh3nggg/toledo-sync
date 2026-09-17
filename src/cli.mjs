@@ -25,7 +25,7 @@ async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
 }
 
 const HELP = `
-Toledo Sync 0.1.10
+Toledo Sync 0.1.15
 
 Usage:
   toledo-sync init --vault <Obsidian vault>
@@ -187,7 +187,9 @@ async function main() {
       Object.assign(config.download, normalizeMaterialsLayout({ ...config.download, ...layoutOptions(options) }));
     }
     if (options['academic-year']) {
-      config.filters.academicYears = [String(options['academic-year'])];
+      const academicYear = String(options['academic-year']);
+      if (config.filters.academicYears[0] !== academicYear) config.courses = [];
+      config.filters.academicYears = [academicYear];
     }
     if (options.courses) {
       const selected = new Set(String(options.courses).split(',').map((value) => value.trim().toUpperCase()).filter(Boolean));
@@ -246,7 +248,8 @@ async function main() {
   }
   if (command === 'discover') {
     const result = await discoverCourses(config, configPath, { auto: Boolean(options.auto), onProgress: (event) => console.log(event.message) });
-    for (const match of result.matches) console.log(`${match.code}: ${match.selectedUrl ?? '未匹配'}`);
+    for (const course of result.courses ?? config.courses) console.log(`${course.code} ${course.title}: ${course.url ?? '未匹配'}`);
+    console.log(`Discovered ${result.courses?.length ?? config.courses.length} course(s) for ${config.filters.academicYears[0]}.`);
     console.log(`Discovery evidence: ${result.runDirectory}`);
     return;
   }
