@@ -13,7 +13,7 @@
     "check": "node --check src/cli.mjs && node --check src/sync.mjs && node --check desktop/main.mjs && node --check desktop/preload.cjs && node --check desktop/renderer/app.js",
     "start": "node src/cli.mjs",
     "desktop": "electron .",
-    "make:win": "electron-builder --win nsis portable"
+    "make:win": "electron-builder --win nsis portable --publish never"
   },
   "engines": {
     "node": ">=20"
