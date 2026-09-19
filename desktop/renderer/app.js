@@ -43,6 +43,7 @@ function renderFileTree() {
   }
   tree.textContent = lines.join('\n');
 }
+function selectedCourseCodes() { return (state.config?.courses || []).filter((course) => course.selected).map((course) => course.code); }
 function setBusy(value) { state.busy = value; document.querySelectorAll('button:not(.tab)').forEach((button) => { button.disabled = value; }); if (!value && state.config) render(); }
 function render() {
   const config = state.config; $('#vaultPath').value = config?.vaultPath || ''; $('#outputRoot').value = config?.outputRoot || ''; $('#materialsPlacement').value = config?.materialsPlacement || 'subdirectory'; $('#materialsFolderName').value = config?.materialsFolderName || 'Materials'; const year = config?.academicYear ?? '2026-2027'; if (![...$('#academicYear').options].some((option) => option.value === year)) $('#academicYear').add(new Option(year, year)); $('#academicYear').value = year; $('#autoStart').checked = Boolean(config?.autoStart); $('#autoCheckOnLaunch').checked = Boolean(config?.autoCheckOnLaunch); $('#periodicCheckMinutes').value = String(config?.periodicCheckMinutes || 0); updateMaterialsFolderVisibility();
@@ -63,7 +64,7 @@ function render() {
     node.querySelector('strong').textContent = course.code; node.querySelector('.course-main span').textContent = course.title;
     node.querySelector('.update-summary').textContent = summaryText(state.updatePlan?.find((summary) => summary.code === course.code));
     const availability = node.querySelector('.availability'); availability.textContent = course.discovered ? t('discovered') : t('notDiscovered'); availability.classList.toggle('available', course.discovered);
-    const syncButton = node.querySelector('button'); syncButton.disabled = !state.authenticated || !state.discoveryDone || !course.discovered || state.busy; syncButton.title = `${t('checkCourse')}: ${course.code}`; syncButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); run(async () => { const value = await window.toledo.checkUpdates(course.code); state.updatePlan = value.summaries; render(); return value.summaries; }); });
+    const syncButton = node.querySelector('button'); syncButton.disabled = !state.authenticated || !state.discoveryDone || !course.discovered || state.busy; syncButton.title = `${t('checkCourse')}: ${course.code}`; syncButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); run(async () => { const value = await window.toledo.checkUpdates(course.code, selectedCourseCodes()); state.updatePlan = value.summaries; render(); return value.summaries; }); });
     list.append(node);
   }
 }
@@ -86,7 +87,7 @@ $('#save').addEventListener('click', () => run(save)); $('#login').addEventListe
 $('#saveAutomation').addEventListener('click', () => run(save));
 $('#treeCourse').addEventListener('change', renderFileTree);
 $('#discover').addEventListener('click', () => run(async () => { const value = await window.toledo.discover(); state.config = value.config; state.discoveryDone = true; state.updatePlan = null; render(); return value.matches; }));
-$('#checkUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.checkUpdates(null); state.updatePlan = value.summaries; render(); return value.summaries; })); $('#applyUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.applyUpdates(null); state.updatePlan = value.summaries; render(); return value.summaries; })); $('#openRoot').addEventListener('click', () => run(() => window.toledo.openPath($('#outputRoot').value)));
+$('#checkUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.checkUpdates(null, selectedCourseCodes()); state.updatePlan = value.summaries; render(); return value.summaries; })); $('#applyUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.applyUpdates(null, selectedCourseCodes()); state.updatePlan = value.summaries; render(); return value.summaries; })); $('#openRoot').addEventListener('click', () => run(() => window.toledo.openPath($('#outputRoot').value)));
 if (!window.toledo) {
   status('Desktop bridge could not start. Please reinstall the application.');
 } else {

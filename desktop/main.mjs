@@ -173,31 +173,38 @@ function registerIpc() {
     notify('success', 'Course discovery finished.');
     return { config: present(refreshed.config, refreshed.configPath, current.authenticated, current.automation), matches: result.matches };
   });
-  ipcMain.handle('toledo:sync', async (_event, courseCode = null) => {
+  function configWithSelection(config, selectedCodes) {
+    if (!Array.isArray(selectedCodes)) return config;
+    const selected = new Set(selectedCodes);
+    return { ...config, courses: config.courses.map((course) => ({ ...course, selected: selected.has(course.code) })) };
+  }
+  ipcMain.handle('toledo:sync', async (_event, request = {}) => {
+    const { courseCode = null, selectedCodes = null } = request || {};
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Syncing ${courseCode}…` : 'Syncing selected courses…');
-    const result = await syncCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
+    const result = await syncCourses({ ...configWithSelection(current.config, selectedCodes), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
     notify('success', 'Synchronization finished.');
     return result;
   });
-  ipcMain.handle('toledo:check-updates', async (_event, courseCode = null) => {
+  ipcMain.handle('toledo:check-updates', async (_event, request = {}) => {
+    const { courseCode = null, selectedCodes = null } = request || {};
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Checking updates for ${courseCode}…` : 'Checking selected courses for updates…');
-    const result = await syncCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message), { dryRun: true });
+    const result = await syncCourses({ ...configWithSelection(current.config, selectedCodes), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message), { dryRun: true });
     notify('success', 'Update check finished. No local material was changed.');
     return { summaries: updateSummary(result), results: result };
   });
-  ipcMain.handle('toledo:apply-updates', async (_event, courseCode = null) => {
+  ipcMain.handle('toledo:apply-updates', async (_event, request = {}) => {
+    const { courseCode = null, selectedCodes = null } = request || {};
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Applying updates for ${courseCode}…` : 'Applying checked updates…');
-    const result = await syncCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
+    const result = await syncCourses({ ...configWithSelection(current.config, selectedCodes), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
     notify('success', 'Updates written locally. Existing local files were preserved.');
     return { summaries: updateSummary(result), results: result };
-  });
-  ipcMain.handle('path:open', async (_event, target) => shell.openPath(target));
+  });  ipcMain.handle('path:open', async (_event, target) => shell.openPath(target));
 }
 
 async function runAutomaticCheck(reason) {
