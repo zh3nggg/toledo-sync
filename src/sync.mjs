@@ -148,7 +148,7 @@ export async function uniqueDestination(directory, fileName, digest) {
 }
 
 async function downloadFile(context, link, outputDirectory, referer, { dryRun = false } = {}) {
-  await ensureDirectory(outputDirectory);
+  if (!dryRun) await ensureDirectory(outputDirectory);
   const response = await context.request.get(link.href, {
     headers: { Referer: referer },
     timeout: 60000,
@@ -207,7 +207,7 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
       const outputDirectory = courseMaterialsPath(config, courseFolder);
       const snapshotDirectory = statePath(config, dryRun ? 'previews' : 'snapshots', course.code, runId);
       const manifestPath = statePath(config, 'manifests', `${course.code}.json`);
-      await ensureDirectory(outputDirectory);
+      if (!dryRun) await ensureDirectory(outputDirectory);
       await ensureDirectory(snapshotDirectory);
       const previousManifest = await readJson(manifestPath, { files: [] });
 
@@ -253,9 +253,9 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
       const materialLinks = [...fileLinks.values()];
       for (const [index, link] of materialLinks.entries()) {
         const linkDirectory = path.join(outputDirectory, ...(link.pathSegments ?? []).map((segment) => sanitizeFileName(segment)));
-        onProgress({ stage: 'download', course: course.code, message: `${course.code}: downloading ${index + 1}/${materialLinks.length} — ${link.title || path.basename(new URL(link.href).pathname)}` });
+        onProgress({ stage: dryRun ? 'check-file' : 'download', course: course.code, message: `${course.code}: ${dryRun ? 'checking' : 'downloading'} ${index + 1}/${materialLinks.length} — ${link.title || path.basename(new URL(link.href).pathname)}` });
         try {
-          const result = await downloadFile(context, link, linkDirectory, referer);
+          const result = await downloadFile(context, link, linkDirectory, referer, { dryRun });
           if (result.file) result.file = path.relative(outputDirectory, path.join(linkDirectory, result.file));
           files.push(result);
           onProgress({ stage: 'downloaded', course: course.code, message: `${course.code}: ${result.status} — ${result.file || link.title || 'material'}` });
