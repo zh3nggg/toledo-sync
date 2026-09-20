@@ -6,7 +6,7 @@ import { courseMaterialsPath, statePath } from './config.mjs';
 import { courseTitleFromText } from './discover.mjs';
 import {
   contentDispositionFileName, ensureDirectory, readJson, sanitizeFileName,
-  sha256, timestampForFile, writeJson
+  sha256, stableId, timestampForFile, writeJson
 } from './utils.mjs';
 
 const FILE_HINT = /bbcswebdav|attachment|download|contentfile|resource\//i;
@@ -133,9 +133,18 @@ async function collectUltraContent(context, baseUrl, courseId, maxItems = 1000) 
   return { records, files: [...files.values()] };
 }
 
-export async function uniqueDestination(directory, fileName, digest) {
+export async function uniqueDestination(directory, fileName, digest, verificationMode = 'sha256') {
   const safeName = sanitizeFileName(fileName, `file-${digest.slice(0, 8)}`);
   const initial = path.join(directory, safeName);
+  if (verificationMode === 'filename') {
+    try {
+      await fs.access(initial);
+      return { path: initial, unchanged: true, localModified: false };
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+    return { path: initial, unchanged: false, localModified: false };
+  }
   try {
     const existing = await fs.readFile(initial);
     if (sha256(existing) === digest) return { path: initial, unchanged: true, localModified: false };
@@ -148,25 +157,56 @@ export async function uniqueDestination(directory, fileName, digest) {
   return { path: path.join(directory, `${stem}-${digest.slice(0, 8)}${extension}`), unchanged: false, localModified: true };
 }
 
-async function downloadFile(context, link, outputDirectory, referer, { dryRun = false } = {}) {
+async function downloadFile(context, link, outputDirectory, referer, {
+  dryRun = false,
+  verificationMode = 'sha256',
+  cacheDirectory = null,
+  cacheIndex = {}
+} = {}) {
   if (!dryRun) await ensureDirectory(outputDirectory);
-  const response = await context.request.get(link.href, {
-    headers: { Referer: referer },
-    timeout: 60000,
-    failOnStatusCode: false
-  });
-  if (!response.ok()) return { status: 'error', url: link.href, httpStatus: response.status() };
-  const headers = response.headers();
+  const cacheKey = stableId(link.href);
+  let body;
+  let headers = {};
+  let fromCache = false;
+  const cached = cacheIndex[cacheKey];
+  if (!dryRun && cached?.path) {
+    try {
+      body = await fs.readFile(cached.path);
+      headers = { 'content-type': cached.contentType ?? '' };
+      fromCache = true;
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+  }
+  if (body === undefined) {
+    const response = await context.request.get(link.href, {
+      headers: { Referer: referer },
+      timeout: 60000,
+      failOnStatusCode: false
+    });
+    if (!response.ok()) return { status: 'error', url: link.href, httpStatus: response.status() };
+    headers = response.headers();
+    body = await response.body();
+  }
   const contentType = headers['content-type'] ?? '';
   if (/text\/html|application\/json/i.test(contentType) && !FILE_EXTENSIONS.has(path.extname(new URL(link.href).pathname).toLowerCase())) {
     return { status: 'skipped-non-file', url: link.href, contentType };
   }
-  const body = await response.body();
   const digest = sha256(body);
   const headerName = contentDispositionFileName(headers['content-disposition']);
+  const cachedName = cached?.fileName;
   const urlName = decodeURIComponent(path.basename(new URL(link.href).pathname));
-  const candidateName = headerName || link.title || urlName || link.text || `file-${digest.slice(0, 8)}`;
-  const destination = await uniqueDestination(outputDirectory, candidateName, digest);
+  const candidateName = headerName || cachedName || link.title || urlName || link.text || `file-${digest.slice(0, 8)}`;
+  if (dryRun && cacheDirectory) {
+    await ensureDirectory(cacheDirectory);
+    const cachePath = path.join(cacheDirectory, `${cacheKey}-${digest.slice(0, 12)}.bin`);
+    await fs.writeFile(cachePath, body);
+    cacheIndex[cacheKey] = {
+      url: link.href, path: cachePath, fileName: candidateName,
+      sha256: digest, contentType, createdAt: new Date().toISOString()
+    };
+  }
+  const destination = await uniqueDestination(outputDirectory, candidateName, digest, verificationMode);
   if (!destination.unchanged && !dryRun) await fs.writeFile(destination.path, body);
   return {
     status: destination.unchanged ? 'unchanged' : destination.localModified ? 'local-modified' : dryRun ? 'new' : 'downloaded',
@@ -174,7 +214,9 @@ async function downloadFile(context, link, outputDirectory, referer, { dryRun = 
     file: path.relative(outputDirectory, destination.path),
     bytes: body.length,
     sha256: digest,
-    contentType
+    contentType,
+    fromCache,
+    verificationMode
   };
 }
 
@@ -193,6 +235,10 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
 
   const { context } = await launchBrowser(config);
   const runId = timestampForFile();
+  const verificationMode = config.sync?.verificationMode === 'filename' ? 'filename' : 'sha256';
+  const cacheDirectory = statePath(config, 'cache');
+  const cacheIndexPath = path.join(cacheDirectory, 'index.json');
+  const cacheIndex = await readJson(cacheIndexPath, {});
   const runResults = missing.map((course) => ({
     schemaVersion: 1,
     status: dryRun ? 'not-discovered' : 'skipped-unavailable',
@@ -260,10 +306,13 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
         const linkDirectory = path.join(outputDirectory, ...(link.pathSegments ?? []).map((segment) => sanitizeFileName(segment)));
         onProgress({ stage: dryRun ? 'check-file' : 'download', course: course.code, message: `${course.code}: ${dryRun ? 'checking' : 'downloading'} ${index + 1}/${materialLinks.length} — ${link.title || path.basename(new URL(link.href).pathname)}` });
         try {
-          const result = await downloadFile(context, link, linkDirectory, referer, { dryRun });
+          const result = await downloadFile(context, link, linkDirectory, referer, {
+            dryRun, verificationMode, cacheDirectory, cacheIndex
+          });
           if (result.file) result.file = path.relative(outputDirectory, path.join(linkDirectory, result.file));
           files.push(result);
-          onProgress({ stage: 'downloaded', course: course.code, message: `${course.code}: ${result.status} — ${result.file || link.title || 'material'}` });
+          const sourceNote = result.fromCache ? ' (using cached copy)' : '';
+          onProgress({ stage: 'downloaded', course: course.code, message: `${course.code}: ${result.status}${sourceNote} — ${result.file || link.title || 'material'}` });
         }
         catch (error) { files.push({ status: 'error', url: link.href, error: error.message }); onProgress({ stage: 'error', course: course.code, message: `${course.code}: error downloading ${link.title || 'material'} — ${error.message}` }); }
       }
@@ -280,6 +329,7 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
         await writeJson(manifestPath, manifest);
         await writeJson(path.join(snapshotDirectory, 'pages.json'), pageRecords);
       }
+      if (dryRun) await writeJson(cacheIndexPath, cacheIndex);
       runResults.push(manifest);
       onProgress({ stage: 'course-complete', course: course.code, message: `${course.code} ${cleanCourseTitle}: complete (${files.filter((file) => file.status === 'downloaded').length} new, ${files.filter((file) => file.status === 'unchanged').length} unchanged)` });
     }

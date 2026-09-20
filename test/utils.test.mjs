@@ -69,6 +69,19 @@ test('cleans Toledo course-card status and notification text from titles', () =>
   assert.equal(courseTitleFromText('G0S83A Advanced Quantum Mechanics 14:00 16:00 21/09/ Advanced Quantum Mechanics 200C 01.27 Advanced Quantum Mechanics', 'G0S83A'), 'Advanced Quantum Mechanics');
   assert.equal(courseTitleFromText('H06A8A Computational Methods in Solid State Physics [ ] ULTRA-B-KUL', 'H06A8A'), 'Computational Methods in Solid State Physics');
 });
+
+test('filename verification keeps an existing local file in place', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'toledo-filename-'));
+  try {
+    const localPath = path.join(directory, 'lecture.pdf');
+    await fs.writeFile(localPath, 'local edit');
+    const destination = await uniqueDestination(directory, 'lecture.pdf', 'b'.repeat(64), 'filename');
+    assert.equal(destination.path, localPath);
+    assert.equal(destination.unchanged, true);
+    assert.equal(destination.localModified, false);
+    assert.equal(await fs.readFile(localPath, 'utf8'), 'local edit');
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});
 test('matches course links by code before title', () => {
   const course = { code: 'G0S96A', title: 'Groups and Symmetries', aliases: [], academicYear: '2026-2027' };
   assert.ok(scoreCourseLink(course, { text: 'G0S96A Groups and Symmetries', title: '', href: 'https://example.edu/ultra/courses/1' }) >= 100);

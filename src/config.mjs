@@ -6,6 +6,7 @@ import { ensureDirectory, readJson, stableId, writeJson } from './utils.mjs';
 
 const DEFAULT_MATERIALS_DIRECTORY = 'Materials';
 const LEGACY_MATERIALS_DIRECTORY = '原始资料';
+const DEFAULT_VERIFICATION_MODE = 'sha256';
 
 export function normalizeMaterialsLayout(download, { preserveLegacyDefault = false } = {}) {
   const placement = download?.materialsPlacement === 'course-root' ? 'course-root' : 'subdirectory';
@@ -16,6 +17,10 @@ export function normalizeMaterialsLayout(download, { preserveLegacyDefault = fal
   return { materialsPlacement: placement, materialsFolderName: name };
 }
 
+
+export function normalizeVerificationMode(value) {
+  return value === 'filename' ? 'filename' : DEFAULT_VERIFICATION_MODE;
+}
 export function defaultConfigPath(vaultPath) {
   return path.join(path.resolve(vaultPath), '_codex', 'toledo-sync', 'config.json');
 }
@@ -49,7 +54,8 @@ export function createConfig(vaultPath, options = {}) {
     sync: {
       maxPagesPerCourse: 40,
       navigationTimeoutMs: 45000,
-      settleTimeMs: 2500
+      settleTimeMs: 2500,
+      verificationMode: normalizeVerificationMode(options.verificationMode)
     },
     courses: FALL_2026_COURSES.map((course, index) => ({
       ...course,
@@ -82,6 +88,7 @@ export async function loadConfig(configPath) {
   if (config.schemaVersion !== 2) throw new Error(`Unsupported config schema: ${config.schemaVersion}`);
   config.vaultPath = path.resolve(config.vaultPath);
   config.download.outputRoot = path.resolve(config.download.outputRoot);
+  config.sync = { ...(config.sync ?? {}), verificationMode: normalizeVerificationMode(config.sync?.verificationMode) };
   Object.assign(config.download, normalizeMaterialsLayout(config.download, {
     preserveLegacyDefault: config.download.materialsPlacement === undefined && config.download.materialsFolderName === undefined
   }));

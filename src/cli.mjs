@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { defaultConfigPath, initializeConfig, loadConfig, normalizeMaterialsLayout, saveConfig, statePath } from './config.mjs';
+import { defaultConfigPath, initializeConfig, loadConfig, normalizeMaterialsLayout, normalizeVerificationMode, saveConfig, statePath } from './config.mjs';
 import { launchBrowser } from './browser.mjs';
 import { discoverCourses } from './discover.mjs';
 import { ask, askWithDefault, choose, confirm } from './prompt.mjs';
@@ -32,11 +32,13 @@ Usage:
                    --output <download root>
                    [--materials-in-course | --materials-subdirectory <name>]
                    [--academic-year 2026-2027|all]
+                   [--verification sha256|filename]
                    [--courses G0S96A,G0S83A,...]
   toledo-sync configure --config <config.json>
                         [--output <download directory>]
                         [--materials-in-course | --materials-subdirectory <name>]
                         [--academic-year 2026-2027|all]
+                        [--verification sha256|filename]
                         [--courses G0S96A,G0S83A,...]
   toledo-sync list --config <config.json>
   toledo-sync login --config <config.json>
@@ -98,7 +100,8 @@ async function runInteractive(options = {}) {
     const created = await initializeConfig(path.dirname(path.dirname(path.dirname(configPath))), configPath, {
       outputRoot, academicYear,
       materialsPlacement: layout === '直接放在课程文件夹' ? 'course-root' : 'subdirectory',
-      materialsFolderName
+      materialsFolderName,
+      verificationMode: normalizeVerificationMode(await choose('本地校验方式', ['SHA-256（内容哈希）', '文件名和路径'], 0) === '文件名和路径' ? 'filename' : 'sha256')
     });
     config = created.config;
     console.log(`\n已创建配置：${configPath}`);
@@ -175,7 +178,8 @@ async function main() {
       outputRoot: options.output,
       academicYear: normalizeAcademicYearOption(options['academic-year']),
       selectedCodes,
-      ...layoutOptions(options)
+      ...layoutOptions(options),
+      verificationMode: normalizeVerificationMode(options.verification)
     });
     console.log(`Created config: ${result.configPath}`);
     console.log(`Download directory: ${result.config.download.outputRoot}`);
@@ -195,6 +199,7 @@ async function main() {
       if (config.filters.academicYears[0] !== academicYear) config.courses = [];
       config.filters.academicYears = [academicYear];
     }
+    if (options.verification) config.sync.verificationMode = normalizeVerificationMode(options.verification);
     if (options.courses) {
       const selected = new Set(String(options.courses).split(',').map((value) => value.trim().toUpperCase()).filter(Boolean));
       const unknown = [...selected].filter((code) => !config.courses.some((course) => course.code.toUpperCase() === code));
@@ -206,6 +211,7 @@ async function main() {
     console.log(`Download directory: ${config.download.outputRoot}`);
     console.log(`Course materials: ${config.download.materialsPlacement === 'course-root' ? 'directly in each course folder' : `in each course folder/${config.download.materialsFolderName}`}`);
     console.log(`Academic year: ${config.filters.academicYears.join(', ')}`);
+    console.log(`Local verification: ${config.sync.verificationMode}`);
     console.log(`Selected courses: ${config.courses.filter((course) => course.selected).map((course) => course.code).join(', ') || 'none'}`);
     return;
   }

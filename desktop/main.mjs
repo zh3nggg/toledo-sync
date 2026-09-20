@@ -63,6 +63,7 @@ function present(config, configPath, authenticated = false, automation = {}) {
     authenticated,
     ...normalizeAutomation(automation),
     academicYear: config.filters.academicYears[0] ?? '',
+    verificationMode: config.sync?.verificationMode ?? 'sha256',
     courses: config.courses.map((course) => ({
       code: course.code, title: course.title, selected: course.selected,
       discovered: Boolean(course.url), academicYear: course.academicYear
@@ -96,7 +97,7 @@ function ensureWindows() {
   if (process.platform !== 'win32') throw new Error('The desktop app is currently published for Windows. Use the CLI on macOS and Linux.');
 }
 
-async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName, autoStart, autoCheckOnLaunch, periodicCheckMinutes }) {
+async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName, verificationMode, autoStart, autoCheckOnLaunch, periodicCheckMinutes }) {
   ensureWindows();
   if (!vaultPath || !outputRoot) throw new Error('Choose both the Obsidian Vault and the download root.');
   const configPath = defaultConfigPath(vaultPath);
@@ -107,6 +108,7 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
     try { await fs.access(statePath(config, 'auth', 'last-login.json')); authenticated = true; } catch { /* Login is still required. */ }
     config.download.outputRoot = path.resolve(outputRoot);
     Object.assign(config.download, normalizeMaterialsLayout({ materialsPlacement, materialsFolderName }));
+    config.sync.verificationMode = verificationMode === 'filename' ? 'filename' : 'sha256';
     const previousAcademicYear = config.filters.academicYears[0] ?? '';
     config.filters.academicYears = academicYear ? [academicYear] : [];
     if (previousAcademicYear !== academicYear) {
@@ -122,7 +124,7 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
     const initialSelectedCodes = selectedCodes.length ? selectedCodes : FALL_2026_COURSES.map((course) => course.code);
-    ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear, selectedCodes: initialSelectedCodes, materialsPlacement, materialsFolderName }));
+    ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear, selectedCodes: initialSelectedCodes, materialsPlacement, materialsFolderName, verificationMode }));
   }
   const automation = normalizeAutomation({ autoStart, autoCheckOnLaunch, periodicCheckMinutes });
   await saveSettings({ configPath, ...automation });

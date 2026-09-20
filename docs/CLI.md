@@ -82,6 +82,7 @@ node src/cli.mjs configure --config "/path/to/config.json" \
   --output "/another/download/root" \
   --materials-subdirectory "Course materials" \
   --academic-year 2026-2027 \
+  --verification sha256 \
   --courses G0S96A,G0R16A
 ```
 
@@ -89,15 +90,17 @@ Changing `--output` changes the future download location; it does not move exist
 
 Use `--materials-in-course` with `init` or `configure` to place course content directly in `G0S96A Groups and Symmetries/`. Use `--materials-subdirectory <name>` to place it in `G0S96A Groups and Symmetries/<name>/`. The two options are mutually exclusive and only affect future downloads; they do not move existing files.
 
+Local verification is `sha256` by default. It compares file contents and preserves a locally edited file by writing a hash-suffixed remote copy. For sources where the filename is the authoritative identity, choose `--verification filename`; that mode treats an existing matching path as unchanged and does not inspect its contents.
+
 ## Synchronize
 
-Preview remote changes first. This reads the remote files and compares their hashes without writing course material:
+Preview remote changes first. This reads the remote files and compares them without writing course material into the download root:
 
 ```sh
 node src/cli.mjs check --config "/path/to/config.json"
 ```
 
-The preview reports new, unchanged, locally modified, and failed files per course. A locally modified file is never overwritten; applying the update creates a hash-suffixed copy beside it.
+The preview reports new, unchanged, locally modified, and failed files per course. The downloaded response bodies are kept in the Vault state cache at `_codex/toledo-sync/cache/`; applying the update reuses those cached bytes instead of downloading the same files again. A locally modified file is never overwritten in SHA-256 mode; applying the update creates a hash-suffixed copy beside it.
 
 Test with one course first:
 
