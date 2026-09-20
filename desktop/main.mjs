@@ -62,7 +62,7 @@ function present(config, configPath, authenticated = false, automation = {}) {
     materialsFolderName: config.download.materialsFolderName,
     authenticated,
     ...normalizeAutomation(automation),
-    academicYear: config.filters.academicYears[0] ?? '',
+    academicYear: '',
     verificationMode: config.sync?.verificationMode ?? 'sha256',
     courses: config.courses.map((course) => ({
       code: course.code, title: course.title, selected: course.selected,
@@ -97,6 +97,10 @@ function ensureWindows() {
   if (process.platform !== 'win32') throw new Error('The desktop app is currently published for Windows. Use the CLI on macOS and Linux.');
 }
 
+function unrestrictedDesktopConfig(config) {
+  return { ...config, filters: { ...config.filters, academicYears: [] } };
+}
+
 async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName, verificationMode, autoStart, autoCheckOnLaunch, periodicCheckMinutes }) {
   ensureWindows();
   if (!vaultPath || !outputRoot) throw new Error('Choose both the Obsidian Vault and the download root.');
@@ -110,10 +114,11 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
     Object.assign(config.download, normalizeMaterialsLayout({ materialsPlacement, materialsFolderName }));
     config.sync.verificationMode = verificationMode === 'filename' ? 'filename' : 'sha256';
     const previousAcademicYear = config.filters.academicYears[0] ?? '';
-    config.filters.academicYears = academicYear ? [academicYear] : [];
-    if (previousAcademicYear !== academicYear) {
-      // The course list is populated from Toledo after the year changes. Keeping
-      // the seed list here made the GUI appear to support only the bundled year.
+    // The desktop workflow always discovers the complete Toledo course list.
+    // Users choose courses after discovery; the year filter remains a CLI-only
+    // compatibility setting.
+    config.filters.academicYears = [];
+    if (previousAcademicYear !== '') {
       config.courses = [];
     } else {
       for (const course of config.courses) {
@@ -124,7 +129,7 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
     const initialSelectedCodes = selectedCodes.length ? selectedCodes : FALL_2026_COURSES.map((course) => course.code);
-    ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear, selectedCodes: initialSelectedCodes, materialsPlacement, materialsFolderName, verificationMode }));
+    ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear: '', selectedCodes: initialSelectedCodes, materialsPlacement, materialsFolderName, verificationMode }));
   }
   const automation = normalizeAutomation({ autoStart, autoCheckOnLaunch, periodicCheckMinutes });
   await saveSettings({ configPath, ...automation });
@@ -170,7 +175,7 @@ function registerIpc() {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', 'Discovering programme courses…');
-    const result = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
+    const result = await discoverCourses({ ...unrestrictedDesktopConfig(current.config), browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
     const refreshed = await loadConfig(current.configPath);
     notify('success', 'Course discovery finished.');
     return { config: present(refreshed.config, refreshed.configPath, current.authenticated, current.automation), matches: result.matches };
@@ -185,7 +190,7 @@ function registerIpc() {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Syncing ${courseCode}…` : 'Syncing selected courses…');
-    const result = await syncCourses({ ...configWithSelection(current.config, selectedCodes), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
+    const result = await syncCourses({ ...unrestrictedDesktopConfig(configWithSelection(current.config, selectedCodes)), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
     notify('success', 'Synchronization finished.');
     return result;
   });
@@ -194,7 +199,7 @@ function registerIpc() {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Checking updates for ${courseCode}…` : 'Checking selected courses for updates…');
-    const result = await syncCourses({ ...configWithSelection(current.config, selectedCodes), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message), { dryRun: true });
+    const result = await syncCourses({ ...unrestrictedDesktopConfig(configWithSelection(current.config, selectedCodes)), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message), { dryRun: true });
     notify('success', 'Update check finished. No local material was changed.');
     return { summaries: updateSummary(result), results: result };
   });
@@ -203,7 +208,7 @@ function registerIpc() {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Applying updates for ${courseCode}…` : 'Applying checked updates…');
-    const result = await syncCourses({ ...configWithSelection(current.config, selectedCodes), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
+    const result = await syncCourses({ ...unrestrictedDesktopConfig(configWithSelection(current.config, selectedCodes)), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
     notify('success', 'Updates written locally. Existing local files were preserved.');
     return { summaries: updateSummary(result), results: result };
   });  ipcMain.handle('path:open', async (_event, target) => shell.openPath(target));
@@ -220,10 +225,10 @@ async function runAutomaticCheck(reason) {
       return;
     }
     notify('info', `${reason}: checking for course updates…`);
-    const discovered = await discoverCourses({ ...current.config, browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
+    const discovered = await discoverCourses({ ...unrestrictedDesktopConfig(current.config), browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
     const refreshed = await loadConfig(current.configPath);
     notify('progress', `${reason}: discovery finished; synchronizing selected courses…`);
-    await syncCourses({ ...refreshed.config, browser: { ...refreshed.config.browser, headless: true } }, null, (event) => notify('progress', event.message));
+    await syncCourses({ ...unrestrictedDesktopConfig(refreshed.config), browser: { ...refreshed.config.browser, headless: true } }, null, (event) => notify('progress', event.message));
     notify('success', `${reason}: update check finished.`);
     return discovered;
   } catch (error) {

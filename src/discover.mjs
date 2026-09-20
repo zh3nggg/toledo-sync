@@ -135,7 +135,7 @@ export async function discoverCourses(config, configPath, options = {}) {
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
     const academicYear = config.filters?.academicYears?.[0] ?? '';
     const portalCourses = discoverPortalCourses(uniqueLinks, academicYear);
-    report({ stage: 'discover', message: `Course list loaded; found ${portalCourses.length} Toledo courses for ${academicYear || 'the selected year'}` });
+    report({ stage: 'discover', message: `Course list loaded; found ${portalCourses.length} Toledo courses${academicYear ? ` for ${academicYear}` : ''}` });
     const previousByCode = new Map(config.courses.map((course) => [course.code.toUpperCase(), course]));
     const discoveredCourses = portalCourses.map((course) => {
       const previous = previousByCode.get(course.code.toUpperCase());

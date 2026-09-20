@@ -3,7 +3,7 @@
 The Windows desktop app packages the same synchronization core as the CLI. It is available in Chinese, English, and Dutch.
 
 1. Download the newest `Toledo.Sync.Setup.<version>.exe` from the GitHub Release and install it, or use the portable `.exe`.
-2. Choose your Obsidian Vault and the exact download root. Every course folder is created directly inside that root.
+2. Choose your Obsidian Vault and the exact download root. Every course folder is created directly inside that root. The desktop app reads all courses returned by Toledo; it does not pre-filter them by academic year.
 3. Under **Course-material location**, choose whether Toledo content belongs directly in each course folder or in a named subfolder such as `Course materials`. The name is your own setting and is not changed by switching the app language.
 4. In **Study space**, choose **Local verification**. **SHA-256** compares file contents and protects local edits; **Filename and path** is a faster name-based mode for sources where filenames are stable.
 5. In **Automatic updates**, optionally enable Windows startup, a check-and-sync on launch, and a schedule (30 minutes, hourly, every 6 hours, or daily). Scheduled checks run while Toledo Sync is open and authenticated.
@@ -13,8 +13,8 @@ The Windows desktop app packages the same synchronization core as the CLI. It is
    - **Update center**: first **Check for updates**, review each course summary, then **Download checked updates**.
    - **Automation**: Windows startup, launch checks, and periodic checks.
 7. Select **Log in to Toledo** in the second tab. Complete KU Leuven SSO/MFA in the Chrome, Edge, or Chromium window.
-8. Select **Discover courses**. Toledo Sync reads the signed-in Toledo course list for the selected academic year and replaces the previous year’s list; it does not rely on a bundled course catalogue or silently match an older course with the same code.
-9. In **Update center**, preview changes before applying them. The preview stores remote responses in the Vault state cache, so **Download checked updates** reuses them instead of downloading a second time. Existing local edits are preserved and remote replacements receive a hash suffix in SHA-256 mode; the app does not delete extra local files.
+8. Select **Discover courses**. Toledo Sync reads the complete signed-in Toledo course list and replaces the displayed list; it does not rely on a bundled course catalogue or silently match an older course with the same code.
+9. Select the courses you actually want to check or update. In **Update center**, preview changes before applying them. The preview stores remote responses in the Vault state cache, so **Download checked updates** reuses them instead of downloading a second time. Existing local edits are preserved and remote replacements receive a hash suffix in SHA-256 mode; the app does not delete extra local files.
 
 The app needs Node.js only when run from source. Installed release builds include the runtime, but still use an installed Chrome, Edge, or Chromium for KU Leuven login.
 
