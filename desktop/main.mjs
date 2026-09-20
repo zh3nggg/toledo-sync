@@ -175,7 +175,7 @@ function registerIpc() {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', 'Discovering programme courses…');
-    const result = await discoverCourses({ ...unrestrictedDesktopConfig(current.config), browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
+    const result = await discoverCourses({ ...unrestrictedDesktopConfig(current.config), browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, ignoreAcademicYear: true, onProgress: (event) => notify('progress', event.message) });
     const refreshed = await loadConfig(current.configPath);
     notify('success', 'Course discovery finished.');
     return { config: present(refreshed.config, refreshed.configPath, current.authenticated, current.automation), matches: result.matches };
@@ -225,7 +225,7 @@ async function runAutomaticCheck(reason) {
       return;
     }
     notify('info', `${reason}: checking for course updates…`);
-    const discovered = await discoverCourses({ ...unrestrictedDesktopConfig(current.config), browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, onProgress: (event) => notify('progress', event.message) });
+    const discovered = await discoverCourses({ ...unrestrictedDesktopConfig(current.config), browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, ignoreAcademicYear: true, onProgress: (event) => notify('progress', event.message) });
     const refreshed = await loadConfig(current.configPath);
     notify('progress', `${reason}: discovery finished; synchronizing selected courses…`);
     await syncCourses({ ...unrestrictedDesktopConfig(refreshed.config), browser: { ...refreshed.config.browser, headless: true } }, null, (event) => notify('progress', event.message));

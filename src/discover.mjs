@@ -201,7 +201,7 @@ export async function discoverCourses(config, configPath, options = {}) {
 
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
     report({ stage: 'discover', message: `Read ${uniqueLinks.length} unique links after loading the complete course list.` });
-    const academicYear = config.filters?.academicYears?.[0] ?? '';
+    const academicYear = options.ignoreAcademicYear ? '' : (config.filters?.academicYears?.[0] ?? '');
     const pageCourses = discoverPortalCourses(uniqueLinks, academicYear);
     const ultraOrigin = uniqueLinks.map((link) => {
       try { return new URL(link.href); } catch { return null; }
