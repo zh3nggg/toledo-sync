@@ -66,7 +66,7 @@ function present(config, configPath, authenticated = false, automation = {}) {
     verificationMode: config.sync?.verificationMode ?? 'sha256',
     courses: config.courses.map((course) => ({
       code: course.code, title: course.title, selected: course.selected,
-      discovered: Boolean(course.url), academicYear: course.academicYear
+      discovered: Boolean(course.url), available: course.available !== false && Boolean(course.url), academicYear: course.academicYear
     }))
   };
 }
@@ -200,7 +200,7 @@ function registerIpc() {
   function configWithSelection(config, selectedCodes) {
     if (!Array.isArray(selectedCodes)) return config;
     const selected = new Set(selectedCodes);
-    return { ...config, courses: config.courses.map((course) => ({ ...course, selected: selected.has(course.code) })) };
+    return { ...config, courses: config.courses.map((course) => ({ ...course, selected: course.available !== false && Boolean(course.url) && selected.has(course.code) })) };
   }
   ipcMain.handle('toledo:sync', async (_event, request = {}) => {
     const { courseCode = null, selectedCodes = null } = request || {};

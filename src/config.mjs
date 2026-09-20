@@ -7,6 +7,7 @@ import { ensureDirectory, readJson, stableId, writeJson } from './utils.mjs';
 const DEFAULT_MATERIALS_DIRECTORY = 'Materials';
 const LEGACY_MATERIALS_DIRECTORY = '原始资料';
 const DEFAULT_VERIFICATION_MODE = 'sha256';
+const DEFAULT_SYNC_TIMEOUT_MS = 120000;
 
 export function normalizeMaterialsLayout(download, { preserveLegacyDefault = false } = {}) {
   const placement = download?.materialsPlacement === 'course-root' ? 'course-root' : 'subdirectory';
@@ -53,7 +54,8 @@ export function createConfig(vaultPath, options = {}) {
     },
     sync: {
       maxPagesPerCourse: 40,
-      navigationTimeoutMs: 45000,
+      navigationTimeoutMs: DEFAULT_SYNC_TIMEOUT_MS,
+      requestTimeoutMs: DEFAULT_SYNC_TIMEOUT_MS,
       settleTimeMs: 2500,
       verificationMode: normalizeVerificationMode(options.verificationMode)
     },
@@ -88,7 +90,14 @@ export async function loadConfig(configPath) {
   if (config.schemaVersion !== 2) throw new Error(`Unsupported config schema: ${config.schemaVersion}`);
   config.vaultPath = path.resolve(config.vaultPath);
   config.download.outputRoot = path.resolve(config.download.outputRoot);
-  config.sync = { ...(config.sync ?? {}), verificationMode: normalizeVerificationMode(config.sync?.verificationMode) };
+  const navigationTimeoutMs = Math.max(Number(config.sync?.navigationTimeoutMs) || 0, DEFAULT_SYNC_TIMEOUT_MS);
+  const requestTimeoutMs = Math.max(Number(config.sync?.requestTimeoutMs) || 0, DEFAULT_SYNC_TIMEOUT_MS);
+  config.sync = {
+    ...(config.sync ?? {}),
+    navigationTimeoutMs,
+    requestTimeoutMs,
+    verificationMode: normalizeVerificationMode(config.sync?.verificationMode)
+  };
   Object.assign(config.download, normalizeMaterialsLayout(config.download, {
     preserveLegacyDefault: config.download.materialsPlacement === undefined && config.download.materialsFolderName === undefined
   }));

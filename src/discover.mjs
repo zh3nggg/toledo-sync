@@ -41,6 +41,25 @@ export function courseTitleFromText(value, code) {
     .trim();
   return title || code || 'Toledo course';
 }
+
+function explicitCourseAvailability(value) {
+  const candidates = [
+    value?.availability?.available,
+    value?.availability?.isAvailable,
+    value?.courseAvailability?.available,
+    value?.available,
+    value?.isAvailable
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'boolean') return candidate;
+    if (typeof candidate !== 'string') continue;
+    const normalized = candidate.trim().toLowerCase();
+    if (/^(yes|true|available|open|opened|active)$/.test(normalized)) return true;
+    if (/^(no|false|unavailable|closed|hidden|inactive)$/.test(normalized)) return false;
+  }
+  return null;
+}
+
 export function discoverPortalCourses(links, academicYear) {
   const candidates = [];
   for (const link of links ?? []) {
@@ -56,7 +75,7 @@ export function discoverPortalCourses(links, academicYear) {
     const score = (years.includes(academicYear) ? 20 : 0)
       + (link.text ? 10 : 0)
       + (isCourseEnrollment ? 100 : 0);
-    candidates.push({ code, title, academicYear: years[0] ?? academicYear, url: link.href, score, source: link });
+    candidates.push({ code, title, academicYear: years[0] ?? academicYear, url: link.href, available: true, score, source: link });
   }
   const byCode = new Map();
   for (const candidate of candidates) {
@@ -95,7 +114,8 @@ export function discoverApiCourses(payload, baseUrl, academicYear = '') {
     const title = courseTitleFromText(course.name ?? course.title ?? enrollment.name ?? code, code);
     const url = apiCourseUrl(course, baseUrl);
     if (!url) continue;
-    courses.push({ code, title, academicYear: years[0] ?? academicYear, url, order: courses.length + 1 });
+    const available = explicitCourseAvailability(course) ?? explicitCourseAvailability(enrollment);
+    courses.push({ code, title, academicYear: years[0] ?? academicYear, url, ...(available === null ? {} : { available }), source: 'api', order: courses.length + 1 });
   }
   const byCode = new Map();
   for (const course of courses) {
@@ -307,7 +327,14 @@ export async function discoverCourses(config, configPath, options = {}) {
       catch (error) { report({ stage: 'discover', message: `Course API unavailable (${error.message}); keeping page-discovered courses.` }); }
     }
     const byCode = new Map(pageCourses.map((course) => [course.code, course]));
-    for (const course of apiCourses) byCode.set(course.code, { ...byCode.get(course.code), ...course });
+    for (const course of apiCourses) {
+      const previous = byCode.get(course.code);
+      byCode.set(course.code, {
+        ...previous,
+        ...course,
+        available: course.available ?? previous?.available
+      });
+    }
     const portalCourses = [...byCode.values()].sort((left, right) => left.title.localeCompare(right.title, undefined, { sensitivity: 'base' }))
       .map((course, index) => ({ ...course, order: index + 1 }));
     report({ stage: 'discover', message: `Course list loaded; found ${portalCourses.length} Toledo courses: ${portalCourses.map((course) => course.code).join(', ') || 'none'}` });
@@ -319,7 +346,11 @@ export async function discoverCourses(config, configPath, options = {}) {
         term: previous?.term ?? `${academicYear}-toledo`,
         aliases: [...new Set([...(previous?.aliases ?? []), course.title])],
         selected: academicYear ? previous?.academicYear === academicYear && Boolean(previous.selected) : Boolean(previous?.selected),
-        url: course.url
+        url: course.url,
+        // A directory link is evidence that the course is open. An API-only
+        // membership without an explicit availability flag is not enough:
+        // Blackboard also returns memberships for courses that are not open.
+        available: course.available === true || (course.available == null && course.source !== 'api')
       };
     });
     // A transient empty page (for example while Toledo is still loading) must
@@ -339,19 +370,20 @@ export async function discoverCourses(config, configPath, options = {}) {
       const preferred = safeCandidates.find((candidate) => /learningUnits\/ultraLink\?batchUid=/i.test(candidate.href))
         ?? safeCandidates.find((candidate) => /redirectType=nautilus&courseId=/i.test(candidate.href))
         ?? safeCandidates[0];
-      if (preferred) {
-        course.url = preferred.href;
-      } else if (options.clearMissing) {
-        course.url = null;
-      }
+      const apiAvailable = course.available === true;
+      const available = Boolean(preferred) || apiAvailable;
+      if (preferred) course.url = preferred.href;
+      else if (!available) course.url = null;
+      course.available = available;
+      if (!available) course.selected = false;
       matches.push({
         code: course.code,
         selectedUrl: course.url,
         previousUrl,
-        status: preferred ? 'matched' : previousUrl ? 'retained-previous-match' : 'not-found',
+        status: preferred ? 'matched' : available ? 'api-available' : 'unavailable',
         candidates: ranked.slice(0, 5)
       });
-      report({ stage: 'course-result', course: course.code, message: `${course.code}: ${preferred ? 'current-year link found' : previousUrl ? 'kept previous link' : 'no current-year link found'}` });
+      report({ stage: 'course-result', course: course.code, message: `${course.code}: ${preferred ? 'current-year link found' : available ? 'available through course membership' : 'not currently open; disabled'}` });
     }
     await saveConfig(configPath, config);
 

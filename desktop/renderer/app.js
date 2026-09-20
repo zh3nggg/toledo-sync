@@ -21,6 +21,9 @@ Object.assign(translations.nl, { verificationMode: 'Lokale controle', verificati
 Object.assign(translations.zh, { resetBrowser: '重置浏览器会话', resetBrowserHint: '清除 Toledo Sync 保存的浏览器会话并重新登录；不会删除课程材料。', resetBrowserConfirm: '确定要重置 Toledo Sync 的浏览器会话吗？这会退出登录，但不会删除课程材料。' });
 Object.assign(translations.en, { resetBrowser: 'Reset browser session', resetBrowserHint: 'Clear the Toledo Sync browser session and sign in again. Course materials are not deleted.', resetBrowserConfirm: 'Reset the Toledo Sync browser session? You will need to sign in again. Course materials will not be deleted.' });
 Object.assign(translations.nl, { resetBrowser: 'Browsersessie resetten', resetBrowserHint: 'Wis de browsersessie van Toledo Sync en meld opnieuw aan. Cursusmateriaal wordt niet verwijderd.', resetBrowserConfirm: 'De browsersessie van Toledo Sync resetten? Je moet je opnieuw aanmelden. Cursusmateriaal wordt niet verwijderd.' });
+Object.assign(translations.zh, { courseUnavailable: '暂未开放，已禁用', courseUnavailableHint: 'Toledo 当前没有开放这门课，暂时不能检查材料。' });
+Object.assign(translations.en, { courseUnavailable: 'Not currently open', courseUnavailableHint: 'Toledo has not opened this course yet, so update checks are disabled.' });
+Object.assign(translations.nl, { courseUnavailable: 'Momenteel niet geopend', courseUnavailableHint: 'Toledo heeft deze cursus nog niet geopend; controles zijn uitgeschakeld.' });
 let locale = localStorage.getItem('toledo-locale') || (navigator.language.startsWith('nl') ? 'nl' : navigator.language.startsWith('zh') ? 'zh' : 'en');
 let state = { config: null, busy: false, authenticated: false, discoveryDone: false, activityLog: [], updatePlan: null };
 const $ = (selector) => document.querySelector(selector);
@@ -59,7 +62,7 @@ function render() {
   $('#stepSetup').classList.toggle('complete', hasConfig); $('#stepAuth').classList.toggle('complete', state.authenticated); $('#stepDiscover').classList.toggle('complete', hasDiscovered); $('#stepSync').classList.toggle('active', hasSelected && state.discoveryDone); $('#discoverCard').classList.toggle('locked', !state.authenticated); $('#syncCard').classList.toggle('locked', !hasSelected || !state.discoveryDone);
   renderFileTree(); const list = $('#courses'); list.replaceChildren();
   for (const course of config?.courses || []) {
-    const node = $('#courseTemplate').content.firstElementChild.cloneNode(true); const checkbox = node.querySelector('input'); checkbox.checked = course.selected; checkbox.disabled = !state.discoveryDone || !course.discovered; checkbox.dataset.code = course.code;
+    const node = $('#courseTemplate').content.firstElementChild.cloneNode(true); const checkbox = node.querySelector('input'); const available = Boolean(course.available ?? course.discovered) && Boolean(course.discovered); node.classList.toggle('unavailable', state.discoveryDone && !available); checkbox.checked = Boolean(course.selected) && available; checkbox.disabled = !state.discoveryDone || !available; checkbox.dataset.code = course.code;
     checkbox.addEventListener('change', () => {
       // Keep the in-memory selection before rebuilding the course cards.
       // Otherwise render() immediately restored the value from the old config.
@@ -69,8 +72,8 @@ function render() {
     });
     node.querySelector('strong').textContent = course.code; node.querySelector('.course-main span').textContent = course.title;
     node.querySelector('.update-summary').textContent = summaryText(state.updatePlan?.find((summary) => summary.code === course.code));
-    const availability = node.querySelector('.availability'); availability.textContent = course.discovered ? t('discovered') : t('notDiscovered'); availability.classList.toggle('available', course.discovered);
-    const syncButton = node.querySelector('button'); syncButton.disabled = !state.authenticated || !state.discoveryDone || !course.discovered || state.busy; syncButton.title = `${t('checkCourse')}: ${course.code}`; syncButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); run(async () => { const value = await window.toledo.checkUpdates(course.code, selectedCourseCodes()); state.updatePlan = value.summaries; render(); return value.summaries; }); });
+    const availability = node.querySelector('.availability'); const availabilityKey = !state.discoveryDone ? 'notDiscovered' : available ? 'discovered' : 'courseUnavailable'; availability.textContent = t(availabilityKey); availability.title = available ? '' : t('courseUnavailableHint'); availability.classList.toggle('available', available);
+    const syncButton = node.querySelector('button'); syncButton.disabled = !state.authenticated || !state.discoveryDone || !available || state.busy; syncButton.title = `${t('checkCourse')}: ${course.code}`; syncButton.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); run(async () => { const value = await window.toledo.checkUpdates(course.code, selectedCourseCodes()); state.updatePlan = value.summaries; render(); return value.summaries; }); });
     list.append(node);
   }
 }

@@ -13,6 +13,8 @@ test('uses the selected download directory as the exact course root', () => {
   const outputRoot = path.resolve('chosen-download-root');
   const config = createConfig(path.resolve('vault'), { outputRoot });
   assert.equal(config.download.outputRoot, outputRoot);
+  assert.equal(config.sync.navigationTimeoutMs, 120000);
+  assert.equal(config.sync.requestTimeoutMs, 120000);
   assert.throws(() => createConfig(path.resolve('vault')), /--output/);
 });
 
@@ -122,10 +124,14 @@ test('enumerates Toledo course links instead of relying on the bundled course li
 test('enumerates enrolled Ultra courses from the current-user API response', () => {
   const courses = discoverApiCourses({ results: [
     { course: { id: '_1_1', externalId: 'ULTRA-B-KUL-G0S90a-2627', name: 'Advanced Solid State Physics' } },
-    { course: { id: '_2_1', externalId: 'ULTRA-B-KUL-G0R16a-2627', name: 'Semiconductor Physics' } }
+    { course: { id: '_2_1', externalId: 'ULTRA-B-KUL-G0R16a-2627', name: 'Semiconductor Physics', availability: { available: 'Yes' } } },
+    { course: { id: '_3_1', externalId: 'ULTRA-B-KUL-G0S91a-2627', name: 'Advanced Nuclear Physics', availability: { available: 'No' } } }
   ] }, 'https://ultra.example');
-  assert.deepEqual(courses.map((course) => course.code), ['G0S90A', 'G0R16A']);
-  assert.equal(courses[0].url, 'https://ultra.example/ultra/courses/_1_1/outline');
+  assert.deepEqual(courses.map((course) => course.code), ['G0S91A', 'G0S90A', 'G0R16A']);
+  assert.equal(courses.find((course) => course.code === 'G0S90A').url, 'https://ultra.example/ultra/courses/_1_1/outline');
+  assert.equal(courses.find((course) => course.code === 'G0S90A').available, undefined);
+  assert.equal(courses.find((course) => course.code === 'G0R16A').available, true);
+  assert.equal(courses.find((course) => course.code === 'G0S91A').available, false);
 });
 
 test('parses folded iCalendar events', () => {

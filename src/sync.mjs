@@ -76,13 +76,13 @@ export function extractUltraFileLinks(content, baseUrl) {
   return links;
 }
 
-async function getJson(context, url) {
-  const response = await context.request.get(url, { failOnStatusCode: false, timeout: 60000 });
+async function getJson(context, url, timeoutMs = 120000) {
+  const response = await context.request.get(url, { failOnStatusCode: false, timeout: timeoutMs });
   if (!response.ok()) return { status: response.status(), body: null };
   return { status: response.status(), body: await response.json() };
 }
 
-async function collectUltraContent(context, baseUrl, courseId, maxItems = 1000) {
+async function collectUltraContent(context, baseUrl, courseId, maxItems = 1000, timeoutMs = 120000) {
   const queue = [{ id: 'ROOT', pathSegments: [] }];
   const visited = new Set();
   const records = [];
@@ -92,7 +92,7 @@ async function collectUltraContent(context, baseUrl, courseId, maxItems = 1000) 
     if (visited.has(queued.id)) continue;
     visited.add(queued.id);
     const itemUrl = new URL(`/learn/api/v1/courses/${courseId}/contents/${queued.id}`, baseUrl).href;
-    const detailResponse = await getJson(context, itemUrl);
+    const detailResponse = await getJson(context, itemUrl, timeoutMs);
     const content = detailResponse.body;
     if (!content) {
       records.push({ id: queued.id, status: detailResponse.status, path: queued.pathSegments });
@@ -121,7 +121,7 @@ async function collectUltraContent(context, baseUrl, courseId, maxItems = 1000) 
     if (!isContainer) continue;
     let childrenUrl = `${itemUrl}/children?%40view=Summary&expand=assignedGroups,selfEnrollmentGroups.group,gradebookCategory&includeInActivityTracking=true&limit=100`;
     while (childrenUrl) {
-      const childrenResponse = await getJson(context, childrenUrl);
+      const childrenResponse = await getJson(context, childrenUrl, timeoutMs);
       if (!childrenResponse.body) break;
       for (const child of childrenResponse.body.results ?? []) {
         queue.push({ id: child.id, pathSegments: currentPath });
@@ -161,7 +161,8 @@ async function downloadFile(context, link, outputDirectory, referer, {
   dryRun = false,
   verificationMode = 'sha256',
   cacheDirectory = null,
-  cacheIndex = {}
+  cacheIndex = {},
+  requestTimeoutMs = 120000
 } = {}) {
   if (!dryRun) await ensureDirectory(outputDirectory);
   const cacheKey = stableId(link.href);
@@ -181,7 +182,7 @@ async function downloadFile(context, link, outputDirectory, referer, {
   if (body === undefined) {
     const response = await context.request.get(link.href, {
       headers: { Referer: referer },
-      timeout: 60000,
+      timeout: requestTimeoutMs,
       failOnStatusCode: false
     });
     if (!response.ok()) return { status: 'error', url: link.href, httpStatus: response.status() };
@@ -236,6 +237,8 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
   const { context } = await launchBrowser(config);
   const runId = timestampForFile();
   const verificationMode = config.sync?.verificationMode === 'filename' ? 'filename' : 'sha256';
+  const requestTimeoutMs = Math.max(Number(config.sync?.requestTimeoutMs) || 0, 120000);
+  const navigationTimeoutMs = Math.max(Number(config.sync?.navigationTimeoutMs) || 0, 120000);
   const cacheDirectory = statePath(config, 'cache');
   const cacheIndexPath = path.join(cacheDirectory, 'index.json');
   const cacheIndex = await readJson(cacheIndexPath, {});
@@ -271,16 +274,16 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
           throw new Error('Toledo authorization has expired or is no longer accepted. Sign in to Toledo again, then retry.');
         }
         await page.waitForURL(ULTRA_COURSE_PATH, {
-          timeout: config.sync?.navigationTimeoutMs ?? 45000,
+          timeout: navigationTimeoutMs,
           waitUntil: 'domcontentloaded'
         }).catch(() => {});
         const ultraMatch = page.url().match(ULTRA_COURSE_PATH);
         if (ultraMatch) {
           await page.waitForFunction(() => document.body.innerText.includes('Course Content'), null, {
-            timeout: config.sync?.navigationTimeoutMs ?? 45000
+            timeout: navigationTimeoutMs
           });
           referer = page.url();
-          const ultra = await collectUltraContent(context, referer, ultraMatch[1]);
+          const ultra = await collectUltraContent(context, referer, ultraMatch[1], 1000, requestTimeoutMs);
           contentRecords = ultra.records;
           for (const link of ultra.files) fileLinks.set(link.href, link);
           pageRecords.push({ url: referer, title: await page.title(), contentItems: contentRecords.length, files: fileLinks.size });
@@ -307,7 +310,7 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
         onProgress({ stage: dryRun ? 'check-file' : 'download', course: course.code, message: `${course.code}: ${dryRun ? 'checking' : 'downloading'} ${index + 1}/${materialLinks.length} — ${link.title || path.basename(new URL(link.href).pathname)}` });
         try {
           const result = await downloadFile(context, link, linkDirectory, referer, {
-            dryRun, verificationMode, cacheDirectory, cacheIndex
+            dryRun, verificationMode, cacheDirectory, cacheIndex, requestTimeoutMs
           });
           if (result.file) result.file = path.relative(outputDirectory, path.join(linkDirectory, result.file));
           files.push(result);
