@@ -201,7 +201,10 @@ export async function discoverCourses(config, configPath, options = {}) {
 
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
     report({ stage: 'discover', message: `Read ${uniqueLinks.length} unique links after loading the complete course list.` });
-    const academicYear = options.ignoreAcademicYear ? '' : (config.filters?.academicYears?.[0] ?? '');
+    // Course discovery is intentionally unrestricted. Academic-year filtering
+    // belongs to an explicit CLI selection step, never to the GUI's source
+    // enumeration; stale config must not hide courses returned by Toledo.
+    const academicYear = '';
     const pageCourses = discoverPortalCourses(uniqueLinks, academicYear);
     const ultraOrigin = uniqueLinks.map((link) => {
       try { return new URL(link.href); } catch { return null; }
