@@ -135,18 +135,34 @@ async function fetchApiJson(page, context, url) {
 async function discoverApiCoursesForOrigin(page, context, origin, academicYear, report) {
   const memberships = [];
   const pageSize = 200;
-  for (let offset = 0; ; offset += pageSize) {
-    const endpoint = new URL('/learn/api/public/v1/users/me/courses', origin);
+  let endpointPath = null;
+  for (const candidatePath of ['/learn/api/v1/users/me/courses', '/learn/api/public/v1/users/me/courses']) {
+    const probe = new URL(candidatePath, origin);
+    probe.searchParams.set('limit', String(pageSize));
+    probe.searchParams.set('offset', '0');
+    const probePayload = await fetchApiJson(page, context, probe.href);
+    if (!probePayload?.__status && Array.isArray(probePayload?.results)) {
+      endpointPath = candidatePath;
+      memberships.push(...probePayload.results);
+      report({ stage: 'discover', message: `Course API ${candidatePath} page offset 0: ${probePayload.results.length} memberships.` });
+      if (probePayload.results.length < pageSize) break;
+      break;
+    }
+    if (probePayload?.__status) report({ stage: 'discover', message: `Course API ${candidatePath} returned HTTP ${probePayload.__status}.` });
+  }
+  if (!endpointPath) {
+    report({ stage: 'discover', message: 'No authenticated course-list API endpoint was available; keeping page-discovered courses.' });
+    return [];
+  }
+  for (let offset = pageSize; ; offset += pageSize) {
+    const endpoint = new URL(endpointPath, origin);
     endpoint.searchParams.set('limit', String(pageSize));
     endpoint.searchParams.set('offset', String(offset));
     const payload = await fetchApiJson(page, context, endpoint.href);
-    if (payload?.__status) {
-      report({ stage: 'discover', message: `Course API returned HTTP ${payload.__status}; keeping page-discovered courses.` });
-      return [];
-    }
+    if (payload?.__status) break;
     const pageResults = Array.isArray(payload?.results) ? payload.results : [];
     memberships.push(...pageResults);
-    report({ stage: 'discover', message: `Course API page offset ${offset}: ${pageResults.length} memberships.` });
+    report({ stage: 'discover', message: `Course API ${endpointPath} page offset ${offset}: ${pageResults.length} memberships.` });
     if (pageResults.length < pageSize) break;
   }
   const courses = [];
@@ -155,8 +171,12 @@ async function discoverApiCoursesForOrigin(page, context, origin, academicYear, 
     const courseId = membership.courseId ?? membership.course?.id;
     if (!courseId || seenIds.has(courseId)) continue;
     seenIds.add(courseId);
-    const detailUrl = new URL(`/learn/api/public/v1/courses/${encodeURIComponent(courseId)}`, origin).href;
-    const details = await fetchApiJson(page, context, detailUrl);
+    let details = null;
+    for (const detailPath of ['/learn/api/v1/courses/', '/learn/api/public/v1/courses/']) {
+      const detailUrl = new URL(`${detailPath}${encodeURIComponent(courseId)}`, origin).href;
+      const candidate = await fetchApiJson(page, context, detailUrl);
+      if (candidate && !candidate.__status) { details = candidate; break; }
+    }
     if (!details || details.__status) continue;
     const course = { ...details, id: details.id ?? courseId, courseId: details.courseId ?? membership.courseId };
     const extracted = discoverApiCourses({ results: [course] }, origin, academicYear);
