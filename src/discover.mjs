@@ -119,13 +119,31 @@ export async function discoverCourses(config, configPath, options = {}) {
     }
     await page.waitForTimeout(config.sync?.settleTimeMs ?? 2500);
 
-    const links = await page.locator('a[href]').evaluateAll((anchors) => anchors.map((anchor) => {
+    // Toledo renders the enrollment cards lazily. Scroll the page and any
+    // scrollable course-list containers so cards below the initial viewport
+    // are mounted before we inspect links.
+    let previousLinkCount = -1;
+    let stableRounds = 0;
+    for (let round = 0; round < 12 && stableRounds < 2; round += 1) {
+      const linkCount = await page.locator('[href]').count();
+      stableRounds = linkCount === previousLinkCount ? stableRounds + 1 : 0;
+      previousLinkCount = linkCount;
+      await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+        for (const element of document.querySelectorAll('*')) {
+          if (element.scrollHeight > element.clientHeight + 80) element.scrollTop = element.scrollHeight;
+        }
+      });
+      await page.waitForTimeout(500);
+    }
+
+    const links = await page.locator('[href]').evaluateAll((anchors) => anchors.map((anchor) => {
       const ownText = (anchor.innerText || anchor.textContent || '').trim();
       const container = anchor.closest('[data-testid*="course" i], [class*="course" i], li, article')
         ?? anchor.parentElement;
       const containerText = (container?.innerText || '').trim();
       return {
-        href: anchor.href,
+        href: anchor.href || anchor.getAttribute('href') || anchor.getAttribute('data-href'),
         text: ownText,
         context: containerText,
         title: (anchor.getAttribute('aria-label') || anchor.getAttribute('title') || '').trim()
@@ -133,6 +151,7 @@ export async function discoverCourses(config, configPath, options = {}) {
     }).filter((link) => link.href));
 
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
+    report({ stage: 'discover', message: `Read ${uniqueLinks.length} unique links after loading the complete course list.` });
     const academicYear = config.filters?.academicYears?.[0] ?? '';
     const portalCourses = discoverPortalCourses(uniqueLinks, academicYear);
     report({ stage: 'discover', message: `Course list loaded; found ${portalCourses.length} Toledo courses${academicYear ? ` for ${academicYear}` : ''}` });
