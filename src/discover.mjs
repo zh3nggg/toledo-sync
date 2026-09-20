@@ -106,15 +106,62 @@ export function discoverApiCourses(payload, baseUrl, academicYear = '') {
     .map((course, index) => ({ ...course, order: index + 1 }));
 }
 
-async function discoverApiCoursesForOrigin(context, origin, academicYear, report) {
-  const endpoint = new URL('/learn/api/public/v1/users/me/courses?limit=100', origin).href;
-  const response = await context.request.get(endpoint, { failOnStatusCode: false, timeout: 30000 });
-  if (!response.ok()) {
-    report({ stage: 'discover', message: `Course API returned HTTP ${response.status()}; keeping page-discovered courses.` });
-    return [];
+async function fetchApiJson(page, context, url) {
+  // Once the directory page is open on the Ultra origin, page.fetch carries
+  // exactly the same SSO cookies as the SPA. This is the reliable path for
+  // installations where BrowserContext.request receives HTTP 401.
+  try {
+    const inPage = await page.evaluate(async (target) => {
+      const response = await fetch(target, {
+        credentials: 'include',
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      let body = null;
+      try { body = await response.json(); } catch { /* Non-JSON response. */ }
+      return { status: response.status, body };
+    }, url);
+    if (inPage.status === 200 && inPage.body) return inPage.body;
+    if (inPage.status !== 401) return { __status: inPage.status };
+  } catch { /* Fall back to the context request below. */ }
+  const response = await context.request.get(url, {
+    failOnStatusCode: false,
+    timeout: 30000,
+    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', Referer: page.url() }
+  });
+  if (!response.ok()) return { __status: response.status() };
+  return response.json();
+}
+
+async function discoverApiCoursesForOrigin(page, context, origin, academicYear, report) {
+  const memberships = [];
+  const pageSize = 200;
+  for (let offset = 0; ; offset += pageSize) {
+    const endpoint = new URL('/learn/api/public/v1/users/me/courses', origin);
+    endpoint.searchParams.set('limit', String(pageSize));
+    endpoint.searchParams.set('offset', String(offset));
+    const payload = await fetchApiJson(page, context, endpoint.href);
+    if (payload?.__status) {
+      report({ stage: 'discover', message: `Course API returned HTTP ${payload.__status}; keeping page-discovered courses.` });
+      return [];
+    }
+    const pageResults = Array.isArray(payload?.results) ? payload.results : [];
+    memberships.push(...pageResults);
+    report({ stage: 'discover', message: `Course API page offset ${offset}: ${pageResults.length} memberships.` });
+    if (pageResults.length < pageSize) break;
   }
-  const payload = await response.json();
-  const courses = discoverApiCourses(payload, origin, academicYear);
+  const courses = [];
+  const seenIds = new Set();
+  for (const membership of memberships) {
+    const courseId = membership.courseId ?? membership.course?.id;
+    if (!courseId || seenIds.has(courseId)) continue;
+    seenIds.add(courseId);
+    const detailUrl = new URL(`/learn/api/public/v1/courses/${encodeURIComponent(courseId)}`, origin).href;
+    const details = await fetchApiJson(page, context, detailUrl);
+    if (!details || details.__status) continue;
+    const course = { ...details, id: details.id ?? courseId, courseId: details.courseId ?? membership.courseId };
+    const extracted = discoverApiCourses({ results: [course] }, origin, academicYear);
+    if (extracted[0]) courses.push(extracted[0]);
+  }
   report({ stage: 'discover', message: `Course API returned ${courses.length} enrolled courses.` });
   return courses;
 }
@@ -236,7 +283,7 @@ export async function discoverCourses(config, configPath, options = {}) {
     }).find((url) => /ultra|blackboard/i.test(url?.hostname ?? ''))?.origin;
     let apiCourses = [];
     if (ultraOrigin) {
-      try { apiCourses = await discoverApiCoursesForOrigin(context, ultraOrigin, academicYear, report); }
+      try { apiCourses = await discoverApiCoursesForOrigin(page, context, ultraOrigin, academicYear, report); }
       catch (error) { report({ stage: 'discover', message: `Course API unavailable (${error.message}); keeping page-discovered courses.` }); }
     }
     const byCode = new Map(pageCourses.map((course) => [course.code, course]));
