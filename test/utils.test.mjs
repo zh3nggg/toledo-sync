@@ -64,6 +64,11 @@ test('extracts direct and embedded Ultra files', () => {
   assert.equal(embedded[0].title, 'Notes.pdf');
 });
 
+test('cleans Toledo course-card status and notification text from titles', () => {
+  assert.equal(courseTitleFromText('G0S96A Groups and Symmetries [ ] 11/09/ New update - Groups and Symmetries [ ] Groups and Symmetries [ ]', 'G0S96A'), 'Groups and Symmetries');
+  assert.equal(courseTitleFromText('G0S83A Advanced Quantum Mechanics 14:00 16:00 21/09/ Advanced Quantum Mechanics 200C 01.27 Advanced Quantum Mechanics', 'G0S83A'), 'Advanced Quantum Mechanics');
+  assert.equal(courseTitleFromText('H06A8A Computational Methods in Solid State Physics [ ] ULTRA-B-KUL', 'H06A8A'), 'Computational Methods in Solid State Physics');
+});
 test('matches course links by code before title', () => {
   const course = { code: 'G0S96A', title: 'Groups and Symmetries', aliases: [], academicYear: '2026-2027' };
   assert.ok(scoreCourseLink(course, { text: 'G0S96A Groups and Symmetries', title: '', href: 'https://example.edu/ultra/courses/1' }) >= 100);
@@ -76,6 +81,15 @@ test('extracts and enforces explicit academic years', () => {
   assert.equal(scoreCourseLink(course, { text: '2025-2026 G0S96A Groups and Symmetries', title: '', href: 'https://example.edu/ultra/courses/old' }), 0);
 });
 
+test('prefers the enrollment link over noisy material and announcement links', () => {
+  const links = [
+    { href: 'https://toledo.example/ultra/redirect?redirectType=nautilus&courseId=_1&contentId=_2', text: 'Lecture 4.pdf 01/06/ New update - Lecture 4.pdf Historical and Social Aspects of Physics [G0U12a]', title: '' },
+    { href: 'https://toledo.example/learningUnits/ultraLink?batchUid=ULTRA-B-KUL-G0U12a-2526', text: 'Historical and Social Aspects of Physics [G0U12a] [2526]', title: '' }
+  ];
+  const courses = discoverPortalCourses(links, '2025-2026');
+  assert.equal(courses[0].title, 'Historical and Social Aspects of Physics');
+  assert.equal(courses[0].url, links[1].href);
+});
 test('enumerates Toledo course links instead of relying on the bundled course list', () => {
   const links = [
     { href: 'https://toledo.example/learningUnits/ultraLink?batchUid=abc', text: 'H0G03A Emergent Quantum Phenomena 2025-2026', title: '' },

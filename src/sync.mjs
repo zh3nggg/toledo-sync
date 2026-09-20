@@ -3,6 +3,7 @@ import path from 'node:path';
 import { FILE_EXTENSIONS } from './constants.mjs';
 import { launchBrowser } from './browser.mjs';
 import { courseMaterialsPath, statePath } from './config.mjs';
+import { courseTitleFromText } from './discover.mjs';
 import {
   contentDispositionFileName, ensureDirectory, readJson, sanitizeFileName,
   sha256, timestampForFile, writeJson
@@ -202,8 +203,9 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
   for (const course of missing) onProgress({ stage: 'course-skipped', message: `${course.code}: no current course link; skipped` });
   try {
     for (const course of courses) {
-      onProgress({ stage: 'course', course: course.code, message: `${course.code} ${course.title}: opening course` });
-      const courseFolder = `${course.code} ${sanitizeFileName(course.title)}`;
+      const cleanCourseTitle = courseTitleFromText(course.title, course.code);
+      onProgress({ stage: 'course', course: course.code, message: `${course.code} ${cleanCourseTitle}: opening course` });
+      const courseFolder = `${course.code} ${sanitizeFileName(cleanCourseTitle)}`;
       const outputDirectory = courseMaterialsPath(config, courseFolder);
       const snapshotDirectory = statePath(config, dryRun ? 'previews' : 'snapshots', course.code, runId);
       const manifestPath = statePath(config, 'manifests', `${course.code}.json`);
@@ -219,6 +221,9 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
       try {
         onProgress({ stage: 'scan', course: course.code, message: `${course.code}: reading course structure and locating files` });
         await page.goto(course.url, { waitUntil: 'domcontentloaded' });
+        if (/idp\.kuleuven\.be|account\.kuleuven\.be/i.test(page.url())) {
+          throw new Error('Toledo authorization has expired or is no longer accepted. Sign in to Toledo again, then retry.');
+        }
         await page.waitForURL(ULTRA_COURSE_PATH, {
           timeout: config.sync?.navigationTimeoutMs ?? 45000,
           waitUntil: 'domcontentloaded'
@@ -264,7 +269,7 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
       }
       const manifest = {
         schemaVersion: 1,
-        course: { code: course.code, title: course.title, url: course.url, resolvedUrl: referer },
+        course: { code: course.code, title: cleanCourseTitle, url: course.url, resolvedUrl: referer },
         syncedAt: new Date().toISOString(),
         outputDirectory,
         pages: pageRecords,
@@ -276,7 +281,7 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
         await writeJson(path.join(snapshotDirectory, 'pages.json'), pageRecords);
       }
       runResults.push(manifest);
-      onProgress({ stage: 'course-complete', course: course.code, message: `${course.code} ${course.title}: complete (${files.filter((file) => file.status === 'downloaded').length} new, ${files.filter((file) => file.status === 'unchanged').length} unchanged)` });
+      onProgress({ stage: 'course-complete', course: course.code, message: `${course.code} ${cleanCourseTitle}: complete (${files.filter((file) => file.status === 'downloaded').length} new, ${files.filter((file) => file.status === 'unchanged').length} unchanged)` });
     }
   } finally {
     await context.close();

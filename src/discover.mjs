@@ -12,17 +12,35 @@ export function extractCourseCode(value) {
   return String(value ?? '').match(COURSE_CODE_PATTERN)?.[0]?.toUpperCase() ?? null;
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function courseTitleFromText(value, code) {
   let title = String(value ?? '').replace(/\s+/g, ' ').trim();
-  if (code) title = title.replace(new RegExp(`\\b${code}\\b`, 'ig'), ' ');
-  title = title.replace(/\b20\d{2}\s*[-/]\s*(?:20\d{2}|\d{2})\b/g, ' ')
+  if (code) {
+    const codePattern = new RegExp(`\\b${escapeRegExp(code)}\\b`, 'i');
+    const match = codePattern.exec(title);
+    if (match) {
+      const beforeCode = title.slice(0, match.index).replace(/[\[\]]+\s*$/, '').trim();
+      const afterCode = title.slice(match.index + match[0].length).replace(/^[\[\]]+\s*/, '');
+      title = beforeCode || afterCode;
+    }
+  }
+  // Toledo renders status, notification, timetable, room and accessibility
+  // labels in the same course-card text. The actual course name comes first.
+  title = title
+    .split(/\[\s*(?:[x✓]|\d{4})?\s*\]|\bnew\s+update\b|\b\d{1,2}\s*\/\s*\d{1,2}\b|\bULTRA[- ]B[- ]KUL\b/i)[0]
+    .replace(/\b\d{1,2}:\d{2}\b/g, ' ')
+    .replace(/\b20\d{2}\s*[-/]\s*(?:20\d{2}|\d{2})\b/g, ' ')
     .replace(/\b\d{4}\b/g, ' ')
+    .replace(/\b\d{1,3}[A-Z]?\s*\.\s*\d{1,3}\b/g, ' ')
+    .replace(/\b\d{2,4}[A-Z]?\b/g, ' ')
     .replace(/^[\s|:;–—-]+|[\s|:;–—-]+$/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
   return title || code || 'Toledo course';
 }
-
 export function discoverPortalCourses(links, academicYear) {
   const candidates = [];
   for (const link of links ?? []) {
@@ -33,9 +51,11 @@ export function discoverPortalCourses(links, academicYear) {
     if (academicYear && years.length && !years.includes(academicYear)) continue;
     const titleSource = extractCourseCode(link.text) ? link.text : `${link.text ?? ''} ${link.context ?? ''} ${link.title ?? ''}`;
     const title = courseTitleFromText(titleSource, code);
+    const isCourseEnrollment = /learningUnits\/ultraLink/i.test(link.href)
+      || (/redirectType=nautilus&courseId=/i.test(link.href) && !/[?&]contentId=/i.test(link.href));
     const score = (years.includes(academicYear) ? 20 : 0)
       + (link.text ? 10 : 0)
-      + (/learningUnits\/ultraLink|redirectType=nautilus&courseId=/i.test(link.href) ? 20 : 0);
+      + (isCourseEnrollment ? 100 : 0);
     candidates.push({ code, title, academicYear: years[0] ?? academicYear, url: link.href, score, source: link });
   }
   const byCode = new Map();
