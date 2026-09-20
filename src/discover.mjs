@@ -119,6 +119,46 @@ async function discoverApiCoursesForOrigin(context, origin, academicYear, report
   return courses;
 }
 
+async function collectPortalLinks(page) {
+  let previousLinkCount = -1;
+  let stableRounds = 0;
+  for (let round = 0; round < 12 && stableRounds < 2; round += 1) {
+    const linkCount = await page.locator('[href]').count();
+    stableRounds = linkCount === previousLinkCount ? stableRounds + 1 : 0;
+    previousLinkCount = linkCount;
+    await page.evaluate(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      for (const element of document.querySelectorAll('*')) {
+        if (element.scrollHeight > element.clientHeight + 80) element.scrollTop = element.scrollHeight;
+      }
+    });
+    await page.waitForTimeout(500);
+  }
+  return page.locator('[href]').evaluateAll((anchors) => anchors.map((anchor) => {
+    const ownText = (anchor.innerText || anchor.textContent || '').trim();
+    const container = anchor.closest('[data-testid*="course" i], [class*="course" i], li, article')
+      ?? anchor.parentElement;
+    const containerText = (container?.innerText || '').trim();
+    return {
+      href: anchor.href || anchor.getAttribute('href') || anchor.getAttribute('data-href'),
+      text: ownText,
+      context: containerText,
+      title: (anchor.getAttribute('aria-label') || anchor.getAttribute('title') || '').trim()
+    };
+  }).filter((link) => link.href));
+}
+
+function courseDirectoryLink(links) {
+  return links.find((link) => {
+    try {
+      const url = new URL(link.href);
+      const label = `${link.text ?? ''} ${link.title ?? ''}`;
+      return /\/ultra\/courses\/?$/i.test(url.pathname)
+        || (/\b(courses|cursussen|cours)\b/i.test(label) && /\/ultra\//i.test(url.pathname));
+    } catch { return false; }
+  })?.href ?? null;
+}
+
 export function scoreCourseLink(course, link) {
   const haystack = normalizeText(`${link.text} ${link.title} ${link.href}`);
   if (!haystack) return 0;
@@ -168,37 +208,22 @@ export async function discoverCourses(config, configPath, options = {}) {
     }
     await page.waitForTimeout(config.sync?.settleTimeMs ?? 2500);
 
-    // Toledo renders the enrollment cards lazily. Scroll the page and any
-    // scrollable course-list containers so cards below the initial viewport
-    // are mounted before we inspect links.
-    let previousLinkCount = -1;
-    let stableRounds = 0;
-    for (let round = 0; round < 12 && stableRounds < 2; round += 1) {
-      const linkCount = await page.locator('[href]').count();
-      stableRounds = linkCount === previousLinkCount ? stableRounds + 1 : 0;
-      previousLinkCount = linkCount;
-      await page.evaluate(() => {
-        window.scrollTo(0, document.documentElement.scrollHeight);
-        for (const element of document.querySelectorAll('*')) {
-          if (element.scrollHeight > element.clientHeight + 80) element.scrollTop = element.scrollHeight;
-        }
-      });
-      await page.waitForTimeout(500);
+    let links = await collectPortalLinks(page);
+    const initialUniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
+    const initialDirectory = courseDirectoryLink(initialUniqueLinks);
+    let directoryUrl = initialDirectory;
+    if (!directoryUrl) {
+      const ultraOrigin = initialUniqueLinks.map((link) => {
+        try { return new URL(link.href); } catch { return null; }
+      }).find((url) => /ultra|blackboard/i.test(url?.hostname ?? ''))?.origin;
+      if (ultraOrigin) directoryUrl = new URL('/ultra/courses', ultraOrigin).href;
     }
-
-    const links = await page.locator('[href]').evaluateAll((anchors) => anchors.map((anchor) => {
-      const ownText = (anchor.innerText || anchor.textContent || '').trim();
-      const container = anchor.closest('[data-testid*="course" i], [class*="course" i], li, article')
-        ?? anchor.parentElement;
-      const containerText = (container?.innerText || '').trim();
-      return {
-        href: anchor.href || anchor.getAttribute('href') || anchor.getAttribute('data-href'),
-        text: ownText,
-        context: containerText,
-        title: (anchor.getAttribute('aria-label') || anchor.getAttribute('title') || '').trim()
-      };
-    }).filter((link) => link.href));
-
+    if (directoryUrl && directoryUrl !== page.url()) {
+      report({ stage: 'discover', message: 'Opening the full Toledo course directory…' });
+      await page.goto(directoryUrl, { waitUntil: 'domcontentloaded' }).catch(() => {});
+      await page.waitForTimeout(config.sync?.settleTimeMs ?? 2500);
+      links = [...links, ...(await collectPortalLinks(page))];
+    }
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
     report({ stage: 'discover', message: `Read ${uniqueLinks.length} unique links after loading the complete course list.` });
     // Course discovery is intentionally unrestricted. Academic-year filtering
@@ -218,7 +243,7 @@ export async function discoverCourses(config, configPath, options = {}) {
     for (const course of apiCourses) byCode.set(course.code, { ...byCode.get(course.code), ...course });
     const portalCourses = [...byCode.values()].sort((left, right) => left.title.localeCompare(right.title, undefined, { sensitivity: 'base' }))
       .map((course, index) => ({ ...course, order: index + 1 }));
-    report({ stage: 'discover', message: `Course list loaded; found ${portalCourses.length} Toledo courses${academicYear ? ` for ${academicYear}` : ''}` });
+    report({ stage: 'discover', message: `Course list loaded; found ${portalCourses.length} Toledo courses: ${portalCourses.map((course) => course.code).join(', ') || 'none'}` });
     const previousByCode = new Map(config.courses.map((course) => [course.code.toUpperCase(), course]));
     const discoveredCourses = portalCourses.map((course) => {
       const previous = previousByCode.get(course.code.toUpperCase());
