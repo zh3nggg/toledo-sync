@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('toledo', {
   chooseDirectory: (title) => ipcRenderer.invoke('dialog:directory', title),
   saveConfig: (values) => ipcRenderer.invoke('config:save', values),
   login: () => ipcRenderer.invoke('toledo:login'),
+  resetBrowser: () => ipcRenderer.invoke('browser:reset'),
   discover: () => ipcRenderer.invoke('toledo:discover'),
   sync: (courseCode, selectedCodes) => ipcRenderer.invoke('toledo:sync', { courseCode, selectedCodes }),
   checkUpdates: (courseCode, selectedCodes) => ipcRenderer.invoke('toledo:check-updates', { courseCode, selectedCodes }),

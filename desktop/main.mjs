@@ -160,6 +160,22 @@ async function startLogin() {
   } finally { await context.close(); }
 }
 
+async function resetBrowserSession() {
+  ensureWindows();
+  const current = await currentConfig();
+  if (!current) throw new Error('Save the initial settings first.');
+
+  // Reset only the app-owned authentication artifacts. The Vault, download
+  // root, and all course materials remain untouched.
+  const profilePath = path.resolve(current.config.browser?.profilePath ?? path.join(process.env.USERPROFILE ?? process.cwd(), '.toledo-sync', 'browser-profile'));
+  const authStatePath = current.config.browser?.authStatePath ? path.resolve(current.config.browser.authStatePath) : null;
+  await fs.rm(profilePath, { recursive: true, force: true });
+  if (authStatePath) await fs.rm(authStatePath, { force: true });
+  await fs.rm(statePath(current.config, 'auth', 'last-login.json'), { force: true });
+  notify('success', 'Browser session reset. Sign in to Toledo again.');
+  return { authenticated: false, reset: true };
+}
+
 function registerIpc() {
   ipcMain.handle('app:initial', async () => {
     const current = await currentConfig();
@@ -171,6 +187,7 @@ function registerIpc() {
   });
   ipcMain.handle('config:save', async (_event, values) => updateConfig(values));
   ipcMain.handle('toledo:login', async () => startLogin());
+  ipcMain.handle('browser:reset', async () => resetBrowserSession());
   ipcMain.handle('toledo:discover', async () => {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
