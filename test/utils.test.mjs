@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseCalendarEvents } from '../src/calendar.mjs';
 import { courseMaterialsPath, createConfig } from '../src/config.mjs';
-import { courseTitleFromText, discoverPortalCourses, extractAcademicYears, extractCourseCode, scoreCourseLink } from '../src/discover.mjs';
+import { courseTitleFromText, discoverApiCourses, discoverPortalCourses, extractAcademicYears, extractCourseCode, scoreCourseLink } from '../src/discover.mjs';
 import { extractUltraFileLinks, isLikelyFileLink, uniqueDestination } from '../src/sync.mjs';
 import { sanitizeFileName } from '../src/utils.mjs';
 
@@ -117,6 +117,15 @@ test('enumerates Toledo course links instead of relying on the bundled course li
   assert.equal(courses[0].url, links[0].href);
   const unrestricted = discoverPortalCourses(links, '');
   assert.deepEqual(new Set(unrestricted.map((course) => course.code)), new Set(['H0G03A', 'G0R16A']));
+});
+
+test('enumerates enrolled Ultra courses from the current-user API response', () => {
+  const courses = discoverApiCourses({ results: [
+    { course: { id: '_1_1', externalId: 'ULTRA-B-KUL-G0S90a-2627', name: 'Advanced Solid State Physics' } },
+    { course: { id: '_2_1', externalId: 'ULTRA-B-KUL-G0R16a-2627', name: 'Semiconductor Physics' } }
+  ] }, 'https://ultra.example');
+  assert.deepEqual(courses.map((course) => course.code), ['G0S90A', 'G0R16A']);
+  assert.equal(courses[0].url, 'https://ultra.example/ultra/courses/_1_1/outline');
 });
 
 test('parses folded iCalendar events', () => {

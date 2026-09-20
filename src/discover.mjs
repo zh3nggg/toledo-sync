@@ -70,6 +70,55 @@ export function discoverPortalCourses(links, academicYear) {
     .map(({ score, source, ...course }, index) => ({ ...course, order: index + 1 }));
 }
 
+function apiCourseUrl(course, baseUrl) {
+  const direct = (course.links ?? []).find((link) => /alternate|course|ultra/i.test(`${link.rel ?? ''} ${link.title ?? ''}`))?.href;
+  if (direct) return new URL(direct, baseUrl).href;
+  const id = course.id ?? course.courseId ?? course.pk1;
+  return id ? new URL(`/ultra/courses/${encodeURIComponent(id)}/outline`, baseUrl).href : null;
+}
+
+export function discoverApiCourses(payload, baseUrl, academicYear = '') {
+  const results = Array.isArray(payload?.results) ? payload.results : [];
+  const courses = [];
+  for (const enrollment of results) {
+    const course = enrollment.course ?? enrollment;
+    const haystack = JSON.stringify({
+      externalId: course.externalId ?? enrollment.externalId,
+      courseId: course.courseId ?? enrollment.courseId,
+      name: course.name ?? course.title ?? enrollment.name,
+      id: course.id ?? enrollment.id
+    });
+    const code = extractCourseCode(haystack);
+    if (!code) continue;
+    const years = extractAcademicYears(haystack);
+    if (academicYear && years.length && !years.includes(academicYear)) continue;
+    const title = courseTitleFromText(course.name ?? course.title ?? enrollment.name ?? code, code);
+    const url = apiCourseUrl(course, baseUrl);
+    if (!url) continue;
+    courses.push({ code, title, academicYear: years[0] ?? academicYear, url, order: courses.length + 1 });
+  }
+  const byCode = new Map();
+  for (const course of courses) {
+    const previous = byCode.get(course.code);
+    if (!previous || course.title.length > previous.title.length) byCode.set(course.code, course);
+  }
+  return [...byCode.values()].sort((left, right) => left.title.localeCompare(right.title, undefined, { sensitivity: 'base' }))
+    .map((course, index) => ({ ...course, order: index + 1 }));
+}
+
+async function discoverApiCoursesForOrigin(context, origin, academicYear, report) {
+  const endpoint = new URL('/learn/api/public/v1/users/me/courses?limit=100', origin).href;
+  const response = await context.request.get(endpoint, { failOnStatusCode: false, timeout: 30000 });
+  if (!response.ok()) {
+    report({ stage: 'discover', message: `Course API returned HTTP ${response.status()}; keeping page-discovered courses.` });
+    return [];
+  }
+  const payload = await response.json();
+  const courses = discoverApiCourses(payload, origin, academicYear);
+  report({ stage: 'discover', message: `Course API returned ${courses.length} enrolled courses.` });
+  return courses;
+}
+
 export function scoreCourseLink(course, link) {
   const haystack = normalizeText(`${link.text} ${link.title} ${link.href}`);
   if (!haystack) return 0;
@@ -153,7 +202,19 @@ export async function discoverCourses(config, configPath, options = {}) {
     const uniqueLinks = [...new Map(links.map((link) => [link.href, link])).values()];
     report({ stage: 'discover', message: `Read ${uniqueLinks.length} unique links after loading the complete course list.` });
     const academicYear = config.filters?.academicYears?.[0] ?? '';
-    const portalCourses = discoverPortalCourses(uniqueLinks, academicYear);
+    const pageCourses = discoverPortalCourses(uniqueLinks, academicYear);
+    const ultraOrigin = uniqueLinks.map((link) => {
+      try { return new URL(link.href); } catch { return null; }
+    }).find((url) => /ultra|blackboard/i.test(url?.hostname ?? ''))?.origin;
+    let apiCourses = [];
+    if (ultraOrigin) {
+      try { apiCourses = await discoverApiCoursesForOrigin(context, ultraOrigin, academicYear, report); }
+      catch (error) { report({ stage: 'discover', message: `Course API unavailable (${error.message}); keeping page-discovered courses.` }); }
+    }
+    const byCode = new Map(pageCourses.map((course) => [course.code, course]));
+    for (const course of apiCourses) byCode.set(course.code, { ...byCode.get(course.code), ...course });
+    const portalCourses = [...byCode.values()].sort((left, right) => left.title.localeCompare(right.title, undefined, { sensitivity: 'base' }))
+      .map((course, index) => ({ ...course, order: index + 1 }));
     report({ stage: 'discover', message: `Course list loaded; found ${portalCourses.length} Toledo courses${academicYear ? ` for ${academicYear}` : ''}` });
     const previousByCode = new Map(config.courses.map((course) => [course.code.toUpperCase(), course]));
     const discoveredCourses = portalCourses.map((course) => {
