@@ -173,7 +173,7 @@ Aanmeldstatus blijft lokaal in `~/.toledo-sync/`; manifesten en snapshots in de 
 
 ## Next version / 下一版本 / Volgende versie
 
-The next release will add an interactive file tree for update review. Users will be able to expand the resulting course structure and resolve each conflict with **keep local**, **replace with remote**, or **skip** before writing files. This is planned work and is not part of version 1.1 yet.
+Version 1.2 development adds an interactive file tree for update review. Users can expand each course, inspect the resulting paths, and resolve each conflict with **keep local**, **replace with remote**, or **skip** before writing files. The existing safe behavior remains the default when no decision is changed.
 
 ## For contributors / 开发者
 

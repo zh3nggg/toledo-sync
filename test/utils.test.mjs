@@ -6,7 +6,7 @@ import path from 'node:path';
 import { parseCalendarEvents } from '../src/calendar.mjs';
 import { courseMaterialsPath, createConfig } from '../src/config.mjs';
 import { courseTitleFromText, discoverApiCourses, discoverPortalCourses, extractAcademicYears, extractCourseCode, scoreCourseLink } from '../src/discover.mjs';
-import { extractUltraFileLinks, isLikelyFileLink, uniqueDestination } from '../src/sync.mjs';
+import { downloadFile, extractUltraFileLinks, fileDecisionKey, isLikelyFileLink, normalizeFileAction, uniqueDestination } from '../src/sync.mjs';
 import { sanitizeFileName } from '../src/utils.mjs';
 
 test('uses the selected download directory as the exact course root', () => {
@@ -82,6 +82,28 @@ test('filename verification keeps an existing local file in place', async () => 
     assert.equal(destination.unchanged, true);
     assert.equal(destination.localModified, false);
     assert.equal(await fs.readFile(localPath, 'utf8'), 'local edit');
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});
+test('interactive file decisions use stable keys and reject unknown actions', () => {
+  assert.equal(fileDecisionKey('G0R16A', 'https://example.edu/file.pdf'), 'G0R16A|https://example.edu/file.pdf');
+  assert.equal(normalizeFileAction('keep-local'), 'keep-local');
+  assert.equal(normalizeFileAction('replace'), 'replace');
+  assert.equal(normalizeFileAction('unknown'), null);
+});
+test('explicit file decisions preserve local files or replace them only when requested', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'toledo-decisions-'));
+  try {
+    const localPath = path.join(directory, 'lecture.pdf');
+    await fs.writeFile(localPath, 'local edit');
+    const link = { href: 'https://example.edu/lecture.pdf', title: 'lecture.pdf' };
+    const remote = Buffer.from('remote version');
+    const context = { request: { get: async () => ({ ok: () => true, headers: () => ({ 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="lecture.pdf"' }), body: async () => remote }) } };
+    const kept = await downloadFile(context, link, directory, 'https://example.edu/course', { action: 'keep-local', decisionKey: 'G0R16A|https://example.edu/lecture.pdf' });
+    assert.equal(kept.status, 'kept-local');
+    assert.equal(await fs.readFile(localPath, 'utf8'), 'local edit');
+    const replaced = await downloadFile(context, link, directory, 'https://example.edu/course', { action: 'replace', decisionKey: 'G0R16A|https://example.edu/lecture.pdf' });
+    assert.equal(replaced.status, 'downloaded');
+    assert.equal(await fs.readFile(localPath, 'utf8'), 'remote version');
   } finally { await fs.rm(directory, { recursive: true, force: true }); }
 });
 test('matches course links by code before title', () => {

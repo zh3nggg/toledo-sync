@@ -48,8 +48,13 @@ function updateSummary(results) {
     newCount: result.files.filter((file) => file.status === 'new' || file.status === 'downloaded').length,
     unchangedCount: result.files.filter((file) => file.status === 'unchanged').length,
     localModifiedCount: result.files.filter((file) => file.status === 'local-modified').length,
+    keptCount: result.files.filter((file) => file.status === 'kept-local').length,
+    skippedCount: result.files.filter((file) => file.status === 'skipped').length,
     errorCount: result.files.filter((file) => file.status === 'error' || file.status === 'skipped-non-file').length,
-    files: result.files
+    files: result.files.map((file) => ({
+      ...file,
+      decisionKey: file.decisionKey ?? `${result.course.code}|${file.url ?? ''}`
+    }))
   }));
 }
 
@@ -221,11 +226,11 @@ function registerIpc() {
     return { summaries: updateSummary(result), results: result };
   });
   ipcMain.handle('toledo:apply-updates', async (_event, request = {}) => {
-    const { courseCode = null, selectedCodes = null } = request || {};
+    const { courseCode = null, selectedCodes = null, decisions = {} } = request || {};
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Applying updates for ${courseCode}…` : 'Applying checked updates…');
-    const result = await syncCourses({ ...unrestrictedDesktopConfig(configWithSelection(current.config, selectedCodes)), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
+    const result = await syncCourses({ ...unrestrictedDesktopConfig(configWithSelection(current.config, selectedCodes)), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message), { decisions });
     notify('success', 'Updates written locally. Existing local files were preserved.');
     return { summaries: updateSummary(result), results: result };
   });  ipcMain.handle('path:open', async (_event, target) => shell.openPath(target));

@@ -11,6 +11,15 @@ import {
 
 const FILE_HINT = /bbcswebdav|attachment|download|contentfile|resource\//i;
 const ULTRA_COURSE_PATH = /\/ultra\/courses\/([^/]+)\/outline/i;
+const FILE_ACTIONS = new Set(['keep-local', 'replace', 'skip', 'preserve-copy']);
+
+export function fileDecisionKey(courseCode, url) {
+  return `${courseCode}|${url}`;
+}
+
+export function normalizeFileAction(value) {
+  return FILE_ACTIONS.has(value) ? value : null;
+}
 
 export function isLikelyFileLink(urlValue) {
   try {
@@ -157,13 +166,26 @@ export async function uniqueDestination(directory, fileName, digest, verificatio
   return { path: path.join(directory, `${stem}-${digest.slice(0, 8)}${extension}`), unchanged: false, localModified: true };
 }
 
-async function downloadFile(context, link, outputDirectory, referer, {
+export async function downloadFile(context, link, outputDirectory, referer, {
   dryRun = false,
   verificationMode = 'sha256',
   cacheDirectory = null,
   cacheIndex = {},
-  requestTimeoutMs = 120000
+  requestTimeoutMs = 120000,
+  action = null,
+  decisionKey = null
 } = {}) {
+  const normalizedAction = normalizeFileAction(action);
+  if (!dryRun && (normalizedAction === 'keep-local' || normalizedAction === 'skip')) {
+    return {
+      status: normalizedAction === 'keep-local' ? 'kept-local' : 'skipped',
+      url: link.href,
+      file: link.title || path.basename(new URL(link.href).pathname),
+      decisionKey,
+      decision: normalizedAction,
+      verificationMode
+    };
+  }
   if (!dryRun) await ensureDirectory(outputDirectory);
   const cacheKey = stableId(link.href);
   let body;
@@ -207,7 +229,10 @@ async function downloadFile(context, link, outputDirectory, referer, {
       sha256: digest, contentType, createdAt: new Date().toISOString()
     };
   }
-  const destination = await uniqueDestination(outputDirectory, candidateName, digest, verificationMode);
+  const safeName = sanitizeFileName(candidateName, `file-${digest.slice(0, 8)}`);
+  const destination = normalizedAction === 'replace'
+    ? { path: path.join(outputDirectory, safeName), unchanged: false, localModified: false }
+    : await uniqueDestination(outputDirectory, candidateName, digest, verificationMode);
   if (!destination.unchanged && !dryRun) await fs.writeFile(destination.path, body);
   return {
     status: destination.unchanged ? 'unchanged' : destination.localModified ? 'local-modified' : dryRun ? 'new' : 'downloaded',
@@ -217,11 +242,13 @@ async function downloadFile(context, link, outputDirectory, referer, {
     sha256: digest,
     contentType,
     fromCache,
-    verificationMode
+    verificationMode,
+    decisionKey,
+    decision: normalizedAction
   };
 }
 
-export async function syncCourses(config, selectedCode = null, onProgress = () => {}, { dryRun = false } = {}) {
+export async function syncCourses(config, selectedCode = null, onProgress = () => {}, { dryRun = false, decisions = {} } = {}) {
   const requestedCourses = config.courses
     .filter((course) => selectedCode
       ? course.code.toLowerCase() === selectedCode.toLowerCase()
@@ -307,17 +334,19 @@ export async function syncCourses(config, selectedCode = null, onProgress = () =
       const materialLinks = [...fileLinks.values()];
       for (const [index, link] of materialLinks.entries()) {
         const linkDirectory = path.join(outputDirectory, ...(link.pathSegments ?? []).map((segment) => sanitizeFileName(segment)));
+        const decisionKey = fileDecisionKey(course.code, link.href);
+        const action = normalizeFileAction(decisions?.[decisionKey]);
         onProgress({ stage: dryRun ? 'check-file' : 'download', course: course.code, message: `${course.code}: ${dryRun ? 'checking' : 'downloading'} ${index + 1}/${materialLinks.length} — ${link.title || path.basename(new URL(link.href).pathname)}` });
         try {
           const result = await downloadFile(context, link, linkDirectory, referer, {
-            dryRun, verificationMode, cacheDirectory, cacheIndex, requestTimeoutMs
+            dryRun, verificationMode, cacheDirectory, cacheIndex, requestTimeoutMs, action, decisionKey
           });
           if (result.file) result.file = path.relative(outputDirectory, path.join(linkDirectory, result.file));
           files.push(result);
           const sourceNote = result.fromCache ? ' (using cached copy)' : '';
           onProgress({ stage: 'downloaded', course: course.code, message: `${course.code}: ${result.status}${sourceNote} — ${result.file || link.title || 'material'}` });
         }
-        catch (error) { files.push({ status: 'error', url: link.href, error: error.message }); onProgress({ stage: 'error', course: course.code, message: `${course.code}: error downloading ${link.title || 'material'} — ${error.message}` }); }
+        catch (error) { files.push({ status: 'error', url: link.href, error: error.message, decisionKey }); onProgress({ stage: 'error', course: course.code, message: `${course.code}: error downloading ${link.title || 'material'} — ${error.message}` }); }
       }
       const manifest = {
         schemaVersion: 1,

@@ -15,6 +15,7 @@ The Windows desktop app packages the same synchronization core as the CLI. It is
 7. Select **Log in to Toledo** in the second tab. Complete KU Leuven SSO/MFA in the Chrome, Edge, or Chromium window.
 8. Select **Discover courses**. Toledo Sync reads the complete signed-in Toledo course list and replaces the displayed list; it does not rely on a bundled course catalogue or silently match an older course with the same code.
 9. Select the courses you actually want to check or update. In **Update center**, preview changes before applying them. The preview stores remote responses in the Vault state cache, so **Download checked updates** reuses them instead of downloading a second time. Existing local edits are preserved and remote replacements receive a hash suffix in SHA-256 mode; the app does not delete extra local files.
+10. The update preview is an interactive file tree. Expand a course to review its files. For a locally modified file, the safe default keeps the current behavior (**Keep local and save remote copy**); you can explicitly choose **Keep local**, **Replace with remote**, or **Skip**. New files can be downloaded or skipped. Choosing **Replace with remote** asks for a second confirmation before writing over the local file.
 
 The app needs Node.js only when run from source. Installed release builds include the runtime, but still use an installed Chrome, Edge, or Chromium for KU Leuven login.
 

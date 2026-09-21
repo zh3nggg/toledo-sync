@@ -6,15 +6,15 @@ const translations = {
 Object.assign(translations.zh, { automationTitle: '自动更新', automationText: '设置应用启动和运行期间的自动检查。', autoStart: '开机时启动 Toledo Sync', autoCheckOnLaunch: '启动时检查并同步课程更新', periodicCheck: '周期性检查', periodicOff: '关闭', periodic30: '每 30 分钟', periodic60: '每小时', periodic360: '每 6 小时', periodic1440: '每天' });
 Object.assign(translations.en, { automationTitle: 'Automatic updates', automationText: 'Choose whether checks run when the app starts or while it stays open.', autoStart: 'Start Toledo Sync when Windows starts', autoCheckOnLaunch: 'Check and synchronize updates on launch', periodicCheck: 'Scheduled checks', periodicOff: 'Off', periodic30: 'Every 30 minutes', periodic60: 'Every hour', periodic360: 'Every 6 hours', periodic1440: 'Every day' });
 Object.assign(translations.nl, { automationTitle: 'Automatische updates', automationText: 'Kies of controles starten bij het openen of tijdens het gebruik.', autoStart: 'Toledo Sync starten wanneer Windows start', autoCheckOnLaunch: 'Updates controleren en synchroniseren bij het openen', periodicCheck: 'Geplande controles', periodicOff: 'Uit', periodic30: 'Elke 30 minuten', periodic60: 'Elk uur', periodic360: 'Elke 6 uur', periodic1440: 'Elke dag' });
-Object.assign(translations.zh, { checkUpdates: '检查更新', applyUpdates: '下载已检查更新', checkCourse: '检查此课程更新', summaryNew: '新增', summaryUnchanged: '未变化', summaryModified: '本地已修改', summaryErrors: '错误', summaryNone: '暂无可下载更新', summaryNotDiscovered: '尚未发现课程链接' });
-Object.assign(translations.en, { checkUpdates: 'Check for updates', applyUpdates: 'Download checked updates', checkCourse: 'Check this course', summaryNew: 'new', summaryUnchanged: 'unchanged', summaryModified: 'locally modified', summaryErrors: 'errors', summaryNone: 'No downloadable updates', summaryNotDiscovered: 'Course link not discovered' });
-Object.assign(translations.nl, { checkUpdates: 'Op updates controleren', applyUpdates: 'Gecontroleerde updates downloaden', checkCourse: 'Deze cursus controleren', summaryNew: 'nieuw', summaryUnchanged: 'ongewijzigd', summaryModified: 'lokaal gewijzigd', summaryErrors: 'fouten', summaryNone: 'Geen downloadbare updates', summaryNotDiscovered: 'Cursuslink niet gevonden' });
+Object.assign(translations.zh, { checkUpdates: '检查更新', applyUpdates: '下载已检查更新', checkCourse: '检查此课程更新', summaryNew: '新增', summaryUnchanged: '未变化', summaryModified: '本地已修改', summaryKept: '已保留本地', summarySkipped: '已跳过', summaryErrors: '错误', summaryNone: '暂无可下载更新', summaryNotDiscovered: '尚未发现课程链接' });
+Object.assign(translations.en, { checkUpdates: 'Check for updates', applyUpdates: 'Download checked updates', checkCourse: 'Check this course', summaryNew: 'new', summaryUnchanged: 'unchanged', summaryModified: 'locally modified', summaryKept: 'kept local', summarySkipped: 'skipped', summaryErrors: 'errors', summaryNone: 'No downloadable updates', summaryNotDiscovered: 'Course link not discovered' });
+Object.assign(translations.nl, { checkUpdates: 'Op updates controleren', applyUpdates: 'Gecontroleerde updates downloaden', checkCourse: 'Deze cursus controleren', summaryNew: 'nieuw', summaryUnchanged: 'ongewijzigd', summaryModified: 'lokaal gewijzigd', summaryKept: 'lokaal behouden', summarySkipped: 'overgeslagen', summaryErrors: 'fouten', summaryNone: 'Geen downloadbare updates', summaryNotDiscovered: 'Cursuslink niet gevonden' });
 Object.assign(translations.zh, { tabSpace: '学习空间', tabCourses: '登录与课程', tabUpdates: '更新中心', tabAutomation: '自动化', updateSafetyTitle: '更新是可预览的', updateSafetyText: '先检查会读取远程文件并比较内容，不会写入课程材料。本地修改文件会保留，应用时以带哈希的副本保存远程版本。' });
 Object.assign(translations.en, { tabSpace: 'Study space', tabCourses: 'Sign in & courses', tabUpdates: 'Update center', tabAutomation: 'Automation', updateSafetyTitle: 'Updates are previewable', updateSafetyText: 'Check first reads remote files and compares content without writing course material. Local edits are kept; applying an update saves the remote version beside them with a hash.' });
 Object.assign(translations.nl, { tabSpace: 'Studieruimte', tabCourses: 'Aanmelden & vakken', tabUpdates: 'Updatecentrum', tabAutomation: 'Automatisering', updateSafetyTitle: 'Updates zijn vooraf te bekijken', updateSafetyText: 'Eerst controleren leest externe bestanden en vergelijkt de inhoud zonder cursusmateriaal te schrijven. Lokale wijzigingen blijven behouden; toepassen bewaart de externe versie met een hash ernaast.' });
-Object.assign(translations.zh, { fileTreeTitle: '更新后的文件树', fileTreeEmpty: '检查更新后将在这里显示完整文件树。', treeAllCourses: '所有已检查课程', treeNew: '新增', treeUnchanged: '未变化', treeModified: '本地修改保护副本' });
-Object.assign(translations.en, { fileTreeTitle: 'Resulting file tree', fileTreeEmpty: 'The complete file tree will appear here after checking for updates.', treeAllCourses: 'All checked courses', treeNew: 'new', treeUnchanged: 'unchanged', treeModified: 'local edit preserved as copy' });
-Object.assign(translations.nl, { fileTreeTitle: 'Bestandsstructuur na update', fileTreeEmpty: 'De volledige bestandsstructuur verschijnt hier na het controleren.', treeAllCourses: 'Alle gecontroleerde vakken', treeNew: 'nieuw', treeUnchanged: 'ongewijzigd', treeModified: 'lokale wijziging als kopie behouden' });
+Object.assign(translations.zh, { fileTreeTitle: '更新后的文件树', fileTreeEmpty: '检查更新后将在这里显示完整文件树。', treeAllCourses: '所有已检查课程', treeNew: '新增', treeUnchanged: '未变化', treeModified: '本地修改保护副本', treeKeep: '保留本地', treeReplace: '覆盖为远程版本', treeSkip: '跳过', treePreserveCopy: '保留本地并保存远程副本', treeDownload: '下载', treeDecisionHint: '可逐个文件决定如何处理' });
+Object.assign(translations.en, { fileTreeTitle: 'Resulting file tree', fileTreeEmpty: 'The complete file tree will appear here after checking for updates.', treeAllCourses: 'All checked courses', treeNew: 'new', treeUnchanged: 'unchanged', treeModified: 'local edit preserved as copy', treeKeep: 'Keep local', treeReplace: 'Replace with remote', treeSkip: 'Skip', treePreserveCopy: 'Keep local and save remote copy', treeDownload: 'Download', treeDecisionHint: 'Choose how to handle each file before applying updates.' });
+Object.assign(translations.nl, { fileTreeTitle: 'Bestandsstructuur na update', fileTreeEmpty: 'De volledige bestandsstructuur verschijnt hier na het controleren.', treeAllCourses: 'Alle gecontroleerde vakken', treeNew: 'nieuw', treeUnchanged: 'ongewijzigd', treeModified: 'lokale wijziging als kopie behouden', treeKeep: 'Lokaal behouden', treeReplace: 'Vervangen door externe versie', treeSkip: 'Overslaan', treePreserveCopy: 'Lokaal behouden en externe kopie bewaren', treeDownload: 'Downloaden', treeDecisionHint: 'Kies per bestand wat er moet gebeuren voordat je toepast.' });
 Object.assign(translations.zh, { verificationMode: '本地校验方式', verificationSha256: 'SHA-256（内容哈希）', verificationFilename: '文件名和路径', verificationHint: 'SHA-256 能识别内容变化并保护本地修改；文件名模式只按文件名和路径判断。' });
 Object.assign(translations.en, { verificationMode: 'Local verification', verificationSha256: 'SHA-256 (content hash)', verificationFilename: 'Filename and path', verificationHint: 'SHA-256 detects content changes and protects local edits; filename mode compares only names and paths.' });
 Object.assign(translations.nl, { verificationMode: 'Lokale controle', verificationSha256: 'SHA-256 (inhoudshash)', verificationFilename: 'Bestandsnaam en pad', verificationHint: 'SHA-256 detecteert inhoudswijzigingen en beschermt lokale bewerkingen; naammodus vergelijkt alleen namen en paden.' });
@@ -24,8 +24,11 @@ Object.assign(translations.nl, { resetBrowser: 'Browsersessie resetten', resetBr
 Object.assign(translations.zh, { courseUnavailable: '暂未开放，已禁用', courseUnavailableHint: 'Toledo 当前没有开放这门课，暂时不能检查材料。' });
 Object.assign(translations.en, { courseUnavailable: 'Not currently open', courseUnavailableHint: 'Toledo has not opened this course yet, so update checks are disabled.' });
 Object.assign(translations.nl, { courseUnavailable: 'Momenteel niet geopend', courseUnavailableHint: 'Toledo heeft deze cursus nog niet geopend; controles zijn uitgeschakeld.' });
+Object.assign(translations.zh, { replaceConfirm: '你选择了覆盖本地文件。确定要用 Toledo 远程版本替换这些文件吗？' });
+Object.assign(translations.en, { replaceConfirm: 'You selected replacement for local files. Replace them with the Toledo remote versions?' });
+Object.assign(translations.nl, { replaceConfirm: 'Je hebt lokale bestanden vervangen geselecteerd. Wil je ze vervangen door de externe Toledo-versies?' });
 let locale = localStorage.getItem('toledo-locale') || (navigator.language.startsWith('nl') ? 'nl' : navigator.language.startsWith('zh') ? 'zh' : 'en');
-let state = { config: null, busy: false, authenticated: false, discoveryDone: false, activityLog: [], updatePlan: null };
+let state = { config: null, busy: false, authenticated: false, discoveryDone: false, activityLog: [], updatePlan: null, decisions: {} };
 const $ = (selector) => document.querySelector(selector);
 const t = (key) => translations[locale][key] || key;
 function setText() { document.documentElement.lang = locale; document.title = 'Toledo Sync'; document.querySelectorAll('[data-i18n]').forEach((node) => { node.textContent = t(node.dataset.i18n); }); }
@@ -33,27 +36,61 @@ function updateMaterialsFolderVisibility() { $('#materialsFolderField').hidden =
 function status(message) { $('#status').textContent = message; }
 function result(value) { const summary = typeof value === 'string' ? value : JSON.stringify(value, null, 2); $('#results').textContent = `${state.activityLog.join('\n')}${state.activityLog.length ? '\n\n' : ''}${summary}`; $('#results').scrollTop = $('#results').scrollHeight; }
 function appendActivity(message) { const stamp = new Date().toLocaleTimeString(); state.activityLog.push(`[${stamp}] ${message}`); if (state.activityLog.length > 250) state.activityLog.shift(); $('#results').textContent = state.activityLog.join('\n'); $('#results').scrollTop = $('#results').scrollHeight; }
-function summaryText(summary) { if (!summary) return ''; if (summary.status === 'not-discovered') return t('summaryNotDiscovered'); const bits = []; if (summary.newCount) bits.push(`${summary.newCount} ${t('summaryNew')}`); if (summary.unchangedCount) bits.push(`${summary.unchangedCount} ${t('summaryUnchanged')}`); if (summary.localModifiedCount) bits.push(`${summary.localModifiedCount} ${t('summaryModified')}`); if (summary.errorCount) bits.push(`${summary.errorCount} ${t('summaryErrors')}`); return bits.length ? bits.join(' · ') : t('summaryNone'); }
+function summaryText(summary) { if (!summary) return ''; if (summary.status === 'not-discovered') return t('summaryNotDiscovered'); const bits = []; if (summary.newCount) bits.push(`${summary.newCount} ${t('summaryNew')}`); if (summary.unchangedCount) bits.push(`${summary.unchangedCount} ${t('summaryUnchanged')}`); if (summary.localModifiedCount) bits.push(`${summary.localModifiedCount} ${t('summaryModified')}`); if (summary.keptCount) bits.push(`${summary.keptCount} ${t('summaryKept')}`); if (summary.skippedCount) bits.push(`${summary.skippedCount} ${t('summarySkipped')}`); if (summary.errorCount) bits.push(`${summary.errorCount} ${t('summaryErrors')}`); return bits.length ? bits.join(' · ') : t('summaryNone'); }
+function fileStatusLabel(file) {
+  if (file.status === 'new') return t('treeNew');
+  if (file.status === 'local-modified') return t('treeModified');
+  if (file.status === 'unchanged') return t('treeUnchanged');
+  if (file.status === 'kept-local') return t('summaryKept');
+  if (file.status === 'skipped') return t('summarySkipped');
+  return file.status;
+}
+function defaultFileDecision(file) {
+  return file.status === 'local-modified' ? 'preserve-copy' : '';
+}
+function decisionOptions(file) {
+  if (file.status === 'new') return [['', t('treeDownload')], ['skip', t('treeSkip')]];
+  if (file.status === 'local-modified') return [['preserve-copy', t('treePreserveCopy')], ['keep-local', t('treeKeep')], ['replace', t('treeReplace')], ['skip', t('treeSkip')]];
+  return [];
+}
 function renderFileTree() {
   const select = $('#treeCourse'); const tree = $('#fileTree'); const summaries = Array.isArray(state.updatePlan) ? state.updatePlan : [];
   const previous = select.value; select.replaceChildren(); select.append(new Option(t('treeAllCourses'), 'all'));
   summaries.forEach((summary) => select.append(new Option(`${summary.code} ${summary.title}`, summary.code)));
   select.value = summaries.some((summary) => summary.code === previous) || previous === 'all' ? previous : 'all';
   const visible = select.value === 'all' ? summaries : summaries.filter((summary) => summary.code === select.value);
+  tree.replaceChildren();
   if (!visible.length) { tree.textContent = t('fileTreeEmpty'); return; }
-  const lines = [];
   for (const summary of visible) {
-    lines.push(`📁 ${summary.code} ${summary.title}`);
-    const files = [...(summary.files || [])].filter((file) => file.file).sort((a, b) => a.file.localeCompare(b.file));
-    files.forEach((file, index) => {
-      const marker = file.status === 'new' ? '＋' : file.status === 'local-modified' ? '↪' : file.status === 'unchanged' ? '·' : '×';
-      lines.push(`${index === files.length - 1 ? '└──' : '├──'} ${marker} ${file.file}  [${file.status === 'new' ? t('treeNew') : file.status === 'local-modified' ? t('treeModified') : file.status === 'unchanged' ? t('treeUnchanged') : file.status}]`);
-    });
+    const courseDetails = document.createElement('details'); courseDetails.className = 'tree-course'; courseDetails.open = true;
+    const courseSummary = document.createElement('summary'); courseSummary.textContent = `📁 ${summary.code} ${summary.title}`; courseDetails.append(courseSummary);
+    const list = document.createElement('ul'); list.className = 'tree-list';
+    const files = [...(summary.files || [])].filter((file) => file.file || file.url).sort((a, b) => (a.file || '').localeCompare(b.file || ''));
+    for (const file of files) {
+      const row = document.createElement('li'); row.className = `tree-file tree-status-${file.status}`;
+      const main = document.createElement('span'); main.className = 'tree-file-name'; main.textContent = file.file || file.url || 'material'; main.title = file.error || main.textContent;
+      const badge = document.createElement('span'); badge.className = 'tree-status'; badge.textContent = fileStatusLabel(file);
+      row.append(main, badge);
+      const options = decisionOptions(file);
+      if (options.length) {
+        const key = file.decisionKey || `${summary.code}|${file.url || ''}`;
+        const selectDecision = document.createElement('select'); selectDecision.className = 'tree-decision'; selectDecision.setAttribute('aria-label', main.textContent);
+        const current = Object.prototype.hasOwnProperty.call(state.decisions, key) ? state.decisions[key] : defaultFileDecision(file);
+        options.forEach(([value, label]) => selectDecision.append(new Option(label, value)));
+        selectDecision.value = current;
+        selectDecision.addEventListener('change', () => {
+          if (selectDecision.value) state.decisions[key] = selectDecision.value;
+          else delete state.decisions[key];
+        });
+        row.append(selectDecision);
+      }
+      list.append(row);
+    }
+    courseDetails.append(list); tree.append(courseDetails);
   }
-  tree.textContent = lines.join('\n');
 }
 function selectedCourseCodes() { return (state.config?.courses || []).filter((course) => course.selected).map((course) => course.code); }
-function setBusy(value) { state.busy = value; document.querySelectorAll('button:not(.tab)').forEach((button) => { button.disabled = value; }); if (!value && state.config) render(); }
+function setBusy(value) { state.busy = value; document.querySelectorAll('button:not(.tab), select.tree-decision').forEach((control) => { control.disabled = value; }); if (!value && state.config) render(); }
 function render() {
   const config = state.config; $('#vaultPath').value = config?.vaultPath || ''; $('#outputRoot').value = config?.outputRoot || ''; $('#materialsPlacement').value = config?.materialsPlacement || 'subdirectory'; $('#materialsFolderName').value = config?.materialsFolderName || 'Materials'; $('#verificationMode').value = config?.verificationMode || 'sha256'; $('#autoStart').checked = Boolean(config?.autoStart); $('#autoCheckOnLaunch').checked = Boolean(config?.autoCheckOnLaunch); $('#periodicCheckMinutes').value = String(config?.periodicCheckMinutes || 0); updateMaterialsFolderVisibility();
   const hasConfig = Boolean(config?.vaultPath && config?.outputRoot); const hasDiscovered = state.discoveryDone && (config?.courses || []).some((course) => course.discovered); const hasSelected = (config?.courses || []).some((course) => course.selected && course.discovered); const hasPlan = Array.isArray(state.updatePlan); const hasActionablePlan = hasPlan && state.updatePlan.some((summary) => summary.newCount || summary.localModifiedCount);
@@ -96,8 +133,8 @@ $('#save').addEventListener('click', () => run(save)); $('#login').addEventListe
 $('#resetBrowser').addEventListener('click', () => { if (!window.confirm(t('resetBrowserConfirm'))) return; run(async () => { const value = await window.toledo.resetBrowser(); state.authenticated = false; state.discoveryDone = false; state.updatePlan = null; render(); return value; }); });
 $('#saveAutomation').addEventListener('click', () => run(save));
 $('#treeCourse').addEventListener('change', renderFileTree);
-$('#discover').addEventListener('click', () => run(async () => { const value = await window.toledo.discover(); state.config = value.config; state.discoveryDone = true; state.updatePlan = null; render(); return value.matches; }));
-$('#checkUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.checkUpdates(null, selectedCourseCodes()); state.updatePlan = value.summaries; render(); return value.summaries; })); $('#applyUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.applyUpdates(null, selectedCourseCodes()); state.updatePlan = value.summaries; render(); return value.summaries; })); $('#openRoot').addEventListener('click', () => run(() => window.toledo.openPath($('#outputRoot').value)));
+$('#discover').addEventListener('click', () => run(async () => { const value = await window.toledo.discover(); state.config = value.config; state.discoveryDone = true; state.updatePlan = null; state.decisions = {}; render(); return value.matches; }));
+$('#checkUpdates').addEventListener('click', () => run(async () => { const value = await window.toledo.checkUpdates(null, selectedCourseCodes()); state.updatePlan = value.summaries; state.decisions = {}; render(); return value.summaries; })); $('#applyUpdates').addEventListener('click', () => { if (Object.values(state.decisions).includes('replace') && !window.confirm(t('replaceConfirm'))) return; run(async () => { const value = await window.toledo.applyUpdates(null, selectedCourseCodes(), state.decisions); state.updatePlan = value.summaries; render(); return value.summaries; }); }); $('#openRoot').addEventListener('click', () => run(() => window.toledo.openPath($('#outputRoot').value)));
 if (!window.toledo) {
   status('Desktop bridge could not start. Please reinstall the application.');
 } else {
