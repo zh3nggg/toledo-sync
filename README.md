@@ -171,9 +171,17 @@ Aanmeldstatus blijft lokaal in `~/.toledo-sync/`; manifesten en snapshots in de 
 
 ---
 
+## Copyright and permitted use / 版权与使用 / Auteursrecht en toegestaan gebruik
+
+Course materials may be protected or licensed by KU Leuven, teaching staff, or other rights holders. Use Toledo Sync only for materials you are authorized to access and for permitted study purposes. Unless you have permission, do not redistribute, publish publicly, sell, use commercially, remove rights notices, or bypass access controls. Examination materials are for study-related use only. Follow KU Leuven rules, course licences, and applicable law. The MIT licence applies to this software; it does not grant additional rights to course materials. See the [KU Leuven Education Regulations](https://www.kuleuven.be/education/regulations/2025/) for the institutional rules on learning and examination materials.
+
+课程材料可能受 KU Leuven、教师或其他权利人的版权和许可约束。仅使用你有权访问且获准使用的材料。除非获得相应授权，不得再分发、公开上传、出售、商业使用、删除权利声明或绕过访问控制；考试材料仅用于学习相关目的。请遵守 KU Leuven 规章、课程许可和适用法律。MIT 许可证只适用于本软件，不授予课程材料的额外权利。
+
+Cursusmateriaal kan beschermd of gelicentieerd zijn door KU Leuven, docenten of andere rechthebbenden. Gebruik Toledo Sync alleen voor materiaal waartoe je gemachtigd bent en voor toegestane studiedoeleinden. Verspreid, publiceer, verkoop of gebruik het niet commercieel zonder toestemming; verwijder geen rechtenvermeldingen en omzeil geen toegangscontroles. Examenmateriaal is alleen voor studiegebruik. Volg de KU Leuven-regels, cursuslicenties en toepasselijke wetgeving. De MIT-licentie geldt voor deze software en geeft geen extra rechten op cursusmateriaal.
+
 ## Next version / 下一版本 / Volgende versie
 
-Version 1.2 development adds an interactive file tree for update review. Users can expand each course, inspect the resulting paths, and resolve each conflict with **keep local**, **replace with remote**, or **skip** before writing files. The existing safe behavior remains the default when no decision is changed.
+The 1.2 series includes an interactive file tree for update review. Users can expand each course, inspect the resulting paths, and resolve each conflict with **keep local**, **replace with remote**, or **skip** before writing files. Version 1.2.1 also tightens the in-app copy, moves detailed guidance into hover help, and makes the copyright and permitted-use notice explicit.
 
 ## For contributors / 开发者
 
