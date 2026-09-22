@@ -9,6 +9,10 @@
 [![Platforms](https://img.shields.io/badge/desktop-Windows%20%7C%20macOS%20Apple%20Silicon-2563eb)](https://github.com/zh3nggg/toledo-sync/releases/latest)
 [![License](https://img.shields.io/github/license/zh3nggg/toledo-sync)](LICENSE)
 
+**语言 / Language / Taal：** [中文](#中文) · [English](#english) · [Nederlands](#nederlands)
+
+## 中文
+
 **当前稳定版：v1.2.0。** Windows 与 Apple Silicon macOS 桌面应用在同一个 GitHub Release 中发布，并附带校验和；Linux 与高级用户可使用跨平台 CLI。
 
 ## 为学习而设计，而不是为下载而设计
