@@ -31,7 +31,7 @@ toledo-sync interactive
 toledo-sync interactive --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
 ```
 
-The wizard is deliberately available on Windows, macOS, and Linux. The Windows desktop application remains available for users who prefer a graphical interface.
+The wizard is deliberately available on Windows, macOS, and Linux. Windows and Apple Silicon macOS desktop applications are also available for users who prefer a graphical interface.
 
 ## First-time setup
 

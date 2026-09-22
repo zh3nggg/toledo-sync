@@ -6,6 +6,9 @@ const translations = {
 Object.assign(translations.zh, { automationTitle: '自动更新', automationText: '设置应用启动和运行期间的自动检查。', autoStart: '开机时启动 Toledo Sync', autoCheckOnLaunch: '启动时检查并同步课程更新', periodicCheck: '周期性检查', periodicOff: '关闭', periodic30: '每 30 分钟', periodic60: '每小时', periodic360: '每 6 小时', periodic1440: '每天' });
 Object.assign(translations.en, { automationTitle: 'Automatic updates', automationText: 'Choose whether checks run when the app starts or while it stays open.', autoStart: 'Start Toledo Sync when Windows starts', autoCheckOnLaunch: 'Check and synchronize updates on launch', periodicCheck: 'Scheduled checks', periodicOff: 'Off', periodic30: 'Every 30 minutes', periodic60: 'Every hour', periodic360: 'Every 6 hours', periodic1440: 'Every day' });
 Object.assign(translations.nl, { automationTitle: 'Automatische updates', automationText: 'Kies of controles starten bij het openen of tijdens het gebruik.', autoStart: 'Toledo Sync starten wanneer Windows start', autoCheckOnLaunch: 'Updates controleren en synchroniseren bij het openen', periodicCheck: 'Geplande controles', periodicOff: 'Uit', periodic30: 'Elke 30 minuten', periodic60: 'Elk uur', periodic360: 'Elke 6 uur', periodic1440: 'Elke dag' });
+Object.assign(translations.zh, { autoStartMac: '登录 macOS 时启动 Toledo Sync', downloadHintMac: '例如：/Users/你的名字/Courses/2026-2027' });
+Object.assign(translations.en, { autoStartMac: 'Start Toledo Sync when you log in to macOS', downloadHintMac: 'Example: /Users/your-name/Courses/2026-2027' });
+Object.assign(translations.nl, { autoStartMac: 'Toledo Sync starten bij het inloggen op macOS', downloadHintMac: 'Voorbeeld: /Users/jouw-naam/Courses/2026-2027' });
 Object.assign(translations.zh, { checkUpdates: '检查更新', applyUpdates: '下载已检查更新', checkCourse: '检查此课程更新', summaryNew: '新增', summaryUnchanged: '未变化', summaryModified: '本地已修改', summaryKept: '已保留本地', summarySkipped: '已跳过', summaryErrors: '错误', summaryNone: '暂无可下载更新', summaryNotDiscovered: '尚未发现课程链接' });
 Object.assign(translations.en, { checkUpdates: 'Check for updates', applyUpdates: 'Download checked updates', checkCourse: 'Check this course', summaryNew: 'new', summaryUnchanged: 'unchanged', summaryModified: 'locally modified', summaryKept: 'kept local', summarySkipped: 'skipped', summaryErrors: 'errors', summaryNone: 'No downloadable updates', summaryNotDiscovered: 'Course link not discovered' });
 Object.assign(translations.nl, { checkUpdates: 'Op updates controleren', applyUpdates: 'Gecontroleerde updates downloaden', checkCourse: 'Deze cursus controleren', summaryNew: 'nieuw', summaryUnchanged: 'ongewijzigd', summaryModified: 'lokaal gewijzigd', summaryKept: 'lokaal behouden', summarySkipped: 'overgeslagen', summaryErrors: 'fouten', summaryNone: 'Geen downloadbare updates', summaryNotDiscovered: 'Cursuslink niet gevonden' });
@@ -28,10 +31,15 @@ Object.assign(translations.zh, { replaceConfirm: '你选择了覆盖本地文件
 Object.assign(translations.en, { replaceConfirm: 'You selected replacement for local files. Replace them with the Toledo remote versions?' });
 Object.assign(translations.nl, { replaceConfirm: 'Je hebt lokale bestanden vervangen geselecteerd. Wil je ze vervangen door de externe Toledo-versies?' });
 let locale = localStorage.getItem('toledo-locale') || (navigator.language.startsWith('nl') ? 'nl' : navigator.language.startsWith('zh') ? 'zh' : 'en');
-let state = { config: null, busy: false, authenticated: false, discoveryDone: false, activityLog: [], updatePlan: null, decisions: {} };
+let state = { platform: null, config: null, busy: false, authenticated: false, discoveryDone: false, activityLog: [], updatePlan: null, decisions: {} };
 const $ = (selector) => document.querySelector(selector);
 const t = (key) => translations[locale][key] || key;
 function setText() { document.documentElement.lang = locale; document.title = 'Toledo Sync'; document.querySelectorAll('[data-i18n]').forEach((node) => { node.textContent = t(node.dataset.i18n); }); }
+function setPlatformText() {
+  $('#platform').textContent = state.platform === 'darwin' ? 'macOS · Apple Silicon' : state.platform === 'win32' ? 'Windows' : state.platform || '';
+  $('#downloadHint').textContent = t(state.platform === 'darwin' ? 'downloadHintMac' : 'downloadHint');
+  $('#autoStartLabel').textContent = t(state.platform === 'darwin' ? 'autoStartMac' : 'autoStart');
+}
 function updateMaterialsFolderVisibility() { $('#materialsFolderField').hidden = $('#materialsPlacement').value !== 'subdirectory'; }
 function status(message) { $('#status').textContent = message; }
 function result(value) { const summary = typeof value === 'string' ? value : JSON.stringify(value, null, 2); $('#results').textContent = `${state.activityLog.join('\n')}${state.activityLog.length ? '\n\n' : ''}${summary}`; $('#results').scrollTop = $('#results').scrollHeight; }
@@ -92,6 +100,7 @@ function renderFileTree() {
 function selectedCourseCodes() { return (state.config?.courses || []).filter((course) => course.selected).map((course) => course.code); }
 function setBusy(value) { state.busy = value; document.querySelectorAll('button:not(.tab), select.tree-decision').forEach((control) => { control.disabled = value; }); if (!value && state.config) render(); }
 function render() {
+  setPlatformText();
   const config = state.config; $('#vaultPath').value = config?.vaultPath || ''; $('#outputRoot').value = config?.outputRoot || ''; $('#materialsPlacement').value = config?.materialsPlacement || 'subdirectory'; $('#materialsFolderName').value = config?.materialsFolderName || 'Materials'; $('#verificationMode').value = config?.verificationMode || 'sha256'; $('#autoStart').checked = Boolean(config?.autoStart); $('#autoCheckOnLaunch').checked = Boolean(config?.autoCheckOnLaunch); $('#periodicCheckMinutes').value = String(config?.periodicCheckMinutes || 0); updateMaterialsFolderVisibility();
   const hasConfig = Boolean(config?.vaultPath && config?.outputRoot); const hasDiscovered = state.discoveryDone && (config?.courses || []).some((course) => course.discovered); const hasSelected = (config?.courses || []).some((course) => course.selected && course.discovered); const hasPlan = Array.isArray(state.updatePlan); const hasActionablePlan = hasPlan && state.updatePlan.some((summary) => summary.newCount || summary.localModifiedCount);
   $('#authState').textContent = state.authenticated ? t('authComplete') : t('authRequired'); $('#authState').classList.toggle('complete', state.authenticated);
@@ -139,5 +148,5 @@ if (!window.toledo) {
   status('Desktop bridge could not start. Please reinstall the application.');
 } else {
   window.toledo.onEvent((event) => { appendActivity(event.message); status(event.message); });
-  (async () => { const initial = await window.toledo.initial(); $('#platform').textContent = initial.platform === 'win32' ? 'Windows' : initial.platform; state.config = initial.config; state.authenticated = Boolean(initial.config?.authenticated); render(); })();
+  (async () => { const initial = await window.toledo.initial(); state.platform = initial.platform; state.config = initial.config; state.authenticated = Boolean(initial.config?.authenticated); render(); })();
 }

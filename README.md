@@ -65,12 +65,18 @@ D:\Study\Leuven 2026 Fall\
 | 系统 | 推荐入口 | 状态 |
 | --- | --- | --- |
 | Windows 10/11 | 三语桌面应用（中文／English／Nederlands）或 CLI | 已支持 |
-| macOS | CLI | 已支持 |
+| macOS（Apple Silicon） | 三语桌面应用或 CLI | 已支持 |
 | Linux | CLI | 已支持 |
 
 **Windows 用户：** 请升级到 1.1 或更高版本，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.<version>.exe`；不想安装时请选择 `Toledo.Sync.<version>.exe` 便携版。不要从旧版本 Release 下载。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
 
-**macOS、Linux 与高级用户：** 参阅 [完整 CLI 指南](docs/CLI.md)。CLI 默认是交互式向导：运行 `toledo-sync` 后按提示选择 Vault、下载目录、学年和课程，不需要编辑配置文件。向导会先登录和发现课程，再提供“检查更新 → 应用更新”两步流程；熟悉命令行后仍可使用完整参数。
+**Apple Silicon Mac 用户：** 从 Release 下载 `Toledo.Sync.<version>-macOS-arm64.dmg`，拖入“应用程序”后即可使用与 Windows 版相同的三语 GUI。当前构建使用临时签名，尚未经过 Apple 公证；首次启动请在 Finder 中按住 Control 点击应用并选择“打开”。详见 [macOS 桌面应用指南](docs/GUI-MACOS.md)。
+
+#### macOS 提示“无法验证开发者”或“已损坏”怎么办？
+
+请只从本项目的 GitHub Release 下载。先把应用拖到“应用程序”，在 Finder 中按住 Control 点击 **Toledo Sync**，选择“打开”；若仍被阻止，请在“系统设置 → 隐私与安全性”页面底部选择 **仍要打开** 并确认。只有在你确认下载来源可信、且仍显示“应用已损坏”时，才使用指南中的单应用隔离属性移除命令；不要为了安装本应用而全局关闭 Gatekeeper。若“仍要打开”按钮不存在，设备很可能由学校或单位管理，应联系管理员放行，而不是绕过设备策略。
+
+**Linux 与高级用户：** 参阅 [完整 CLI 指南](docs/CLI.md)。CLI 默认是交互式向导：运行 `toledo-sync` 后按提示选择 Vault、下载目录、学年和课程，不需要编辑配置文件。向导会先登录和发现课程，再提供“检查更新 → 应用更新”两步流程；熟悉命令行后仍可使用完整参数。
 
 ### 当前支持范围
 
@@ -103,7 +109,7 @@ It is designed for students who want to keep **only their chosen courses for a c
 | Course layout | Places material directly in each course folder or in a subfolder with your chosen name. |
 | Historic courses | Skips unavailable current-year courses instead of substituting an older course with the same code. |
 | Repeat runs | Uses SHA-256 to avoid duplicate copies of unchanged files. |
-| Automatic updates | Optionally starts with Windows, checks on launch, and runs a schedule while open. |
+| Automatic updates | Optionally starts at Windows/macOS login, checks on launch, and runs a schedule while open. |
 | Credentials | KU Leuven password and MFA stay on KU Leuven sign-in pages. |
 | Toledo actions | Reads visible learning material only; it never submits, posts, tests, or modifies content. |
 
@@ -119,10 +125,12 @@ Choose Vault and download root → sign in once → discover current courses
 | Platform | Recommended interface | Status |
 | --- | --- | --- |
 | Windows 10/11 | Desktop app in 中文, English, Nederlands; CLI | Supported |
-| macOS | CLI | Supported |
+| macOS (Apple Silicon) | Desktop app in 中文, English, Nederlands; CLI | Supported |
 | Linux | CLI | Supported |
 
-For Windows, upgrade to 1.1 or later and always download the current installer from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.<version>.exe` for a normal installation or `Toledo.Sync.<version>.exe` for the portable build; older release assets should not be used. Then follow the [desktop-app guide](docs/GUI-WINDOWS.md). On macOS and Linux, run `toledo-sync` (or `node src/cli.mjs`) to open the interactive wizard: it asks for paths and choices, opens SSO/MFA in a browser, and guides discovery and safe update application without requiring JSON editing. The [complete CLI guide](docs/CLI.md) also documents every command and flag.
+For Windows, upgrade to 1.1 or later and always download the current installer from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.<version>.exe` for a normal installation or `Toledo.Sync.<version>.exe` for the portable build; older release assets should not be used. Then follow the [Windows desktop-app guide](docs/GUI-WINDOWS.md).
+
+On an Apple Silicon Mac, download `Toledo.Sync.<version>-macOS-arm64.dmg`, drag the app to Applications, and use the same multilingual GUI. The current community build is ad-hoc signed but not Apple-notarized, so the first launch must use Finder's control-click **Open** action. See the [macOS desktop-app guide](docs/GUI-MACOS.md). Linux users and advanced users can run `toledo-sync` (or `node src/cli.mjs`) for the interactive CLI wizard. The [complete CLI guide](docs/CLI.md) documents every command and flag.
 
 ### Current scope and privacy
 
@@ -149,7 +157,7 @@ De toepassing is bedoeld voor studenten die alleen hun **geselecteerde vakken va
 | Cursusindeling | Plaatst materiaal rechtstreeks in elke cursusmap of in een submap met jouw eigen naam. |
 | Historische vakken | Slaat een niet-beschikbaar huidig vak over en vervangt het niet door een oud vak met dezelfde code. |
 | Herhaald synchroniseren | Gebruikt SHA-256 om dubbele kopieën van ongewijzigde bestanden te vermijden. |
-| Automatische updates | Optioneel starten met Windows, controleren bij openen en periodiek controleren zolang de app open is. |
+| Automatische updates | Optioneel starten bij Windows/macOS-aanmelding, controleren bij openen en periodiek controleren zolang de app open is. |
 | Aanmeldgegevens | KU Leuven-wachtwoord en MFA blijven op de officiële KU Leuven-aanmeldpagina. |
 | Acties in Toledo | Leest alleen zichtbaar cursusmateriaal; dient niets in en wijzigt geen Toledo-inhoud. |
 
@@ -158,10 +166,12 @@ De toepassing is bedoeld voor studenten die alleen hun **geselecteerde vakken va
 | Platform | Aanbevolen interface | Status |
 | --- | --- | --- |
 | Windows 10/11 | Desktopapp in 中文, English, Nederlands; CLI | Ondersteund |
-| macOS | CLI | Ondersteund |
+| macOS (Apple Silicon) | Desktopapp in 中文, English, Nederlands; CLI | Ondersteund |
 | Linux | CLI | Ondersteund |
 
-Download voor Windows altijd versie 1.1 of nieuwer via de [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Gebruik `Toledo.Sync.Setup.<version>.exe` voor een normale installatie of `Toledo.Sync.<version>.exe` als portable versie; gebruik geen assets uit oudere releases. Volg daarna de [handleiding voor de desktopapp](docs/GUI-WINDOWS.md). Op macOS en Linux start `toledo-sync` de interactieve wizard: kies paden, academiejaar en vakken in prompts; daarna begeleidt de wizard de aanmelding, ontdekking en veilige controle/toepassing van updates. JSON bewerken is niet nodig. De [volledige CLI-handleiding](docs/CLI.md) bevat ook alle opdrachten en opties.
+Download voor Windows altijd versie 1.1 of nieuwer via de [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Gebruik `Toledo.Sync.Setup.<version>.exe` voor een normale installatie of `Toledo.Sync.<version>.exe` als portable versie; gebruik geen assets uit oudere releases. Volg daarna de [Windows-handleiding](docs/GUI-WINDOWS.md).
+
+Download op een Apple Silicon Mac `Toledo.Sync.<version>-macOS-arm64.dmg`, sleep de app naar Programma's en gebruik dezelfde drietalige GUI. De huidige communitybuild is ad-hoc ondertekend maar niet door Apple genotariseerd; start hem de eerste keer via Control-klik en **Open** in Finder. Zie de [macOS-handleiding](docs/GUI-MACOS.md). Op Linux en voor geavanceerd gebruik start `toledo-sync` de interactieve CLI-wizard. De [volledige CLI-handleiding](docs/CLI.md) bevat alle opdrachten en opties.
 
 ### Huidige ondersteuning en privacy
 
@@ -183,6 +193,6 @@ npm test
 npm run check
 ```
 
-Run the CLI with `node src/cli.mjs help`. On Windows, start the desktop app with `npm run desktop`; build its installer and portable executable with `npm run make:win`.
+Run the CLI with `node src/cli.mjs help`. Start the desktop app from source with `npm run desktop`. Build the Windows installer and portable executable with `npm run make:win`, or build the Apple Silicon macOS disk image and ZIP archive with `npm run make:mac`.
 
 The project is licensed under the [MIT License](LICENSE).

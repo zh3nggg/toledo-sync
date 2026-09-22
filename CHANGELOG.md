@@ -7,6 +7,13 @@
 - Includes the Windows installer and portable Windows build.
 # Changelog
 
+## 1.2.0 — 2026-09-22
+
+- Added an Apple Silicon macOS desktop build with DMG and ZIP packaging.
+- Enabled macOS GUI configuration, sign-in, course discovery, update review, synchronization, and login-item automation.
+- Added a macOS application icon, release workflow, and installation guide.
+- Reworked the desktop layout for macOS Retina and larger text: content now uses the window scrollbar instead of a fixed-height blank region.
+
 ## 0.1.10 — 2026-09-16
 
 - Split update handling into a read-only update check and an explicit apply step in the Windows GUI.

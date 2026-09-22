@@ -13,7 +13,8 @@
     "check": "node --check src/cli.mjs && node --check src/sync.mjs && node --check desktop/main.mjs && node --check desktop/preload.cjs && node --check desktop/renderer/app.js",
     "start": "node src/cli.mjs",
     "desktop": "electron .",
-    "make:win": "electron-builder --win nsis portable --publish never"
+    "make:win": "electron-builder --win nsis portable --publish never",
+    "make:mac": "electron-builder --mac dmg zip --arm64 --publish never"
   },
   "engines": {
     "node": ">=20"
@@ -28,6 +29,7 @@
     "directories": {
       "output": "release"
     },
+    "afterPack": "scripts/after-pack.mjs",
     "files": [
       "assets/**/*",
       "desktop/**/*",
@@ -36,13 +38,33 @@
       "README.md",
       "docs/**/*"
     ],
-    "icon": "assets/toledo-sync.ico",
     "win": {
       "target": [
         "nsis",
         "portable"
       ],
       "icon": "assets/toledo-sync.ico"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "assets/toledo-sync.png",
+      "category": "public.app-category.education",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "artifactName": "Toledo.Sync-${version}-macOS-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

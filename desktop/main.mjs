@@ -98,8 +98,10 @@ async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
   throw new Error('Timed out waiting for Toledo login. Please try again.');
 }
 
-function ensureWindows() {
-  if (process.platform !== 'win32') throw new Error('The desktop app is currently published for Windows. Use the CLI on macOS and Linux.');
+function ensureDesktopPlatform() {
+  if (!['win32', 'darwin'].includes(process.platform)) {
+    throw new Error('The desktop app is available on Windows and macOS. Use the CLI on Linux.');
+  }
 }
 
 function unrestrictedDesktopConfig(config) {
@@ -107,7 +109,7 @@ function unrestrictedDesktopConfig(config) {
 }
 
 async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName, verificationMode, autoStart, autoCheckOnLaunch, periodicCheckMinutes }) {
-  ensureWindows();
+  ensureDesktopPlatform();
   if (!vaultPath || !outputRoot) throw new Error('Choose both the Obsidian Vault and the download root.');
   const configPath = defaultConfigPath(vaultPath);
   let config;
@@ -143,7 +145,7 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
 }
 
 async function startLogin() {
-  ensureWindows();
+  ensureDesktopPlatform();
   const current = await currentConfig();
   if (!current) throw new Error('Save the initial settings first.');
   const loginConfig = { ...current.config, browser: { ...current.config.browser, headless: false } };
@@ -166,13 +168,13 @@ async function startLogin() {
 }
 
 async function resetBrowserSession() {
-  ensureWindows();
+  ensureDesktopPlatform();
   const current = await currentConfig();
   if (!current) throw new Error('Save the initial settings first.');
 
   // Reset only the app-owned authentication artifacts. The Vault, download
   // root, and all course materials remain untouched.
-  const profilePath = path.resolve(current.config.browser?.profilePath ?? path.join(process.env.USERPROFILE ?? process.cwd(), '.toledo-sync', 'browser-profile'));
+  const profilePath = path.resolve(current.config.browser?.profilePath ?? path.join(app.getPath('home'), '.toledo-sync', 'browser-profile'));
   const authStatePath = current.config.browser?.authStatePath ? path.resolve(current.config.browser.authStatePath) : null;
   await fs.rm(profilePath, { recursive: true, force: true });
   if (authStatePath) await fs.rm(authStatePath, { force: true });
@@ -262,7 +264,7 @@ async function runAutomaticCheck(reason) {
 
 async function configureAutomation(automation) {
   const normalized = normalizeAutomation(automation);
-  if (process.platform === 'win32') {
+  if (['win32', 'darwin'].includes(process.platform)) {
     app.setLoginItemSettings({
       openAtLogin: normalized.autoStart,
       path: process.execPath,
@@ -284,11 +286,12 @@ async function initializeAutomation() {
 
 async function createWindow() {
   const demoMode = process.env.TOLEDO_DEMO === '1';
+  const windowIcon = process.platform === 'darwin' ? 'toledo-sync.png' : 'toledo-sync.ico';
   mainWindow = new BrowserWindow({
     width: demoMode ? 1280 : 860, height: demoMode ? 720 : 660,
     minWidth: demoMode ? 1280 : 720, minHeight: demoMode ? 720 : 540,
     resizable: !demoMode, autoHideMenuBar: demoMode, useContentSize: true, show: false,
-    icon: path.join(__dirname, '..', 'assets', 'toledo-sync.ico'),
+    icon: path.join(__dirname, '..', 'assets', windowIcon),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false }
   });
   await mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
