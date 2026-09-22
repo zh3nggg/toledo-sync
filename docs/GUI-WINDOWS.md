@@ -19,4 +19,4 @@ The Windows desktop app packages the same synchronization core as the CLI. It is
 
 The app needs Node.js only when run from source. Installed release builds include the runtime, but still use an installed Chrome, Edge, or Chromium for KU Leuven login.
 
-Use the CLI on macOS and Linux; see [CLI.md](CLI.md).
+Apple Silicon Macs also have a desktop app; see [GUI-MACOS.md](GUI-MACOS.md). The CLI remains available on Windows, macOS, and Linux; see [CLI.md](CLI.md).
