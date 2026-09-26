@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/linux-cli.mjs && node --check src/cli-i18n.mjs && node --check src/browser.mjs && node --check src/sync.mjs && node --check desktop/main.mjs && node --check desktop/preload.cjs && node --check desktop/renderer/app.js",
+    "check": "node --check src/linux-cli.mjs && node --check src/cli.mjs && node --check src/cli-i18n.mjs && node --check src/browser.mjs && node --check src/sync.mjs && node --check desktop/main.mjs && node --check desktop/preload.cjs && node --check desktop/renderer/app.js",
     "start": "node src/linux-cli.mjs",
     "desktop": "electron .",
     "make:win": "electron-builder --win nsis portable --publish never"

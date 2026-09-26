@@ -8,6 +8,7 @@ import { ask, askWithDefault, choose, confirm } from './prompt.mjs';
 import { setCalendarUrl, syncCalendar } from './calendar.mjs';
 import { syncCourses } from './sync.mjs';
 import { parseArgs, writeJson } from './utils.mjs';
+import { runCli } from './linux-cli.mjs';
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -298,7 +299,7 @@ async function main() {
   throw new Error(`Unknown command: ${command}\n${HELP}`);
 }
 
-main().catch((error) => {
+runCli().catch((error) => {
   console.error(`Error: ${error.message}`);
   process.exitCode = 1;
 });
