@@ -67,7 +67,7 @@ D:\Study\Leuven 2026 Fall\
 | macOS（Apple Silicon） | 三语桌面应用 | 已支持 |
 | Linux | 三语交互式 CLI；Firefox、Chrome、Chromium、Edge、Brave | 已支持 |
 
-**Windows 用户：** 请升级到 1.2.2，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo Sync Setup <version>.exe`；不想安装时请选择 `Toledo Sync <version>.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
+**Windows 用户：** 请升级到 1.2.2，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.1.2.2.exe`；不想安装时请选择 `Toledo.Sync.1.2.2.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
 
 **Mac 用户：** Apple Silicon 版本请从同一 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载 DMG，参阅 [macOS 安装指南](docs/GUI-MACOS.md)。
 
@@ -123,7 +123,7 @@ Choose Vault and download root → sign in once → discover current courses
 | macOS (Apple Silicon) | Desktop app in 中文, English, Nederlands | Supported |
 | Linux | Interactive CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Supported |
 
-For Windows, upgrade to 1.2.2 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo Sync Setup <version>.exe` to install or `Toledo Sync <version>.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). For Apple Silicon Macs, download the DMG from the same release and follow the [macOS guide](docs/GUI-MACOS.md). On Linux, run `toledo-sync` (or `npm start` from the repository) to open the trilingual interactive wizard. See the [Linux CLI guide](docs/CLI.md).
+For Windows, upgrade to 1.2.2 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.1.2.2.exe` to install or `Toledo.Sync.1.2.2.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). For Apple Silicon Macs, download the DMG from the same release and follow the [macOS guide](docs/GUI-MACOS.md). On Linux, run `toledo-sync` (or `npm start` from the repository) to open the trilingual interactive wizard. See the [Linux CLI guide](docs/CLI.md).
 
 ### Current scope and privacy
 
@@ -162,7 +162,7 @@ De toepassing is bedoeld voor studenten die eerst hun volledige cursuslijst will
 | macOS (Apple Silicon) | Desktopapp in 中文, English, Nederlands | Ondersteund |
 | Linux | Interactieve CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Ondersteund |
 
-Installeer op Windows versie 1.2.2 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo Sync Setup <version>.exe` voor installatie of `Toledo Sync <version>.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). Download op een Apple Silicon Mac de DMG van dezelfde release en volg de [macOS-handleiding](docs/GUI-MACOS.md). Op Linux start `toledo-sync` de drietalige interactieve wizard. Zie de [Linux CLI-handleiding](docs/CLI.md).
+Installeer op Windows versie 1.2.2 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo.Sync.Setup.1.2.2.exe` voor installatie of `Toledo.Sync.1.2.2.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). Download op een Apple Silicon Mac de DMG van dezelfde release en volg de [macOS-handleiding](docs/GUI-MACOS.md). Op Linux start `toledo-sync` de drietalige interactieve wizard. Zie de [Linux CLI-handleiding](docs/CLI.md).
 
 ### Huidige ondersteuning en privacy
 

@@ -71,6 +71,13 @@ jobs:
         with:
           path: release
           merge-multiple: true
+      - name: Normalize Windows asset names
+        shell: bash
+        run: |
+          for file in release/*.exe; do
+            target="${file// /.}"
+            if [ "$file" != "$target" ]; then mv -- "$file" "$target"; fi
+          done
       - name: Write checksums
         shell: bash
         run: |
