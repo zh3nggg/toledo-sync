@@ -9,14 +9,17 @@
   "bin": {
     "toledo-sync": "./src/linux-cli.mjs"
   },
+  "files": ["src/", "docs/CLI.md", "docs/GUI-LINUX.md", "docs/CONTENT-ENGINE.md", "README.md", "LICENSE"],
   "scripts": {
     "test": "node --test test/course-content.test.mjs test/linux-cli.test.mjs test/utils.test.mjs",
     "check": "node --check src/linux-cli.mjs && node --check src/cli.mjs && node --check src/cli-i18n.mjs && node --check src/browser.mjs && node --check src/course-content.mjs && node --check src/sync.mjs && node --check desktop/main.mjs && node --check desktop/preload.cjs && node --check desktop/renderer/app.js",
     "start": "node src/linux-cli.mjs",
     "desktop": "electron .",
     "make:win": "electron-builder --win nsis portable --publish never",
-    "make:linux": "electron-builder --linux AppImage --publish never",
-    "make:linux:portable": "electron-builder --linux tar.gz --publish never",
+    "make:linux": "electron-builder --linux AppImage tar.gz --x64 --publish never",
+    "make:linux:portable": "electron-builder --linux tar.gz --x64 --publish never",
+    "make:cli": "node scripts/package-cli.mjs",
+    "test:linux-gui": "node test/linux-desktop-smoke.mjs",
     "make:mac": "electron-builder --mac dmg zip --arm64 --publish never"
   },
   "engines": {
@@ -33,6 +36,8 @@
       "output": "release"
     },
     "afterPack": "scripts/after-pack.mjs",
+    "asarUnpack": ["node_modules/playwright-core/**/*"],
+    "toolsets": { "appimage": "1.0.3" },
     "files": [
       "assets/**/*",
       "desktop/**/*",
@@ -42,7 +47,9 @@
       "docs/**/*"
     ],
     "linux": {
-      "icon": "assets/toledo-sync.svg",
+      "icon": "assets/toledo-sync.png",
+      "executableName": "toledo-sync",
+      "artifactName": "Toledo.Sync-${version}-linux-${arch}.${ext}",
       "target": [
         "AppImage"
       ],

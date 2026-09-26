@@ -36,14 +36,18 @@ Object.assign(translations.nl, { courseUnavailable: 'Momenteel niet geopend', co
 Object.assign(translations.zh, { replaceConfirm: '你选择了覆盖本地文件。确定要用 Toledo 远程版本替换这些文件吗？' });
 Object.assign(translations.en, { replaceConfirm: 'You selected replacement for local files. Replace them with the Toledo remote versions?' });
 Object.assign(translations.nl, { replaceConfirm: 'Je hebt lokale bestanden vervangen geselecteerd. Wil je ze vervangen door de externe Toledo-versies?' });
+Object.assign(translations.en, { downloadHintLinux: 'Example: /home/your-name/Courses', browserLabel: 'Login browser', browserAuto: 'Automatic detection', browserCustom: 'Configured executable', prepareBrowser: 'Install browser', browserHint: 'Chromium and Firefox use compatible Playwright builds. Install once, then sign in. Changing browser requires signing in again.' });
+Object.assign(translations.zh, { downloadHintLinux: '例如：/home/你的用户名/Courses', browserLabel: '登录浏览器', browserAuto: '自动检测', browserCustom: '已配置的可执行文件', prepareBrowser: '安装浏览器', browserHint: 'Chromium 和 Firefox 使用 Playwright 兼容版本，安装一次后即可登录。切换浏览器后需要重新登录。' });
+Object.assign(translations.nl, { downloadHintLinux: 'Voorbeeld: /home/jouw-naam/Courses', browserLabel: 'Browser voor aanmelden', browserAuto: 'Automatisch detecteren', browserCustom: 'Ingesteld uitvoerbaar bestand', prepareBrowser: 'Browser installeren', browserHint: 'Chromium en Firefox gebruiken compatibele Playwright-versies. Installeer eenmaal en meld je aan. Meld je opnieuw aan als je van browser wisselt.' });
 let locale = localStorage.getItem('toledo-locale') || (navigator.language.startsWith('nl') ? 'nl' : navigator.language.startsWith('zh') ? 'zh' : 'en');
 let state = { config: null, busy: false, authenticated: false, discoveryDone: false, activityLog: [], updatePlan: null, decisions: {} };
 const $ = (selector) => document.querySelector(selector);
 const t = (key) => translations[locale][key] || key;
 function setText() { document.documentElement.lang = locale; document.title = 'Toledo Sync'; document.querySelectorAll('[data-i18n]').forEach((node) => { node.textContent = t(node.dataset.i18n); }); document.querySelectorAll('[data-i18n-title]').forEach((node) => { node.title = t(node.dataset.i18nTitle); }); }
 function setPlatformText() {
-  $('#platform').textContent = state.platform === 'darwin' ? 'macOS · Apple Silicon' : state.platform === 'win32' ? 'Windows' : state.platform || '';
-  $('#downloadHint').textContent = t(state.platform === 'darwin' ? 'downloadHintMac' : 'downloadHint');
+  $('#platform').textContent = state.platform === 'darwin' ? 'macOS · Apple Silicon' : state.platform === 'win32' ? 'Windows' : state.platform === 'linux' ? 'Linux' : '';
+  $('#downloadHint').textContent = t(state.platform === 'darwin' ? 'downloadHintMac' : state.platform === 'linux' ? 'downloadHintLinux' : 'downloadHint');
+  $('#linuxBrowser').hidden = state.platform !== 'linux';
   $('#autoStartLabel').textContent = t(state.platform === 'darwin' ? 'autoStartMac' : 'autoStart');
 }
 function updateMaterialsFolderVisibility() { $('#materialsFolderField').hidden = $('#materialsPlacement').value !== 'subdirectory'; }
@@ -107,8 +111,11 @@ function renderFileTree() {
   }
 }
 function selectedCourseCodes() { return (state.config?.courses || []).filter((course) => course.selected).map((course) => course.code); }
-function setBusy(value) { state.busy = value; document.querySelectorAll('button:not(.tab), select.tree-decision').forEach((control) => { control.disabled = value; }); if (!value && state.config) render(); }
+function setBusy(value) { state.busy = value; document.querySelectorAll('button:not(.tab), select.tree-decision, #browserChoice').forEach((control) => { control.disabled = value; }); if (!value) render(); }
 function render() {
+  $('#browserChoice').value = state.config?.browserChoice || 'auto';
+  $('#browserChoice').disabled = state.busy || !state.config;
+  $('#prepareBrowser').disabled = state.busy || !state.config || !['chromium', 'firefox'].includes($('#browserChoice').value);
   const config = state.config; $('#vaultPath').value = config?.vaultPath || ''; $('#outputRoot').value = config?.outputRoot || ''; $('#materialsPlacement').value = config?.materialsPlacement || 'subdirectory'; $('#materialsFolderName').value = config?.materialsFolderName || 'Materials'; $('#verificationMode').value = config?.verificationMode || 'sha256'; $('#autoStart').checked = Boolean(config?.autoStart); $('#autoCheckOnLaunch').checked = Boolean(config?.autoCheckOnLaunch); $('#periodicCheckMinutes').value = String(config?.periodicCheckMinutes || 0); updateMaterialsFolderVisibility();
   const hasConfig = Boolean(config?.vaultPath && config?.outputRoot); const hasDiscovered = state.discoveryDone && (config?.courses || []).some((course) => course.discovered); const hasSelected = (config?.courses || []).some((course) => course.selected && course.discovered); const hasPlan = Array.isArray(state.updatePlan); const hasActionablePlan = hasPlan && state.updatePlan.some((summary) => summary.newCount || summary.localModifiedCount);
   $('#authState').textContent = state.authenticated ? t('authComplete') : t('authRequired'); $('#authState').classList.toggle('complete', state.authenticated);
@@ -133,7 +140,7 @@ function render() {
 }
 async function save() {
   const selectedCodes = [...document.querySelectorAll('#courses input:checked')].map((box) => box.dataset.code);
-  state.config = await window.toledo.saveConfig({ vaultPath: $('#vaultPath').value, outputRoot: $('#outputRoot').value, materialsPlacement: $('#materialsPlacement').value, materialsFolderName: $('#materialsFolderName').value.trim(), verificationMode: $('#verificationMode').value, autoStart: $('#autoStart').checked, autoCheckOnLaunch: $('#autoCheckOnLaunch').checked, periodicCheckMinutes: Number($('#periodicCheckMinutes').value), selectedCodes }); state.authenticated = state.config.authenticated;
+  state.config = await window.toledo.saveConfig({ vaultPath: $('#vaultPath').value, outputRoot: $('#outputRoot').value, materialsPlacement: $('#materialsPlacement').value, materialsFolderName: $('#materialsFolderName').value.trim(), verificationMode: $('#verificationMode').value, autoStart: $('#autoStart').checked, autoCheckOnLaunch: $('#autoCheckOnLaunch').checked, periodicCheckMinutes: Number($('#periodicCheckMinutes').value), browserChoice: state.platform === 'linux' ? $('#browserChoice').value : undefined, selectedCodes }); state.authenticated = state.config.authenticated;
   render(); status(t('saved'));
 }
 async function run(operation) { try { setBusy(true); appendActivity(t('syncing')); status(t('syncing')); const value = await operation(); result(value); } catch (error) { appendActivity(`${t('error')}: ${error.message}`); status(`${t('error')}: ${error.message}`); } finally { setBusy(false); } }
@@ -144,6 +151,8 @@ document.querySelectorAll('.tab').forEach((tab) => tab.addEventListener('click',
   document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.toggle('active', panel.dataset.panel === tab.dataset.tab));
 }));
 $('#materialsPlacement').addEventListener('change', updateMaterialsFolderVisibility);
+$('#browserChoice').addEventListener('change', () => run(async () => { await save(); state.updatePlan = null; state.decisions = {}; render(); }));
+$('#prepareBrowser').addEventListener('click', () => run(async () => { state.config = await window.toledo.installBrowser($('#browserChoice').value); state.authenticated = state.config.authenticated; render(); }));
 $('#chooseVault').addEventListener('click', async () => { const folder = await window.toledo.chooseDirectory(t('chooseVault')); if (folder) $('#vaultPath').value = folder; });
 $('#chooseOutput').addEventListener('click', async () => { const folder = await window.toledo.chooseDirectory(t('chooseOutput')); if (folder) $('#outputRoot').value = folder; });
 $('#save').addEventListener('click', () => run(save)); $('#login').addEventListener('click', () => run(async () => { const value = await window.toledo.login(); state.authenticated = true; render(); return value; }));

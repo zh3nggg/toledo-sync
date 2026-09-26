@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { defaultConfigPath, initializeConfig, loadConfig, normalizeMaterialsLayout, saveConfig, statePath } from '../src/config.mjs';
 import { FALL_2026_COURSES } from '../src/constants.mjs';
-import { launchBrowser, resetBrowserSession as resetManagedBrowserSession } from '../src/browser.mjs';
+import { browserChoice, setBrowserChoice, installManagedBrowser, launchBrowser, resetBrowserSession as resetManagedBrowserSession } from '../src/browser.mjs';
+import { linuxAutostartEntry, linuxAutostartPath } from '../src/linux-desktop.mjs';
 import { discoverCourses } from '../src/discover.mjs';
 import { syncCourses } from '../src/sync.mjs';
 import { writeJson } from '../src/utils.mjs';
@@ -67,6 +68,7 @@ function present(config, configPath, authenticated = false, automation = {}) {
     materialsPlacement: config.download.materialsPlacement,
     materialsFolderName: config.download.materialsFolderName,
     authenticated,
+    browserChoice: browserChoice(config),
     ...normalizeAutomation(automation),
     academicYear: '',
     verificationMode: config.sync?.verificationMode ?? 'sha256',
@@ -109,7 +111,7 @@ function unrestrictedDesktopConfig(config) {
   return { ...config, filters: { ...config.filters, academicYears: [] } };
 }
 
-async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName, verificationMode, autoStart, autoCheckOnLaunch, periodicCheckMinutes }) {
+async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes = [], materialsPlacement, materialsFolderName, verificationMode, autoStart, autoCheckOnLaunch, periodicCheckMinutes, browserChoice: requestedBrowser }) {
   ensureDesktopPlatform();
   if (!vaultPath || !outputRoot) throw new Error('Choose both the Obsidian Vault and the download root.');
   const configPath = defaultConfigPath(vaultPath);
@@ -136,8 +138,15 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
     await saveConfig(configPath, config);
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    const initialSelectedCodes = selectedCodes.length ? selectedCodes : FALL_2026_COURSES.map((course) => course.code);
-    ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear: '', selectedCodes: initialSelectedCodes, materialsPlacement, materialsFolderName, verificationMode }));
+    const initialSelectedCodes = process.platform === 'linux' ? [] : selectedCodes.length ? selectedCodes : FALL_2026_COURSES.map((course) => course.code);
+    ({ config } = await initializeConfig(vaultPath, configPath, { outputRoot, academicYear: '', selectedCodes: initialSelectedCodes, ...(process.platform === 'linux' ? { courseCatalog: [] } : {}), materialsPlacement, materialsFolderName, verificationMode }));
+  }
+  if (process.platform === 'linux' && requestedBrowser && requestedBrowser !== 'custom'
+      && requestedBrowser !== browserChoice(config)) {
+    setBrowserChoice(config, requestedBrowser);
+    await saveConfig(configPath, config);
+    await fs.rm(statePath(config, 'auth', 'last-login.json'), { force: true });
+    authenticated = false;
   }
   const automation = normalizeAutomation({ autoStart, autoCheckOnLaunch, periodicCheckMinutes });
   await saveSettings({ configPath, ...automation });
@@ -159,9 +168,12 @@ async function startLogin() {
     if (await portalLink.count()) await portalLink.click();
     else await page.goto(loginConfig.portalUrl, { waitUntil: 'domcontentloaded' });
     const result = await waitForSuccessfulPortalLogin(page);
-    if (authStatePath) await context.storageState({ path: authStatePath });
+    if (authStatePath) {
+      await context.storageState({ path: authStatePath });
+      try { await fs.chmod(authStatePath, 0o600); } catch { /* Platform ACL may apply. */ }
+    }
     await writeJson(statePath(loginConfig, 'auth', 'last-login.json'), {
-      verifiedAt: new Date().toISOString(), url: result.url, title: result.title, browser: executablePath, profilePath
+      verifiedAt: new Date().toISOString(), url: result.url, title: result.title, browser: executablePath, profilePath, authStatePath
     });
     notify('success', 'Toledo login verified.');
     return { title: result.title, url: result.url, authenticated: true };
@@ -189,6 +201,22 @@ function registerIpc() {
   ipcMain.handle('config:save', async (_event, values) => updateConfig(values));
   ipcMain.handle('toledo:login', async () => startLogin());
   ipcMain.handle('browser:reset', async () => resetBrowserSession());
+  ipcMain.handle('browser:install', async (_event, name) => {
+    if (process.platform !== 'linux') throw new Error('Browser installation is available in the Linux app.');
+    if (!['chromium', 'firefox'].includes(name)) throw new Error('Choose Chromium or Firefox.');
+    const current = await currentConfig();
+    if (!current) throw new Error('Save the initial settings first.');
+    notify('progress', `Preparing ${name}…`);
+    await installManagedBrowser(name, { onProgress: message => notify('progress', message.trim()) });
+    if (browserChoice(current.config) !== name) {
+      setBrowserChoice(current.config, name);
+      await saveConfig(current.configPath, current.config);
+      await fs.rm(statePath(current.config, 'auth', 'last-login.json'), { force: true });
+      current.authenticated = false;
+    }
+    notify('success', `${name} is ready.`);
+    return present(current.config, current.configPath, current.authenticated, current.automation);
+  });
   ipcMain.handle('toledo:discover', async () => {
     const current = await currentConfig();
     if (!current) throw new Error('Save the initial settings first.');
@@ -266,24 +294,12 @@ async function configureAutomation(automation) {
       args: app.isPackaged ? [] : [app.getAppPath()]
     });
   } else if (process.platform === 'linux') {
-    const autostartDirectory = path.join(app.getPath('home'), '.config', 'autostart');
-    const desktopFile = path.join(autostartDirectory, 'toledo-sync.desktop');
+    const desktopFile = linuxAutostartPath(app.getPath('home'));
     if (normalized.autoStart) {
-      const launchPath = process.env.APPIMAGE || process.execPath;
-      const escapeDesktopValue = (value) => `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
-      const appArguments = process.env.APPIMAGE ? '' : ` ${escapeDesktopValue(app.getAppPath())}`;
-      await fs.mkdir(autostartDirectory, { recursive: true });
-      await fs.writeFile(desktopFile, [
-        '[Desktop Entry]',
-        'Type=Application',
-        'Name=Toledo Sync',
-        'Comment=Synchronize Toledo course materials',
-        `Exec=${escapeDesktopValue(launchPath)}${appArguments}`,
-        'Icon=toledo-sync',
-        'Terminal=false',
-        'X-GNOME-Autostart-enabled=true',
-        ''
-      ].join('\n'), 'utf8');
+      await fs.mkdir(path.dirname(desktopFile), { recursive: true });
+      await fs.writeFile(desktopFile, linuxAutostartEntry({
+        executable: process.execPath, appPath: app.getAppPath(), packaged: app.isPackaged, appImage: process.env.APPIMAGE
+      }), { encoding: 'utf8', mode: 0o600 });
     } else {
       await fs.rm(desktopFile, { force: true });
     }
@@ -303,7 +319,7 @@ async function initializeAutomation() {
 
 async function createWindow() {
   const demoMode = process.env.TOLEDO_DEMO === '1';
-  const windowIcon = process.platform === 'darwin' ? 'toledo-sync.png' : 'toledo-sync.ico';
+  const windowIcon = process.platform === 'win32' ? 'toledo-sync.ico' : 'toledo-sync.png';
   mainWindow = new BrowserWindow({
     width: demoMode ? 1280 : 860, height: demoMode ? 720 : 660,
     minWidth: demoMode ? 1280 : 720, minHeight: demoMode ? 720 : 540,

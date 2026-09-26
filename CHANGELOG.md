@@ -1,3 +1,12 @@
+## Linux update based on 1.3.0 — 2026-09-26
+
+- Use the repaired 1.3.0 content engine in the Linux GUI and interactive CLI.
+- Fix keyboard menus by importing keypress events from the correct Node module.
+- Add interactive Chromium/Firefox installation and Linux GUI browser selection.
+- Keep scanning failures visible in CLI summaries and return a failure exit status to one-shot schedulers.
+- Correct Linux window icons, path examples, empty initial course lists, and XDG autostart paths.
+- Build x86-64 AppImage, desktop tar.gz, and a CLI npm archive, with a Linux GUI/CLI integration test using local fixture courses.
+
 ## 1.3.0 — 2026-09-26
 
 - Release the substantially strengthened course-content engine as the recommended Windows desktop version.

@@ -1,4 +1,5 @@
 import readline from 'node:readline/promises';
+import { emitKeypressEvents } from 'node:readline';
 import { stdin as input, stdout as output } from 'node:process';
 
 export async function ask(question) {
@@ -139,7 +140,7 @@ async function runTerminalMenu(question, choices, fallbackIndex, labels, multipl
     try {
       stdin.setRawMode(true);
       stdin.resume();
-      readline.emitKeypressEvents(stdin);
+      emitKeypressEvents(stdin);
       stdin.on('keypress', onKeypress);
       stdout.on('resize', render);
       stdout.write('\x1b[?1049h\x1b[?25l');

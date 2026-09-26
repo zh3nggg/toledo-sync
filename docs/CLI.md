@@ -2,13 +2,26 @@
 
 The maintained CLI target is Linux. It requires Node.js 20 or newer and a supported browser. Chrome, Edge, Chromium, and Brave use their installed executable. Firefox uses Playwright's compatible Firefox build, which is installed once by the CLI.
 
+The Linux update uses the **1.3.0 content engine**. Access failures and incomplete course reads remain errors; `check`, `sync`, and `watch --once` return a nonzero exit code when a course or file fails. The interactive menu stays open so you can retry. For the desktop app, see the [Linux GUI guide](GUI-LINUX.md).
+
 ## Install
+
+Download [toledo-sync-1.3.0.tgz](https://github.com/zh3nggg/toledo-sync/releases/download/v1.3.0/toledo-sync-1.3.0.tgz), open a terminal in the download folder, then:
+
+```sh
+npm install --global --prefix "$HOME/.local" ./toledo-sync-1.3.0.tgz
+export PATH="$HOME/.local/bin:$PATH"
+toledo-sync
+```
+
+Add the PATH line to your shell configuration if `~/.local/bin` is not already on it. Installation needs no root permissions and does not install Electron. Alternatively, install from the source checkout containing the Linux changes:
 
 ```sh
 git clone https://github.com/zh3nggg/toledo-sync.git
 cd toledo-sync
 npm ci --omit=dev
-npm link
+npm link --prefix "$HOME/.local"
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 After `npm link`, run `toledo-sync` from any directory. From the repository, `npm start` opens the same interactive CLI. Advanced commands can also be run as `node src/linux-cli.mjs …`.
@@ -27,11 +40,16 @@ TOLEDO_BROWSER_PATH=/snap/bin/chromium toledo-sync
 toledo-sync --browser /custom/path/to/chromium
 ```
 
-To use Firefox, install Playwright's Firefox build once and select it:
+In the interactive wizard, **Settings → Browser settings** offers automatic detection, managed Chromium, managed Firefox, and an executable path. Choosing a missing managed browser offers to download it immediately. Signing in without a supported browser opens the same selection flow. No JSON editing is required.
+
+For command-line setup, install a compatible browser once and select it:
 
 ```sh
 toledo-sync install-browser firefox
 toledo-sync --browser firefox
+# Chromium is also available:
+toledo-sync install-browser chromium
+toledo-sync --browser chromium
 ```
 
 The installed Firefox application cannot be automated directly: Playwright requires its compatible Firefox build. Toledo Sync stores its Firefox profile separately from a Chromium profile. The browser build is downloaded into Playwright's local browser cache; if Linux reports missing shared libraries, install the browser's system dependencies as described in the [Playwright Linux setup guide](https://playwright.dev/docs/browsers#installing-browser-dependencies).
@@ -208,3 +226,23 @@ toledo-sync sync-calendar --config "/path/to/config.json"
 ## Security
 
 Do not commit or cloud-sync `~/.toledo-sync/`, which contains browser-profile and session state. Do not publish files from `<vault>/_codex/toledo-sync/` if snapshots contain private course metadata.
+
+## 中文快速入门
+
+需要 Node.js 20 或更新版本。可用上方命令将 `toledo-sync-1.3.0.tgz` 安装到当前用户目录，或在源码目录执行 `npm ci --omit=dev` 后运行 `npm start`。首次使用选择语言，然后配置 Vault、下载根目录和材料布局。
+
+在“设置 → 浏览器设置”选择自动检测、Chromium、Firefox 或自定义路径。选择未安装的 Chromium / Firefox 后，菜单会询问是否下载兼容版本，无需编辑 JSON。登录时没有可用浏览器也会进入这一流程。
+
+登录 → 读取课程 → 空格勾选课程 → 检查并审阅更新 → 确认应用。远程访问失败会显示错误，不会误报“没有材料”；检查不会写入课程目录，应用复用缓存。默认保留本地批注并另存远程副本；可逐文件选择保留、替换或跳过。
+
+单次 `check`、`sync`、`watch --once` 遇到课程或文件错误时返回非零退出码。交互菜单保持打开以便重试。持续监控默认只检查；自动应用需明确开启。需要桌面界面时请看 [Linux GUI 指南](GUI-LINUX.md)。
+
+## Nederlandse snelstart
+
+Node.js 20 of nieuwer is vereist. Installeer `toledo-sync-1.3.0.tgz` met de opdracht hierboven in je gebruikersmap, of voer in de broncodemap `npm ci --omit=dev` en daarna `npm start` uit. Kies bij de eerste start je taal, Vault, downloadhoofdmap en materiaalindeling.
+
+Onder **Instellingen → Browserinstellingen** kies je automatische detectie, Chromium, Firefox of een uitvoerbaar bestand. Als de gekozen beheerde browser ontbreekt, vraagt het menu of je de compatibele versie wilt downloaden. JSON aanpassen is niet nodig. Dezelfde keuze verschijnt wanneer je zonder beschikbare browser probeert aan te melden.
+
+Meld je aan → lees cursussen → selecteer met de spatiebalk → controleer en beoordeel updates → bevestig het toepassen. Toegangsfouten blijven zichtbare fouten. Controleren wijzigt geen cursusbestanden; toepassen hergebruikt de cache. Lokale aantekeningen blijven standaard behouden met een aparte externe kopie. Per bestand kun je ook behouden, vervangen of overslaan.
+
+Eenmalige `check`, `sync` en `watch --once` geven bij fouten een niet-nul afsluitcode terug. Het interactieve menu blijft open voor een nieuwe poging. Monitoring controleert standaard alleen; automatisch toepassen moet je zelf inschakelen. Zie ook de [Linux GUI-handleiding](GUI-LINUX.md).
