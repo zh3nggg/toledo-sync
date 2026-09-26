@@ -1,6 +1,6 @@
 # Linux desktop guide / Linux 桌面版 / Linux-desktopapp
 
-Based on the 1.3.0 content engine. Linux packages are built separately from the existing Windows release; do not assume that the Windows release page includes them. Current build target: **x86-64 Linux**, tested in Ubuntu 22.04 under WSL2. Native Wayland desktops and other distributions still need testing.
+Based on the 1.3.0 content engine. Download Linux packages from the [1.3.0 release](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0). Verify with SHA256SUMS-linux.txt. Current build target: **x86-64 Linux**, tested in Ubuntu 22.04 under WSL2. Native Wayland desktops and other distributions still need testing.
 
 ## English
 
@@ -48,7 +48,7 @@ AppImage 在文件管理器中勾选“允许作为程序执行”后打开；�
 
 开机启动通过当前用户的 autostart 配置实现。应用文件应放在固定位置；定时检查需要应用保持运行。桌面版的自动更新会检查并同步所选课程。登录需要图形桌面环境。首次下载浏览器时，若提示缺少系统库，请按活动监控中的提示处理。
 
-当前产物面向 x86-64，已在 Ubuntu 22.04 / WSL2 测试；尚未验证所有发行版和原生 Wayland 桌面。Linux 包独立构建，不能把 Windows 发行页当作已有 Linux 下载入口。
+当前产物面向 x86-64，已在 Ubuntu 22.04 / WSL2 测试；尚未验证所有发行版和原生 Wayland 桌面。Linux 安装包已加入同一 v1.3.0 Release；使用 SHA256SUMS-linux.txt 校验。
 
 ## Nederlands
 
@@ -64,4 +64,4 @@ Maak de AppImage uitvoerbaar via de bestandseigenschappen en open hem. Je kunt o
 
 Automatisch starten gebruikt de autostart-instellingen van de huidige gebruiker. Bewaar de app op een vaste locatie. Geplande controles werken zolang de app open blijft; de desktopautomatisering controleert én synchroniseert de gekozen cursussen. Aanmelden vereist een grafische sessie. Eventuele ontbrekende systeembibliotheken worden in de activiteitenmonitor gemeld.
 
-Deze pakketten zijn voor x86-64 en getest op Ubuntu 22.04 onder WSL2. Andere distributies en native Wayland-desktops zijn nog niet volledig getest. Linux-pakketten worden afzonderlijk gebouwd; de Windows-releasepagina bevat ze niet automatisch.
+Deze pakketten zijn voor x86-64 en getest op Ubuntu 22.04 onder WSL2. Andere distributies en native Wayland-desktops zijn nog niet volledig getest. De Linux-pakketten staan in release v1.3.0; gebruik SHA256SUMS-linux.txt voor controle.

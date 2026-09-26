@@ -6,7 +6,7 @@ The Linux update uses the **1.3.0 content engine**. Access failures and incomple
 
 ## Install
 
-With the CLI package built for this update:
+Download [toledo-sync-1.3.0.tgz](https://github.com/zh3nggg/toledo-sync/releases/download/v1.3.0/toledo-sync-1.3.0.tgz), open a terminal in the download folder, then:
 
 ```sh
 npm install --global --prefix "$HOME/.local" ./toledo-sync-1.3.0.tgz

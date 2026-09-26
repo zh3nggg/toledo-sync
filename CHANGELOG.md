@@ -1,4 +1,4 @@
-## Linux update based on 1.3.0 — not yet published
+## Linux update based on 1.3.0 — 2026-09-26
 
 - Use the repaired 1.3.0 content engine in the Linux GUI and interactive CLI.
 - Fix keyboard menus by importing keypress events from the correct Node module.
