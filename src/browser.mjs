@@ -80,6 +80,18 @@ export async function detectBrowser(configuredPath = null) {
   ].join(' '));
 }
 
+export async function verifyBrowserLaunch(executablePath) {
+  const browserType = isFirefoxPath(executablePath) ? firefox : chromium;
+  const browser = await browserType.launch({ executablePath, headless: true, timeout: 20000 });
+  try {
+    const page = await browser.newPage();
+    await page.goto('data:text/html,<title>Toledo Sync browser check</title>');
+    if (await page.title() !== 'Toledo Sync browser check') throw new Error('Browser did not render a local page.');
+  } finally {
+    await browser.close();
+  }
+}
+
 function browserSetupError(message) {
   return Object.assign(new Error(message), { code: 'BROWSER_SETUP_REQUIRED' });
 }

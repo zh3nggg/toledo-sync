@@ -4,11 +4,11 @@
 
 [中文](#中文) · [English](#english) · [Nederlands](#nederlands)
 
-> **Windows 推荐升级 / Recommended Windows update / Aanbevolen Windows-update: 1.3.0.** 1.2.1 及更早版本可能把 Toledo 访问失败误报为“课程没有材料”。请安装 [最新发行版](https://github.com/zh3nggg/toledo-sync/releases/latest)。Apple Silicon Mac 1.3.0 已在同一 Release 提供；Linux GUI 和 CLI 1.3.0 已加入同一发行版。 / Versions 1.2.1 and earlier can report an access failure as an empty course. Install the [latest Windows release](https://github.com/zh3nggg/toledo-sync/releases/latest); Apple Silicon macOS 1.3.0 is available in the same release; Linux GUI and CLI 1.3.0 are available in the same release. / Versies 1.2.1 en ouder kunnen een toegangsprobleem als een lege cursus tonen. Installeer de [nieuwste Windows-versie](https://github.com/zh3nggg/toledo-sync/releases/latest); Apple Silicon macOS 1.3.0 staat in dezelfde release; Linux GUI en CLI 1.3.0 staan in dezelfde release.
+> **Downloads / 下载 / Downloads:** [Windows, macOS, Linux GUI 1.3.0](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0) · [Linux CLI 1.3.1](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.1-cli). Windows 1.2.1 and earlier may mistake Toledo access failures for empty courses; upgrade to 1.3.0 before checking materials. / Windows 1.2.1 及更早版本可能把访问失败误报为空课程，请升级到 1.3.0。 / Windows 1.2.1 en ouder kunnen toegangsproblemen als lege cursussen tonen; werk bij naar 1.3.0.
 
 ## 中文
 
-**Linux 适配：** 基于 1.3.0 的 Linux GUI 与交互式 CLI 已更新，安装包见 [v1.3.0 Release](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0)，校验文件为 SHA256SUMS-linux.txt。构建与使用说明见 [Linux GUI](docs/GUI-LINUX.md) 和 [Linux CLI](docs/CLI.md)。
+**Linux 适配：** 交互式 CLI 1.3.1 的安装包和 SHA256SUMS-cli.txt 见 [v1.3.1-cli](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.1-cli)；Linux GUI 仍从 [v1.3.0](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0) 下载。构建与使用说明见 [Linux GUI](docs/GUI-LINUX.md) 和 [Linux CLI](docs/CLI.md)。
 
 ### 适合什么场景？
 
@@ -69,7 +69,7 @@ D:\Study\Leuven 2026 Fall\
 | macOS（Apple Silicon） | 三语桌面应用 | 已支持 |
 | Linux x86-64 | 三语 GUI（AppImage / tar.gz）与交互式 CLI | 已发布 |
 
-**Windows 用户：** 请升级到 1.3.0，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.1.3.0.exe`；不想安装时请选择 `Toledo.Sync.1.3.0.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
+**Windows 用户：** 请升级到 [v1.3.0](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0)。长期使用请选择 `Toledo.Sync.Setup.1.3.0.exe`；不想安装时请选择 `Toledo.Sync.1.3.0.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
 
 **Mac 用户：** 从同一 [v1.3.0 发行版](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0) 下载 `Toledo.Sync-1.3.0-macOS-arm64.dmg` 或 ZIP。Mac 版直接使用 Windows v1.3.0 的原始抓取引擎，校验文件为 `SHA256SUMS-macOS.txt`。安装与首次运行放行方法见 [macOS 安装指南](docs/GUI-MACOS.md)。
 
@@ -91,7 +91,7 @@ D:\Study\Leuven 2026 Fall\
 
 ## English
 
-**Linux update:** the GUI and interactive CLI have been updated from the 1.3.0 engine. Download Linux packages from the [v1.3.0 release](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0); verify them with SHA256SUMS-linux.txt. See the [Linux GUI guide](docs/GUI-LINUX.md) and [CLI guide](docs/CLI.md) for building and using them.
+**Linux update:** Download the interactive CLI 1.3.1 and SHA256SUMS-cli.txt from [v1.3.1-cli](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.1-cli). The Linux GUI remains in [v1.3.0](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0). See the [Linux GUI guide](docs/GUI-LINUX.md) and [CLI guide](docs/CLI.md).
 
 ### The problem it solves
 
@@ -127,7 +127,7 @@ Choose Vault and download root → sign in once → discover current courses
 | macOS (Apple Silicon) | Desktop app in 中文, English, Nederlands | Supported |
 | Linux x86-64 | GUI (AppImage / tar.gz) and interactive CLI in 中文, English, Nederlands | Available |
 
-For Windows, upgrade to 1.3.0 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.1.3.0.exe` to install or `Toledo.Sync.1.3.0.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). Apple Silicon macOS 1.3.0 is available in the same release as `Toledo.Sync-1.3.0-macOS-arm64.dmg` and ZIP, using the unchanged Windows v1.3.0 engine. Mac checksums are in `SHA256SUMS-macOS.txt`; see the [macOS guide](docs/GUI-MACOS.md). Linux GUI and CLI 1.3.0 are available; see the [Linux CLI guide](docs/CLI.md).
+For Windows, download [v1.3.0](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0). Use `Toledo.Sync.Setup.1.3.0.exe` to install or `Toledo.Sync.1.3.0.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). Apple Silicon macOS 1.3.0 is available in the same release as `Toledo.Sync-1.3.0-macOS-arm64.dmg` and ZIP; see the [macOS guide](docs/GUI-MACOS.md). The Linux GUI is also in v1.3.0; the Linux CLI is [v1.3.1-cli](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.1-cli). See the [Linux CLI guide](docs/CLI.md).
 
 ### Current scope and privacy
 
@@ -139,7 +139,7 @@ Authentication state stays locally in `~/.toledo-sync/`; Vault-side manifests an
 
 ## Nederlands
 
-**Linux-update:** de GUI en interactieve CLI zijn bijgewerkt op basis van 1.3.0. Download de Linux-pakketten via [v1.3.0](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0); controleer ze met SHA256SUMS-linux.txt. Zie de [Linux GUI-handleiding](docs/GUI-LINUX.md) en [CLI-handleiding](docs/CLI.md) voor bouwen en gebruik.
+**Linux-update:** Download de interactieve CLI 1.3.1 en SHA256SUMS-cli.txt via [v1.3.1-cli](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.1-cli). De Linux-GUI blijft beschikbaar via [v1.3.0](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0). Zie de [Linux GUI-handleiding](docs/GUI-LINUX.md) en [CLI-handleiding](docs/CLI.md).
 
 ### Voor welk probleem?
 
@@ -168,7 +168,7 @@ De toepassing is bedoeld voor studenten die eerst hun volledige cursuslijst will
 | macOS (Apple Silicon) | Desktopapp in 中文, English, Nederlands | Ondersteund |
 | Linux x86-64 | GUI (AppImage / tar.gz) en interactieve CLI in 中文, English, Nederlands | Beschikbaar |
 
-Installeer op Windows versie 1.3.0 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo.Sync.Setup.1.3.0.exe` voor installatie of `Toledo.Sync.1.3.0.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). Apple Silicon macOS 1.3.0 staat in dezelfde release als `Toledo.Sync-1.3.0-macOS-arm64.dmg` en ZIP, met de ongewijzigde Windows v1.3.0-engine. Mac-controlesommen staan in `SHA256SUMS-macOS.txt`; zie de [macOS-handleiding](docs/GUI-MACOS.md). Linux GUI en CLI 1.3.0 zijn beschikbaar; zie de [Linux CLI-handleiding](docs/CLI.md).
+Download voor Windows [v1.3.0](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0). Kies `Toledo.Sync.Setup.1.3.0.exe` voor installatie of `Toledo.Sync.1.3.0.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). Apple Silicon macOS 1.3.0 staat in dezelfde release als `Toledo.Sync-1.3.0-macOS-arm64.dmg` en ZIP; zie de [macOS-handleiding](docs/GUI-MACOS.md). De Linux-GUI staat eveneens in v1.3.0; de Linux-CLI staat in [v1.3.1-cli](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.1-cli). Zie de [Linux CLI-handleiding](docs/CLI.md).
 
 ### Huidige ondersteuning en privacy
 
@@ -188,7 +188,7 @@ Cursusmateriaal kan beschermd of gelicentieerd zijn door KU Leuven, docenten of 
 
 ## Version 1.3.0 / 版本 1.3.0 / Versie 1.3.0
 
-Version 1.3.0 is the recommended Windows release, centered on the substantially strengthened course-content engine. The engine repair first shipped in the transitional 1.2.2 release: inaccessible courses now show an error instead of a misleading empty result, with safer retries, cache validation, and session handling. Upgrade from 1.2.1 or earlier before checking course materials. Apple Silicon macOS 1.3.0 now uses the same unmodified engine in the same release. Linux GUI and CLI 1.3.0 are available in the same release.
+Version 1.3.0 is the recommended Windows, macOS, and Linux GUI release, centered on the strengthened course-content engine. Linux CLI 1.3.1 adds trilingual guidance and a real browser startup check without changing that content engine.
 
 ## For contributors / 开发者
 

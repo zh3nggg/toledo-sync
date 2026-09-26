@@ -8,7 +8,7 @@ import {
   defaultConfigPath, initializeConfig, loadConfig, normalizeMaterialsLayout,
   normalizeVerificationMode, saveConfig, statePath
 } from './config.mjs';
-import { browserChoice, setBrowserChoice, detectBrowser, installManagedBrowser, launchBrowser, resetBrowserSession } from './browser.mjs';
+import { browserChoice, setBrowserChoice, detectBrowser, installManagedBrowser, launchBrowser, resetBrowserSession, verifyBrowserLaunch } from './browser.mjs';
 import { discoverCourses } from './discover.mjs';
 import { ask, askWithDefault, choose, chooseMany, confirm } from './prompt.mjs';
 import { setCalendarUrl, syncCalendar } from './calendar.mjs';
@@ -62,14 +62,14 @@ async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
     if (!identityProvider && portal) return { currentUrl, title };
     await delay(1000);
   }
-  throw new Error('Timed out waiting for Toledo login. The browser session was kept for another attempt.');
+  throw new Error(activeTranslator('loginTimeout'));
 }
 
 function helpText(t) {
   return `${t('appTitle')} ${VERSION}
 
-Usage:
-  toledo-sync                         Interactive setup and update flow
+${t('helpUsage')}:
+  toledo-sync                         ${t('helpInteractiveFlow')}
   toledo-sync interactive [--config <config.json>]
   toledo-sync doctor
   toledo-sync install-browser chromium|firefox
@@ -88,10 +88,10 @@ Usage:
   toledo-sync set-calendar --config <config.json>
   toledo-sync sync-calendar --config <config.json>
 
-Global options:
-  --language en|zh|nl       Interface language (or TOLEDO_LANG)
-  --browser <path|chromium|firefox>  System executable or managed browser
-  --config <path>           Existing Toledo Sync configuration
+${t('helpGlobalOptions')}:
+  --language en|zh|nl       ${t('helpLanguageOption')}
+  --browser <path|chromium|firefox>  ${t('helpBrowserOption')}
+  --config <path>           ${t('helpConfigOption')}
 
 ${t('copyrightShort')}`;
 }
@@ -106,7 +106,7 @@ function headlessConfig(config) {
 
 function layoutOptions(options) {
   if (options['materials-in-course'] && options['materials-subdirectory']) {
-    throw new Error('Choose either --materials-in-course or --materials-subdirectory, not both.');
+    throw new Error(activeTranslator('layoutConflict'));
   }
   if (options['materials-in-course']) return { materialsPlacement: 'course-root' };
   if (options['materials-subdirectory']) {
@@ -321,7 +321,7 @@ async function checkAndApply(config, selectedCode, context, { apply = true } = {
 export function normalizeWatchInterval(value) {
   const minutes = Number(value ?? 60);
   if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) {
-    throw new Error('Watch interval must be a whole number from 1 to 1440 minutes.');
+    throw new Error(activeTranslator('watchIntervalInvalid'));
   }
   return minutes;
 }
@@ -367,7 +367,7 @@ async function runMonitor(config, configPath, context, { intervalMinutes = 60, a
           if (errors && once) process.exitCode = 1;
         }
       } catch (error) {
-        console.error(`Error: ${error.message}`);
+        console.error(`${context.t('errorLabel')}: ${error.message}`);
         if (once) process.exitCode = 1;
       }
       if (once || stop.requested) break;
@@ -574,7 +574,7 @@ async function runInteractive(options, settings, context) {
         }
       }
     } catch (error) {
-      console.error(`Error: ${error.message}`);
+      console.error(`${context.t('errorLabel')}: ${error.message}`);
     }
   }
   console.log(context.t('done'));
@@ -633,10 +633,21 @@ export async function runCli(argv = process.argv.slice(2)) {
     console.log(context.t('doctorPlatform', { platform: `${process.platform} ${process.arch}` }));
     console.log(context.t('doctorNode', { version: process.version }));
     try {
-      console.log(context.t('doctorBrowser', { path: await detectBrowser(options.browser) }));
+      const executablePath = await detectBrowser(options.browser);
+      console.log(context.t('doctorBrowser', { path: executablePath }));
+      try {
+        await verifyBrowserLaunch(executablePath);
+        console.log(context.t('doctorBrowserReady'));
+      } catch (error) {
+        const missingLibrary = error.message.match(/error while loading shared libraries: ([^:]+)/)?.[1];
+        const reason = missingLibrary ? context.t('doctorMissingLibrary', { name: missingLibrary }) : error.message.split('\n')[0];
+        console.log(context.t('doctorBrowserFailed', { reason }));
+        console.log(context.t('doctorDependenciesHint'));
+        process.exitCode = 1;
+      }
     } catch (error) {
       console.log(context.t('doctorBrowserMissing'));
-      console.log(error.message);
+      if (error.code !== 'BROWSER_SETUP_REQUIRED') console.log(error.message);
       console.log(context.t('doctorHint'));
       process.exitCode = 1;
     }
@@ -644,7 +655,7 @@ export async function runCli(argv = process.argv.slice(2)) {
   }
   if (command === 'install-browser') {
     const browserName = String(positional[1] ?? '').toLowerCase();
-    if (!['chromium', 'firefox'].includes(browserName)) throw new Error('Usage: toledo-sync install-browser chromium|firefox');
+    if (!['chromium', 'firefox'].includes(browserName)) throw new Error(context.t('installBrowserUsage'));
     console.log(context.t('installingBrowser', { name: browserName }));
     const result = await installManagedBrowser(browserName);
     console.log(context.t('browserLine', { path: result.executablePath }));
@@ -655,8 +666,8 @@ export async function runCli(argv = process.argv.slice(2)) {
     return;
   }
   if (command === 'init') {
-    if (!options.vault) throw new Error('init requires --vault <path>');
-    if (!options.output) throw new Error('init requires --output <download-root>');
+    if (!options.vault) throw new Error(context.t('initVaultRequired'));
+    if (!options.output) throw new Error(context.t('initOutputRequired'));
     const selectedCodes = options.courses
       ? String(options.courses).split(',').map((value) => value.trim()).filter(Boolean)
       : [];
@@ -751,20 +762,20 @@ export async function runCli(argv = process.argv.slice(2)) {
     return;
   }
   if (command === 'set-calendar') {
-    console.log(`Calendar link: ${await setCalendarUrl(configPath)}`);
+    console.log(context.t('calendarLink', { url: await setCalendarUrl(configPath) }));
     return;
   }
   if (command === 'sync-calendar') {
     const result = await syncCalendar(config, configPath);
-    console.log(`Calendar: ${result.eventCount} events → ${result.outputDirectory}`);
+    console.log(context.t('calendarResult', { count: result.eventCount, path: result.outputDirectory }));
     return;
   }
-  throw new Error(`Unknown command: ${command}\n\n${helpText(context.t)}`);
+  throw new Error(`${context.t('unknownCommand', { command })}\n\n${helpText(context.t)}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   runCli().catch((error) => {
-    console.error(`Error: ${error.message}`);
+    console.error(`${activeTranslator('errorLabel')}: ${error.message}`);
     process.exitCode = 1;
   });
 }

@@ -2,14 +2,14 @@
 
 The maintained CLI target is Linux. It requires Node.js 20 or newer and a supported browser. Chrome, Edge, Chromium, and Brave use their installed executable. Firefox uses Playwright's compatible Firefox build, which is installed once by the CLI.
 
-The Linux update uses the **1.3.0 content engine**. Access failures and incomplete course reads remain errors; `check`, `sync`, and `watch --once` return a nonzero exit code when a course or file fails. The interactive menu stays open so you can retry. For the desktop app, see the [Linux GUI guide](GUI-LINUX.md).
+Linux CLI **1.3.1** uses the **1.3.0 content engine**. It adds complete English, Chinese, and Dutch command guidance plus a browser startup check. Access failures and incomplete course reads remain errors; `check`, `sync`, and `watch --once` return a nonzero exit code when a course or file fails. The interactive menu stays open so you can retry. The Linux GUI remains at 1.3.0; see the [Linux GUI guide](GUI-LINUX.md).
 
 ## Install
 
-Download [toledo-sync-1.3.0.tgz](https://github.com/zh3nggg/toledo-sync/releases/download/v1.3.0/toledo-sync-1.3.0.tgz), open a terminal in the download folder, then:
+Download [toledo-sync-1.3.1.tgz](https://github.com/zh3nggg/toledo-sync/releases/download/v1.3.1-cli/toledo-sync-1.3.1.tgz), open a terminal in the download folder, then:
 
 ```sh
-npm install --global --prefix "$HOME/.local" ./toledo-sync-1.3.0.tgz
+npm install --global --prefix "$HOME/.local" ./toledo-sync-1.3.1.tgz
 export PATH="$HOME/.local/bin:$PATH"
 toledo-sync
 ```
@@ -31,6 +31,8 @@ Check browser detection before setup:
 ```sh
 toledo-sync doctor
 ```
+
+`doctor` also starts the browser briefly and opens a local test page. A browser file alone is not enough: if Linux is missing a required shared library, the check reports the missing library and exits with an error before you try to sign in. The test page does not contact Toledo.
 
 The CLI searches standard Linux locations, the current `PATH`, Ubuntu Snap Chromium at `/snap/bin/chromium`, and common Flatpak export locations. If needed, specify the executable without editing JSON:
 
@@ -229,7 +231,7 @@ Do not commit or cloud-sync `~/.toledo-sync/`, which contains browser-profile an
 
 ## 中文快速入门
 
-需要 Node.js 20 或更新版本。可用上方命令将 `toledo-sync-1.3.0.tgz` 安装到当前用户目录，或在源码目录执行 `npm ci --omit=dev` 后运行 `npm start`。首次使用选择语言，然后配置 Vault、下载根目录和材料布局。
+需要 Node.js 20 或更新版本。可用上方命令将 `toledo-sync-1.3.1.tgz` 安装到当前用户目录，或在源码目录执行 `npm ci --omit=dev` 后运行 `npm start`。首次使用选择语言，然后配置 Vault、下载根目录和材料布局。
 
 在“设置 → 浏览器设置”选择自动检测、Chromium、Firefox 或自定义路径。选择未安装的 Chromium / Firefox 后，菜单会询问是否下载兼容版本，无需编辑 JSON。登录时没有可用浏览器也会进入这一流程。
 
@@ -239,7 +241,7 @@ Do not commit or cloud-sync `~/.toledo-sync/`, which contains browser-profile an
 
 ## Nederlandse snelstart
 
-Node.js 20 of nieuwer is vereist. Installeer `toledo-sync-1.3.0.tgz` met de opdracht hierboven in je gebruikersmap, of voer in de broncodemap `npm ci --omit=dev` en daarna `npm start` uit. Kies bij de eerste start je taal, Vault, downloadhoofdmap en materiaalindeling.
+Node.js 20 of nieuwer is vereist. Installeer `toledo-sync-1.3.1.tgz` met de opdracht hierboven in je gebruikersmap, of voer in de broncodemap `npm ci --omit=dev` en daarna `npm start` uit. Kies bij de eerste start je taal, Vault, downloadhoofdmap en materiaalindeling.
 
 Onder **Instellingen → Browserinstellingen** kies je automatische detectie, Chromium, Firefox of een uitvoerbaar bestand. Als de gekozen beheerde browser ontbreekt, vraagt het menu of je de compatibele versie wilt downloaden. JSON aanpassen is niet nodig. Dezelfde keuze verschijnt wanneer je zonder beschikbare browser probeert aan te melden.
 

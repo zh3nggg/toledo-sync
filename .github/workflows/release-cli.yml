@@ -1,0 +1,48 @@
+name: Publish Linux CLI
+
+on:
+  push:
+    tags:
+      - 'v*-cli'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --omit=dev
+      - run: npm test
+      - run: npm run check
+      - run: npm run make:cli
+      - name: Install the release tarball
+        run: npm install --prefix "$RUNNER_TEMP/toledo-cli" ./release/toledo-sync-1.3.1.tgz
+      - name: Check the installed CLI languages
+        run: |
+          cli="$RUNNER_TEMP/toledo-cli/node_modules/toledo-sync/src/linux-cli.mjs"
+          node "$cli" help --language en | grep -q 'Global options'
+          node "$cli" help --language zh | grep -q '通用选项'
+          node "$cli" help --language nl | grep -q 'Algemene opties'
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Verify the installed CLI can start a browser
+        run: |
+          cli="$RUNNER_TEMP/toledo-cli/node_modules/toledo-sync/src/linux-cli.mjs"
+          node "$cli" doctor --browser chromium --language en
+      - name: Write checksum
+        run: cd release && sha256sum toledo-sync-1.3.1.tgz > SHA256SUMS-cli.txt
+      - uses: softprops/action-gh-release@v2.6.2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Toledo Sync Linux CLI 1.3.1
+          body_path: docs/RELEASE-NOTES-1.3.1-CLI.md
+          make_latest: false
+          files: |
+            release/toledo-sync-1.3.1.tgz
+            release/SHA256SUMS-cli.txt
+          fail_on_unmatched_files: true

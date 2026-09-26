@@ -166,6 +166,67 @@ Object.assign(messages.nl, {
   applyIncomplete: 'Sommige updates zijn mislukt. Bekijk de fouten en probeer opnieuw.'
 });
 
+Object.assign(messages.en, {
+  helpUsage: 'Usage', helpInteractiveFlow: 'Interactive setup and update flow',
+  helpGlobalOptions: 'Global options', helpLanguageOption: 'Interface language (or TOLEDO_LANG)',
+  helpBrowserOption: 'System executable or managed browser',
+  helpConfigOption: 'Existing Toledo Sync configuration',
+  errorLabel: 'Error',
+  loginTimeout: 'Timed out waiting for Toledo login. The browser session was kept for another attempt.',
+  layoutConflict: 'Choose either --materials-in-course or --materials-subdirectory, not both.',
+  watchIntervalInvalid: 'Watch interval must be a whole number from 1 to 1440 minutes.',
+  installBrowserUsage: 'Usage: toledo-sync install-browser chromium|firefox',
+  initVaultRequired: 'init requires --vault <path>',
+  initOutputRequired: 'init requires --output <download-root>',
+  unknownCommand: 'Unknown command: {command}',
+  calendarLink: 'Calendar link: {url}',
+  calendarResult: 'Calendar: {count} events → {path}',
+  doctorBrowserReady: 'Browser opened a local test page successfully.',
+  doctorBrowserFailed: 'Browser found, but could not start: {reason}',
+  doctorMissingLibrary: 'missing Linux library {name}',
+  doctorDependenciesHint: 'Install the browser system dependencies, then run toledo-sync doctor again.'
+});
+Object.assign(messages.zh, {
+  helpUsage: '用法', helpInteractiveFlow: '交互式设置与更新',
+  helpGlobalOptions: '通用选项', helpLanguageOption: '界面语言（也可设置 TOLEDO_LANG）',
+  helpBrowserOption: '系统浏览器路径或托管浏览器',
+  helpConfigOption: '现有 Toledo Sync 配置文件',
+  errorLabel: '错误',
+  loginTimeout: '等待 Toledo 登录超时。浏览器会话已保留，可以重试。',
+  layoutConflict: '--materials-in-course 与 --materials-subdirectory 只能选择一个。',
+  watchIntervalInvalid: '检查周期必须是 1 到 1440 分钟之间的整数。',
+  installBrowserUsage: '用法：toledo-sync install-browser chromium|firefox',
+  initVaultRequired: 'init 命令需要 --vault <路径>',
+  initOutputRequired: 'init 命令需要 --output <下载根目录>',
+  unknownCommand: '未知命令：{command}',
+  calendarLink: '日历链接：{url}',
+  calendarResult: '日历：{count} 个事件 → {path}',
+  doctorBrowserReady: '浏览器已成功启动并打开本地测试页。',
+  doctorBrowserFailed: '已找到浏览器，但无法启动：{reason}',
+  doctorMissingLibrary: '缺少 Linux 共享库 {name}',
+  doctorDependenciesHint: '安装浏览器所需的系统依赖后，再运行 toledo-sync doctor。'
+});
+Object.assign(messages.nl, {
+  helpUsage: 'Gebruik', helpInteractiveFlow: 'Interactieve installatie en updates',
+  helpGlobalOptions: 'Algemene opties', helpLanguageOption: 'Interfacetaal (of TOLEDO_LANG)',
+  helpBrowserOption: 'Browserprogramma of beheerde browser',
+  helpConfigOption: 'Bestaande Toledo Sync-configuratie',
+  errorLabel: 'Fout',
+  loginTimeout: 'Wachten op Toledo-aanmelding duurde te lang. De browsersessie is bewaard om opnieuw te proberen.',
+  layoutConflict: 'Kies óf --materials-in-course óf --materials-subdirectory.',
+  watchIntervalInvalid: 'Het controle-interval moet een geheel getal van 1 tot 1440 minuten zijn.',
+  installBrowserUsage: 'Gebruik: toledo-sync install-browser chromium|firefox',
+  initVaultRequired: 'init vereist --vault <pad>',
+  initOutputRequired: 'init vereist --output <downloadhoofdmap>',
+  unknownCommand: 'Onbekende opdracht: {command}',
+  calendarLink: 'Agendalink: {url}',
+  calendarResult: 'Agenda: {count} afspraken → {path}',
+  doctorBrowserReady: 'De browser heeft een lokale testpagina geopend.',
+  doctorBrowserFailed: 'Browser gevonden, maar starten mislukt: {reason}',
+  doctorMissingLibrary: 'ontbrekende Linux-bibliotheek {name}',
+  doctorDependenciesHint: 'Installeer de systeemafhankelijkheden van de browser en voer toledo-sync doctor opnieuw uit.'
+});
+
 export function normalizeLanguage(value) {
   const normalized = String(value ?? '').trim().toLowerCase().replace('_', '-');
   if (/^(zh|cn)(-|$)/.test(normalized)) return 'zh';

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { createTranslator, normalizeLanguage, resolveLanguage } from '../src/cli-i18n.mjs';
 import { formatUpdateTree, normalizeWatchInterval, updateCounts } from '../src/linux-cli.mjs';
 import { browserChoice, setBrowserChoice, detectBrowser } from '../src/browser.mjs';
@@ -17,6 +18,33 @@ test('Linux CLI resolves English, Chinese, and Dutch locale variants', () => {
   assert.equal(createTranslator('en')('signIn'), 'Sign in to Toledo');
   assert.equal(createTranslator('zh')('signIn'), '登录 Toledo');
   assert.equal(createTranslator('nl')('signIn'), 'Aanmelden bij Toledo');
+});
+
+test('help and missing-browser guidance use the selected language', async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'toledo-cli-lang-'));
+  const cli = path.resolve('src/linux-cli.mjs');
+  const samples = [
+    { language: 'en', help: 'Global options', doctor: 'No supported Chrome' },
+    { language: 'zh', help: '通用选项', doctor: '没有找到受支持的' },
+    { language: 'nl', help: 'Algemene opties', doctor: 'Geen ondersteunde' }
+  ];
+  try {
+    for (const { language, help, doctor } of samples) {
+      const env = { ...process.env, HOME: home, USERPROFILE: home };
+      const helpResult = spawnSync(process.execPath, [cli, 'help', '--language', language], { encoding: 'utf8', env });
+      assert.equal(helpResult.status, 0, helpResult.stderr);
+      assert.ok(helpResult.stdout.includes(help));
+
+      const missing = path.join(home, 'missing-browser-do-not-create');
+      const doctorResult = spawnSync(process.execPath, [cli, 'doctor', '--language', language, '--browser', missing], { encoding: 'utf8', env });
+      assert.equal(doctorResult.status, 1);
+      assert.ok(doctorResult.stdout.includes(doctor));
+      assert.doesNotMatch(doctorResult.stdout, /The selected browser does not exist/);
+    }
+  } finally {
+    if (!home.startsWith(path.join(os.tmpdir(), 'toledo-cli-lang-'))) throw new Error('Unexpected CLI test directory');
+    await fs.rm(home, { recursive: true, force: true });
+  }
 });
 
 test('new CLI configurations discover all years and start without bundled selections', () => {
