@@ -51,6 +51,7 @@ export function createConfig(vaultPath, options = {}) {
     },
     stateRoot: path.join('_codex', 'toledo-sync'),
     browser: {
+      type: null,
       executablePath: null,
       headless: false,
       profilePath: path.join(os.homedir(), '.toledo-sync', 'browser-profile'),

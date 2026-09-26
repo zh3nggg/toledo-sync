@@ -1,6 +1,6 @@
 # Linux CLI guide
 
-The maintained CLI target is Linux. It requires Node.js 20 or newer and a locally installed Google Chrome, Microsoft Edge, Chromium, or Brave browser.
+The maintained CLI target is Linux. It requires Node.js 20 or newer and a supported browser. Chrome, Edge, Chromium, and Brave use their installed executable. Firefox uses Playwright's compatible Firefox build, which is installed once by the CLI.
 
 ## Install
 
@@ -27,6 +27,15 @@ TOLEDO_BROWSER_PATH=/snap/bin/chromium toledo-sync
 toledo-sync --browser /custom/path/to/chromium
 ```
 
+To use Firefox, install Playwright's Firefox build once and select it:
+
+```sh
+toledo-sync install-browser firefox
+toledo-sync --browser firefox
+```
+
+The installed Firefox application cannot be automated directly: Playwright requires its compatible Firefox build. Toledo Sync stores its Firefox profile separately from a Chromium profile. The browser build is downloaded into Playwright's local browser cache; if Linux reports missing shared libraries, install the browser's system dependencies as described in the [Playwright Linux setup guide](https://playwright.dev/docs/browsers#installing-browser-dependencies).
+
 ## Interactive mode
 
 You do not need to edit JSON or memorize flags. Start the wizard with:
@@ -38,6 +47,8 @@ npm start
 ```
 
 On first use, choose English, Chinese, or Dutch. The wizard asks for the Vault, exact download root, material layout, and local verification mode. It then opens the KU Leuven login page, reads the complete course list, lets you select courses by number or code, and offers **Check and review updates** before writing anything. The last configuration and language are remembered locally, so later runs return directly to the main menu.
+
+In a terminal, menus are keyboard-driven: use **↑/↓** to move and **Enter** to choose. Course selection is a checklist: use **Space** to toggle a course, **A** to select all available courses, **N** to clear the selection, and **Enter** to save. Unavailable courses are disabled. The list scrolls for large course catalogs, and **Esc** cancels course selection. In a non-interactive terminal, the CLI keeps a numbered text fallback.
 
 Language can also be selected explicitly:
 
@@ -188,6 +199,7 @@ toledo-sync sync-calendar --config "/path/to/config.json"
 ## Troubleshooting
 
 - **No supported browser found:** run `toledo-sync doctor`. Install Chrome, Edge, Chromium, or Brave; use `--browser <path>` or set `TOLEDO_BROWSER_PATH`. Ubuntu Snap Chromium is normally `/snap/bin/chromium`.
+- **Firefox is installed but unavailable:** run `toledo-sync install-browser firefox`, then choose `firefox` under Settings → Browser or pass `--browser firefox`.
 - **Browser session is stuck:** run `toledo-sync reset-browser --config "/path/to/config.json"`, then sign in again.
 - **Course is unavailable:** the signed-in account has a membership, but Toledo does not currently expose an open course link. The CLI shows the course but prevents selecting it.
 - **Login expired:** rerun `login`; use `--fresh` when a normal login does not recover the session.

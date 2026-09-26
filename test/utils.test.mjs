@@ -97,7 +97,7 @@ test('explicit file decisions preserve local files or replace them only when req
     await fs.writeFile(localPath, 'local edit');
     const link = { href: 'https://example.edu/lecture.pdf', title: 'lecture.pdf' };
     const remote = Buffer.from('remote version');
-    const context = { request: { get: async () => ({ ok: () => true, headers: () => ({ 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="lecture.pdf"' }), body: async () => remote }) } };
+    const context = { request: { get: async () => ({ ok: () => true, status: () => 200, headers: () => ({ 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="lecture.pdf"' }), body: async () => remote }) } };
     const kept = await downloadFile(context, link, directory, 'https://example.edu/course', { action: 'keep-local', decisionKey: 'G0R16A|https://example.edu/lecture.pdf' });
     assert.equal(kept.status, 'kept-local');
     assert.equal(await fs.readFile(localPath, 'utf8'), 'local edit');

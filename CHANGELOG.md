@@ -1,3 +1,13 @@
+## Unreleased — content engine reliability
+
+- Treat authorization failures, inaccessible content, malformed responses and incomplete pagination as failed checks, never as empty courses.
+- Read course contents through the signed-in browser, with a request fallback, bounded retries and an alternative public content endpoint.
+- Follow SSO redirects and course notification links without depending on the interface language.
+- Preserve refreshed browser cookies instead of overwriting them with an older login export.
+- Keep previous manifests on scan failure and continue checking the remaining courses; show course errors in the update tree.
+- Reject login/error pages returned as downloads and verify cached bytes before applying checked updates.
+- Store endpoint/status diagnostics for failed checks without recording authentication headers or login-page snapshots.
+
 ## 1.2.1 — 2026-09-26
 
 - Aligned the maintained Linux CLI with the current desktop synchronization workflow.
@@ -7,6 +17,8 @@
 - Added a safe browser-session reset command without touching course materials or configuration.
 - Added course-by-course update trees, cached previews, and per-file conflict decisions before applying changes.
 - Added an interactive and command-line watch mode for immediate and periodic checks, with explicit opt-in automatic application.
+- Added Firefox detection and support through Playwright's compatible Firefox build, with separate persistent browser storage.
+- Reworked Linux terminal prompts into keyboard-driven menus and course checklists, with scrolling, bulk selection, disabled unavailable courses, and numbered non-TTY fallback.
 - Kept SHA-256 local-edit protection as the default and retained filename/path verification as an option.
 
 ## 1.0.0 — 2026-09-19

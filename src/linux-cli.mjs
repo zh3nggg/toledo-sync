@@ -8,9 +8,9 @@ import {
   defaultConfigPath, initializeConfig, loadConfig, normalizeMaterialsLayout,
   normalizeVerificationMode, saveConfig, statePath
 } from './config.mjs';
-import { detectBrowser, launchBrowser, resetBrowserSession } from './browser.mjs';
+import { detectBrowser, installManagedBrowser, launchBrowser, resetBrowserSession } from './browser.mjs';
 import { discoverCourses } from './discover.mjs';
-import { ask, askWithDefault, choose, confirm } from './prompt.mjs';
+import { ask, askWithDefault, choose, chooseMany, confirm } from './prompt.mjs';
 import { setCalendarUrl, syncCalendar } from './calendar.mjs';
 import { syncCourses } from './sync.mjs';
 import { LANGUAGE_CHOICES, createTranslator, normalizeLanguage, resolveLanguage } from './cli-i18n.mjs';
@@ -24,6 +24,9 @@ let activeTranslator = createTranslator('en');
 function promptLabels(t) {
   return {
     select: t('selectPrompt'),
+    navigation: t('menuNavigation'),
+    yes: t('yes'),
+    no: t('no'),
     invalidChoice: (count) => t('invalidChoice', { count }),
     invalidConfirm: t('invalidConfirm')
   };
@@ -69,9 +72,10 @@ Usage:
   toledo-sync                         Interactive setup and update flow
   toledo-sync interactive [--config <config.json>]
   toledo-sync doctor
+  toledo-sync install-browser firefox
   toledo-sync init --vault <vault> --output <download-root>
                    [--materials-in-course | --materials-subdirectory <name>]
-                   [--verification sha256|filename] [--browser <path>]
+                   [--verification sha256|filename] [--browser <path|firefox>]
                    [--language en|zh|nl]
   toledo-sync configure --config <config.json> [options]
   toledo-sync login --config <config.json> [--fresh]
@@ -86,7 +90,7 @@ Usage:
 
 Global options:
   --language en|zh|nl       Interface language (or TOLEDO_LANG)
-  --browser <path>          Chrome, Edge, Chromium, or Brave executable
+  --browser <path|firefox>  Chromium-based executable or Playwright Firefox
   --config <path>           Existing Toledo Sync configuration
 
 ${t('copyrightShort')}`;
@@ -180,28 +184,48 @@ async function selectCourses(config, configPath, context) {
     console.log(context.t('noCourses'));
     return;
   }
-  printCourseList(config, context);
-  console.log(`\n${context.t('selectionHelp')}`);
-  const raw = (await ask(`${context.t('selectionQuestion')}: `)).trim();
-  if (!raw) return;
   const usableCourses = config.courses.filter(availableCourse);
-  const normalized = raw.toLowerCase();
   let selectedCodes;
-  if (['all', '全部', 'alles'].includes(normalized)) {
-    selectedCodes = new Set(usableCourses.map((course) => course.code.toUpperCase()));
-  } else if (['none', '无', 'geen'].includes(normalized)) {
-    selectedCodes = new Set();
+  if (process.stdin.isTTY && process.stdout.isTTY) {
+    const choices = config.courses.map((course) => {
+      const availability = course.available === false ? context.t('courseUnavailable') : context.t('courseAvailable');
+      const year = course.academicYear ? ` · ${course.academicYear}` : '';
+      return {
+        value: course.code.toUpperCase(),
+        label: `${course.code} ${course.title} · ${availability}${year}`,
+        disabled: !availableCourse(course)
+      };
+    });
+    selectedCodes = await chooseMany(context.t('selectionQuestion'), choices,
+      usableCourses.filter((course) => course.selected).map((course) => course.code.toUpperCase()),
+      {
+        multiSelectHelp: context.t('multiSelectHelp'),
+        selectedCount: (count) => context.t('selectedCount', { count }),
+        unavailable: context.t('courseUnavailable')
+      });
+    if (selectedCodes === null) return;
   } else {
-    selectedCodes = new Set();
-    const unknown = [];
-    for (const token of raw.split(',').map((value) => value.trim()).filter(Boolean)) {
-      const course = /^\d+$/.test(token)
-        ? config.courses[Number(token) - 1]
-        : config.courses.find((item) => item.code.toUpperCase() === token.toUpperCase());
-      if (!course || !availableCourse(course)) unknown.push(token);
-      else selectedCodes.add(course.code.toUpperCase());
+    printCourseList(config, context);
+    console.log(`\n${context.t('selectionHelp')}`);
+    const raw = (await ask(`${context.t('selectionQuestion')}: `)).trim();
+    if (!raw) return;
+    const normalized = raw.toLowerCase();
+    if (['all', '全部', 'alles'].includes(normalized)) {
+      selectedCodes = new Set(usableCourses.map((course) => course.code.toUpperCase()));
+    } else if (['none', '无', 'geen'].includes(normalized)) {
+      selectedCodes = new Set();
+    } else {
+      selectedCodes = new Set();
+      const unknown = [];
+      for (const token of raw.split(',').map((value) => value.trim()).filter(Boolean)) {
+        const course = /^\d+$/.test(token)
+          ? config.courses[Number(token) - 1]
+          : config.courses.find((item) => item.code.toUpperCase() === token.toUpperCase());
+        if (!course || !availableCourse(course)) unknown.push(token);
+        else selectedCodes.add(course.code.toUpperCase());
+      }
+      if (unknown.length) throw new Error(context.t('selectionInvalid', { values: unknown.join(', ') }));
     }
-    if (unknown.length) throw new Error(context.t('selectionInvalid', { values: unknown.join(', ') }));
   }
   for (const course of config.courses) {
     course.selected = availableCourse(course) && selectedCodes.has(course.code.toUpperCase());
@@ -225,7 +249,7 @@ function updateCounts(results) {
     newCount: files.filter((file) => file.status === 'new' || file.status === 'downloaded').length,
     unchanged: files.filter((file) => file.status === 'unchanged').length,
     modified: files.filter((file) => file.status === 'local-modified').length,
-    errors: files.filter((file) => file.status === 'error' || file.status === 'skipped-non-file').length
+    errors: results.filter(result => result.status === 'scan-error').length + files.filter((file) => file.status === 'error' || file.status === 'skipped-non-file').length
   };
 }
 
@@ -233,6 +257,7 @@ export function formatUpdateTree(results, t = createTranslator('en')) {
   const lines = [t('fileTree')];
   for (const result of results) {
     lines.push('', `${result.course.code} ${result.course.title}`);
+    if (result.status === 'scan-error') { lines.push(`  └─ ${t('statusError')}: ${result.error}`); continue; }
     const files = [...(result.files ?? [])].sort((left, right) => String(left.file ?? left.url).localeCompare(String(right.file ?? right.url)));
     if (!files.length) {
       lines.push(`  └─ ${t('noUpdates')}`);
@@ -373,9 +398,9 @@ async function settingsMenu(config, configPath, context) {
       { label: context.t('filenameMode'), value: 'filename' }
     ], config.sync.verificationMode === 'filename' ? 1 : 0, context.labels);
   } else if (action === 'browser') {
-    const current = config.browser.executablePath || context.t('autoDetect');
+    const current = config.browser.type === 'firefox' ? 'firefox' : config.browser.executablePath || context.t('autoDetect');
     const value = (await ask(`${context.t('browserPath')} [${current}]: `)).trim();
-    if (value) config.browser.executablePath = ['auto', '自动', 'automatisch'].includes(value.toLowerCase()) ? null : path.resolve(value);
+    if (value) setBrowserOption(config, value);
   } else if (action === 'language') {
     const language = await choose(context.t('languageQuestion'), LANGUAGE_CHOICES, LANGUAGE_CHOICES.findIndex((item) => item.value === context.language), context.labels);
     setLanguage(context, language);
@@ -436,7 +461,7 @@ async function runInteractive(options, settings, context) {
   configPath = loaded.configPath;
   config.filters = { ...(config.filters ?? {}), academicYears: [] };
   config.ui = { ...(config.ui ?? {}), language: context.language };
-  if (options.browser) config.browser.executablePath = path.resolve(String(options.browser));
+  if (options.browser) setBrowserOption(config, options.browser);
   await saveConfig(configPath, config);
   await saveCliSettings({ configPath, language: context.language });
 
@@ -529,8 +554,22 @@ async function chooseInitialLanguage(options, settings, interactive) {
   if (!interactive) return resolveLanguage(process.env.LC_ALL, process.env.LANG, 'en');
   return choose('Language / 语言 / Taal', LANGUAGE_CHOICES, 0, {
     select: 'Select / 选择 / Kies',
+    navigation: '↑/↓ move · Enter choose',
     invalidChoice: (count) => `Enter a number from 1 to ${count}.`
   });
+}
+
+function setBrowserOption(config, value) {
+  const browser = String(value).trim();
+  if (browser.toLowerCase() === 'firefox') {
+    config.browser.type = 'firefox';
+    config.browser.executablePath = null;
+    return;
+  }
+  config.browser.type = null;
+  config.browser.executablePath = ['auto', '自动', 'automatisch'].includes(browser.toLowerCase())
+    ? null
+    : path.resolve(browser);
 }
 
 export async function runCli(argv = process.argv.slice(2)) {
@@ -558,6 +597,14 @@ export async function runCli(argv = process.argv.slice(2)) {
     }
     return;
   }
+  if (command === 'install-browser') {
+    const browserName = String(positional[1] ?? '').toLowerCase();
+    if (browserName !== 'firefox') throw new Error('Usage: toledo-sync install-browser firefox');
+    console.log('Installing the Playwright-compatible Firefox build…');
+    const result = await installManagedBrowser(browserName);
+    console.log(result.installed ? `Firefox is ready: ${result.executablePath}` : `Firefox is already installed: ${result.executablePath}`);
+    return;
+  }
   if (interactive) {
     await runInteractive(options, settings, context);
     return;
@@ -578,7 +625,7 @@ export async function runCli(argv = process.argv.slice(2)) {
       verificationMode: normalizeVerificationMode(options.verification)
     });
     if (options.browser) {
-      result.config.browser.executablePath = path.resolve(String(options.browser));
+      setBrowserOption(result.config, options.browser);
       await saveConfig(result.configPath, result.config);
     }
     await saveCliSettings({ configPath: result.configPath, language: context.language });
@@ -594,7 +641,7 @@ export async function runCli(argv = process.argv.slice(2)) {
     setLanguage(context, config.ui.language);
   }
   config.filters = { ...(config.filters ?? {}), academicYears: [] };
-  if (options.browser) config.browser.executablePath = path.resolve(String(options.browser));
+  if (options.browser) setBrowserOption(config, options.browser);
   await saveCliSettings({ configPath, language: context.language });
 
   if (command === 'configure') {

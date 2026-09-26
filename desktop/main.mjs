@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { defaultConfigPath, initializeConfig, loadConfig, normalizeMaterialsLayout, saveConfig, statePath } from '../src/config.mjs';
 import { FALL_2026_COURSES } from '../src/constants.mjs';
-import { launchBrowser } from '../src/browser.mjs';
+import { launchBrowser, resetBrowserSession as resetManagedBrowserSession } from '../src/browser.mjs';
 import { discoverCourses } from '../src/discover.mjs';
 import { syncCourses } from '../src/sync.mjs';
 import { writeJson } from '../src/utils.mjs';
@@ -45,12 +45,13 @@ function updateSummary(results) {
     code: result.course.code,
     title: result.course.title,
     status: result.status,
+    error: result.error,
     newCount: result.files.filter((file) => file.status === 'new' || file.status === 'downloaded').length,
     unchangedCount: result.files.filter((file) => file.status === 'unchanged').length,
     localModifiedCount: result.files.filter((file) => file.status === 'local-modified').length,
     keptCount: result.files.filter((file) => file.status === 'kept-local').length,
     skippedCount: result.files.filter((file) => file.status === 'skipped').length,
-    errorCount: result.files.filter((file) => file.status === 'error' || file.status === 'skipped-non-file').length,
+    errorCount: (result.status === 'scan-error' ? 1 : 0) + result.files.filter((file) => file.status === 'error' || file.status === 'skipped-non-file').length,
     files: result.files.map((file) => ({
       ...file,
       decisionKey: file.decisionKey ?? `${result.course.code}|${file.url ?? ''}`
@@ -98,8 +99,10 @@ async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
   throw new Error('Timed out waiting for Toledo login. Please try again.');
 }
 
-function ensureWindows() {
-  if (process.platform !== 'win32') throw new Error('The desktop app is currently published for Windows. Use the CLI on macOS and Linux.');
+function ensureDesktopPlatform() {
+  if (!['win32', 'linux'].includes(process.platform)) {
+    throw new Error('The desktop app supports Windows and Linux. Use the CLI on macOS.');
+  }
 }
 
 function unrestrictedDesktopConfig(config) {
@@ -107,7 +110,7 @@ function unrestrictedDesktopConfig(config) {
 }
 
 async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes, materialsPlacement, materialsFolderName, verificationMode, autoStart, autoCheckOnLaunch, periodicCheckMinutes }) {
-  ensureWindows();
+  ensureDesktopPlatform();
   if (!vaultPath || !outputRoot) throw new Error('Choose both the Obsidian Vault and the download root.');
   const configPath = defaultConfigPath(vaultPath);
   let config;
@@ -143,7 +146,7 @@ async function updateConfig({ vaultPath, outputRoot, academicYear, selectedCodes
 }
 
 async function startLogin() {
-  ensureWindows();
+  ensureDesktopPlatform();
   const current = await currentConfig();
   if (!current) throw new Error('Save the initial settings first.');
   const loginConfig = { ...current.config, browser: { ...current.config.browser, headless: false } };
@@ -166,17 +169,10 @@ async function startLogin() {
 }
 
 async function resetBrowserSession() {
-  ensureWindows();
+  ensureDesktopPlatform();
   const current = await currentConfig();
   if (!current) throw new Error('Save the initial settings first.');
-
-  // Reset only the app-owned authentication artifacts. The Vault, download
-  // root, and all course materials remain untouched.
-  const profilePath = path.resolve(current.config.browser?.profilePath ?? path.join(process.env.USERPROFILE ?? process.cwd(), '.toledo-sync', 'browser-profile'));
-  const authStatePath = current.config.browser?.authStatePath ? path.resolve(current.config.browser.authStatePath) : null;
-  await fs.rm(profilePath, { recursive: true, force: true });
-  if (authStatePath) await fs.rm(authStatePath, { force: true });
-  await fs.rm(statePath(current.config, 'auth', 'last-login.json'), { force: true });
+  await resetManagedBrowserSession(current.config, { lastLoginPath: statePath(current.config, 'auth', 'last-login.json') });
   notify('success', 'Browser session reset. Sign in to Toledo again.');
   return { authenticated: false, reset: true };
 }
@@ -213,7 +209,7 @@ function registerIpc() {
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Syncing ${courseCode}…` : 'Syncing selected courses…');
     const result = await syncCourses({ ...unrestrictedDesktopConfig(configWithSelection(current.config, selectedCodes)), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message));
-    notify('success', 'Synchronization finished.');
+    notify(result.some(r => /error/.test(r.status ?? '')) ? 'error' : 'success', result.some(r => /error/.test(r.status ?? '')) ? 'Some courses or files could not be read. Review the errors and retry.' : 'Synchronization finished.');
     return result;
   });
   ipcMain.handle('toledo:check-updates', async (_event, request = {}) => {
@@ -222,7 +218,7 @@ function registerIpc() {
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Checking updates for ${courseCode}…` : 'Checking selected courses for updates…');
     const result = await syncCourses({ ...unrestrictedDesktopConfig(configWithSelection(current.config, selectedCodes)), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message), { dryRun: true });
-    notify('success', 'Update check finished. No local material was changed.');
+    notify(result.some(r => /error/.test(r.status ?? '')) ? 'error' : 'success', result.some(r => /error/.test(r.status ?? '')) ? 'Check incomplete. Review the course errors and retry. No local material was changed.' : 'Update check finished. No local material was changed.');
     return { summaries: updateSummary(result), results: result };
   });
   ipcMain.handle('toledo:apply-updates', async (_event, request = {}) => {
@@ -231,7 +227,7 @@ function registerIpc() {
     if (!current) throw new Error('Save the initial settings first.');
     notify('info', courseCode ? `Applying updates for ${courseCode}…` : 'Applying checked updates…');
     const result = await syncCourses({ ...unrestrictedDesktopConfig(configWithSelection(current.config, selectedCodes)), browser: { ...current.config.browser, headless: true } }, courseCode, (event) => notify('progress', event.message), { decisions });
-    notify('success', 'Updates written locally. Existing local files were preserved.');
+    notify(result.some(r => /error/.test(r.status ?? '')) ? 'error' : 'success', result.some(r => /error/.test(r.status ?? '')) ? 'Some updates failed. Review the course errors and retry.' : 'Updates written locally.');
     return { summaries: updateSummary(result), results: result };
   });  ipcMain.handle('path:open', async (_event, target) => shell.openPath(target));
 }
@@ -250,7 +246,8 @@ async function runAutomaticCheck(reason) {
     const discovered = await discoverCourses({ ...unrestrictedDesktopConfig(current.config), browser: { ...current.config.browser, headless: true } }, current.configPath, { auto: true, allCourses: true, ignoreAcademicYear: true, onProgress: (event) => notify('progress', event.message) });
     const refreshed = await loadConfig(current.configPath);
     notify('progress', `${reason}: discovery finished; synchronizing selected courses…`);
-    await syncCourses({ ...unrestrictedDesktopConfig(refreshed.config), browser: { ...refreshed.config.browser, headless: true } }, null, (event) => notify('progress', event.message));
+    const results = await syncCourses({ ...unrestrictedDesktopConfig(refreshed.config), browser: { ...refreshed.config.browser, headless: true } }, null, (event) => notify('progress', event.message));
+    if (results.some(r => /error/.test(r.status ?? ''))) throw new Error('Some courses or files could not be read. Review the errors and retry.');
     notify('success', `${reason}: update check finished.`);
     return discovered;
   } catch (error) {
@@ -268,6 +265,28 @@ async function configureAutomation(automation) {
       path: process.execPath,
       args: app.isPackaged ? [] : [app.getAppPath()]
     });
+  } else if (process.platform === 'linux') {
+    const autostartDirectory = path.join(app.getPath('home'), '.config', 'autostart');
+    const desktopFile = path.join(autostartDirectory, 'toledo-sync.desktop');
+    if (normalized.autoStart) {
+      const launchPath = process.env.APPIMAGE || process.execPath;
+      const escapeDesktopValue = (value) => `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+      const appArguments = process.env.APPIMAGE ? '' : ` ${escapeDesktopValue(app.getAppPath())}`;
+      await fs.mkdir(autostartDirectory, { recursive: true });
+      await fs.writeFile(desktopFile, [
+        '[Desktop Entry]',
+        'Type=Application',
+        'Name=Toledo Sync',
+        'Comment=Synchronize Toledo course materials',
+        `Exec=${escapeDesktopValue(launchPath)}${appArguments}`,
+        'Icon=toledo-sync',
+        'Terminal=false',
+        'X-GNOME-Autostart-enabled=true',
+        ''
+      ].join('\n'), 'utf8');
+    } else {
+      await fs.rm(desktopFile, { force: true });
+    }
   }
   if (automationTimer) clearInterval(automationTimer);
   automationTimer = normalized.periodicCheckMinutes > 0

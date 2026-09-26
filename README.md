@@ -66,11 +66,11 @@ D:\Study\Leuven 2026 Fall\
 | --- | --- | --- |
 | Windows 10/11 | 三语桌面应用（中文／English／Nederlands） | 已支持 |
 | macOS | 独立 GUI 版本 | 单独维护 |
-| Linux | 三语交互式 CLI | 已支持 |
+| Linux | 三语交互式 CLI；Firefox、Chrome、Chromium、Edge、Brave | 已支持 |
 
 **Windows 用户：** 请升级到 1.1 或更高版本，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.<version>.exe`；不想安装时请选择 `Toledo.Sync.<version>.exe` 便携版。不要从旧版本 Release 下载。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
 
-**Linux 用户：** 参阅 [完整 CLI 指南](docs/CLI.md)。运行 `toledo-sync` 后可以选择中文、English 或 Nederlands，再依次配置 Vault、下载目录、登录和课程。CLI 不按学年隐藏课程，而是读取账户中的完整课程列表，再由用户选择同步范围。“检查更新”会先显示文件树和冲突选项，确认后才写入课程目录。
+**Linux 用户：** 参阅 [完整 CLI 指南](docs/CLI.md)。运行 `toledo-sync` 后可以选择中文、English 或 Nederlands，再依次配置 Vault、下载目录、登录和课程。在终端菜单中使用方向键和回车；课程列表可用空格勾选，支持长列表滚动。CLI 不按学年隐藏课程，而是读取账户中的完整课程列表，再由用户选择同步范围。“检查更新”会先显示文件树和冲突选项，确认后才写入课程目录。
 
 ### 当前支持范围
 
@@ -120,9 +120,9 @@ Choose Vault and download root → sign in once → discover current courses
 | --- | --- | --- |
 | Windows 10/11 | Desktop app in 中文, English, Nederlands | Supported |
 | macOS | Separate GUI build | Maintained separately |
-| Linux | Interactive CLI in 中文, English, Nederlands | Supported |
+| Linux | Interactive CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Supported |
 
-For Windows, upgrade to 1.1 or later and always download the current installer from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.<version>.exe` for a normal installation or `Toledo.Sync.<version>.exe` for the portable build; older release assets should not be used. Then follow the [desktop-app guide](docs/GUI-WINDOWS.md). On Linux, run `toledo-sync` (or `npm start` from the repository) to open the trilingual interactive wizard. It reads the complete account course list, supports browser-session reset and browser diagnostics, and presents a reviewable file tree with per-file conflict decisions before applying updates. See the [Linux CLI guide](docs/CLI.md).
+For Windows, upgrade to 1.1 or later and always download the current installer from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.<version>.exe` for a normal installation or `Toledo.Sync.<version>.exe` for the portable build; older release assets should not be used. Then follow the [desktop-app guide](docs/GUI-WINDOWS.md). On Linux, run `toledo-sync` (or `npm start` from the repository) to open the trilingual interactive wizard. Navigate menus with the arrow keys, select courses with Space, and review the complete account course list and update tree before applying updates. See the [Linux CLI guide](docs/CLI.md).
 
 ### Current scope and privacy
 
@@ -159,9 +159,9 @@ De toepassing is bedoeld voor studenten die eerst hun volledige cursuslijst will
 | --- | --- | --- |
 | Windows 10/11 | Desktopapp in 中文, English, Nederlands | Ondersteund |
 | macOS | Afzonderlijke GUI-versie | Afzonderlijk onderhouden |
-| Linux | Interactieve CLI in 中文, English, Nederlands | Ondersteund |
+| Linux | Interactieve CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Ondersteund |
 
-Download voor Windows altijd versie 1.1 of nieuwer via de [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Gebruik `Toledo.Sync.Setup.<version>.exe` voor een normale installatie of `Toledo.Sync.<version>.exe` als portable versie; gebruik geen assets uit oudere releases. Volg daarna de [handleiding voor de desktopapp](docs/GUI-WINDOWS.md). Op Linux start `toledo-sync` de drietalige interactieve wizard. De CLI leest de volledige cursuslijst, biedt browserdiagnose en sessiereset, en toont vóór het toepassen een bestandsboom met keuzes per conflict. Zie de [Linux CLI-handleiding](docs/CLI.md).
+Download voor Windows altijd versie 1.1 of nieuwer via de [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Gebruik `Toledo.Sync.Setup.<version>.exe` voor een normale installatie of `Toledo.Sync.<version>.exe` als portable versie; gebruik geen assets uit oudere releases. Volg daarna de [handleiding voor de desktopapp](docs/GUI-WINDOWS.md). Op Linux start `toledo-sync` de drietalige interactieve wizard. Navigeer menu’s met de pijltjestoetsen en selecteer cursussen met de spatiebalk. De CLI leest de volledige cursuslijst, biedt browserdiagnose en sessiereset, en toont vóór het toepassen een bestandsboom met keuzes per conflict. Zie de [Linux CLI-handleiding](docs/CLI.md).
 
 ### Huidige ondersteuning en privacy
 
@@ -181,7 +181,7 @@ Cursusmateriaal kan beschermd of gelicentieerd zijn door KU Leuven, docenten of 
 
 ## Version 1.2.1 / 版本 1.2.1 / Versie 1.2.1
 
-The 1.2 series includes an interactive file tree for update review. Version 1.2.1 aligns the maintained Linux CLI with that workflow: complete unrestricted course discovery, English/Chinese/Dutch interaction, Linux browser diagnostics and session reset, cached previews, and per-file conflict decisions before writing files.
+The 1.2 series includes an interactive file tree for update review. Version 1.2.1 aligns the maintained Linux CLI with that workflow: complete unrestricted course discovery, English/Chinese/Dutch interaction, Linux browser diagnostics and session reset, Firefox support through Playwright's compatible build, cached previews, and per-file conflict decisions before writing files.
 
 ## For contributors / 开发者
 
