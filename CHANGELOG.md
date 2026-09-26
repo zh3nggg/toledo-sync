@@ -1,3 +1,13 @@
+## 1.2.1 — 2026-09-26
+
+- Aligned the maintained Linux CLI with the current desktop synchronization workflow.
+- Added English, Chinese, and Dutch interactive interfaces with English as the first-run default.
+- Removed academic-year filtering from the interactive flow and discover the complete signed-in course list before selection.
+- Added Linux browser diagnostics and detection for PATH, Snap Chromium, common Flatpak exports, and Brave.
+- Added a safe browser-session reset command without touching course materials or configuration.
+- Added course-by-course update trees, cached previews, and per-file conflict decisions before applying changes.
+- Kept SHA-256 local-edit protection as the default and retained filename/path verification as an option.
+
 ## 1.0.0 — 2026-09-19
 
 - First stable release of Toledo Sync.

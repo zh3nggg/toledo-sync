@@ -1,28 +1,52 @@
-# CLI guide
+# Linux CLI guide
 
-This guide applies to Windows, macOS, and Linux. The CLI requires Node.js 20 or newer and a locally installed Google Chrome, Microsoft Edge, or Chromium.
+The maintained CLI target is Linux. It requires Node.js 20 or newer and a locally installed Google Chrome, Microsoft Edge, Chromium, or Brave browser.
 
 ## Install
 
 ```sh
-git clone https://github.com/OWNER/toledo-sync.git
+git clone https://github.com/zh3nggg/toledo-sync.git
 cd toledo-sync
-npm install
+npm ci --omit=dev
+npm link
 ```
 
-You can run every command as `node src/cli.mjs …`. `npm link` is optional if you want the shorter `toledo-sync …` command.
+After `npm link`, run `toledo-sync` from any directory. From the repository, `npm start` opens the same interactive CLI. Advanced commands can also be run as `node src/linux-cli.mjs …`.
 
-## Interactive mode (recommended on macOS/Linux)
+Check browser detection before setup:
+
+```sh
+toledo-sync doctor
+```
+
+The CLI searches standard Linux locations, the current `PATH`, Ubuntu Snap Chromium at `/snap/bin/chromium`, and common Flatpak export locations. If needed, specify the executable without editing JSON:
+
+```sh
+TOLEDO_BROWSER_PATH=/snap/bin/chromium toledo-sync
+# or
+toledo-sync --browser /custom/path/to/chromium
+```
+
+## Interactive mode
 
 You do not need to edit JSON or memorize flags. Start the wizard with:
 
 ```sh
-node src/cli.mjs
-# or, after npm link:
 toledo-sync
+# or, from the repository:
+npm start
 ```
 
-The wizard asks for the Vault, exact download root, academic year, and material layout. It then opens the KU Leuven login page, discovers courses, lets you select courses by number or code, and offers **Check updates** before **Apply updates**. A later run reuses the saved configuration and presents the same update flow. Paths are entered using the native format for your system (`/Users/...` on macOS, `/home/...` on Linux, `C:\\...` on Windows).
+On first use, choose English, Chinese, or Dutch. The wizard asks for the Vault, exact download root, material layout, and local verification mode. It then opens the KU Leuven login page, reads the complete course list, lets you select courses by number or code, and offers **Check and review updates** before writing anything. The last configuration and language are remembered locally, so later runs return directly to the main menu.
+
+Language can also be selected explicitly:
+
+```sh
+toledo-sync --language en
+toledo-sync --language zh
+toledo-sync --language nl
+# TOLEDO_LANG=en is also supported.
+```
 
 You can also start it explicitly, or point it at an existing configuration:
 
@@ -31,7 +55,7 @@ toledo-sync interactive
 toledo-sync interactive --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
 ```
 
-The wizard is deliberately available on Windows, macOS, and Linux. The Windows desktop application remains available for users who prefer a graphical interface.
+The interactive CLI is the maintained Linux interface. The Windows desktop application remains available separately.
 
 ## First-time setup
 
@@ -42,19 +66,21 @@ Choose two directories:
 3. Choose the in-course layout: `--materials-in-course` stores Toledo folders directly inside each course folder. `--materials-subdirectory "Course materials"` stores them in a consistently named subfolder. If omitted, new configurations use `Materials`.
 
 ```sh
-node src/cli.mjs init \
+toledo-sync init \
   --vault "/path/to/SemiCon" \
   --output "/path/to/2026-2027" \
-  --academic-year 2026-2027 \
-  --courses G0S96A,G0R16A,H06A8A,H0G03A
+  --language en \
+  --verification sha256
 ```
 
 The config file is created at `<vault>/_codex/toledo-sync/config.json`.
 
+The Linux CLI does not filter discovery by academic year. It reads every course returned for the signed-in account, marks unavailable courses as unavailable, and lets the user choose the sync scope from that list.
+
 ## Login
 
 ```sh
-node src/cli.mjs login --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
+toledo-sync login --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
 ```
 
 Complete KU Leuven SSO/MFA only in the browser that opens. The program never asks for or stores your password. Login cookies are stored locally in `~/.toledo-sync/`, outside the Vault.
@@ -62,26 +88,28 @@ Complete KU Leuven SSO/MFA only in the browser that opens. The program never ask
 If the local session is unusable, start a clean login:
 
 ```sh
-node src/cli.mjs login --config "/path/to/config.json" --fresh
+toledo-sync reset-browser --config "/path/to/config.json"
+toledo-sync login --config "/path/to/config.json"
 ```
+
+`login --fresh` performs the same reset before opening a new login window. Resetting removes only Toledo Sync's browser profile and saved sign-in state; it does not delete downloaded materials or course settings.
 
 ## Discover current courses
 
 ```sh
-node src/cli.mjs discover --config "/path/to/config.json" --auto
+toledo-sync discover --config "/path/to/config.json"
 ```
 
-Discovery reads the signed-in Toledo course list directly, extracts the course code/title/link, and filters explicit academic-year labels against the configured year. It never silently substitutes a prior-year course with the same code. If Toledo is still loading and no course link is visible, the previous list is retained rather than erased.
+Discovery reads the complete signed-in Toledo directory and current-user course API, then replaces the visible selection list with the complete result. It does not rely on a bundled course catalogue. Courses that exist but are not currently open remain visible as unavailable and cannot be selected. If Toledo is still loading and no course link is visible, the previous list is retained rather than erased.
 
 ## Inspect and change selection
 
 ```sh
-node src/cli.mjs list --config "/path/to/config.json"
+toledo-sync list --config "/path/to/config.json"
 
-node src/cli.mjs configure --config "/path/to/config.json" \
+toledo-sync configure --config "/path/to/config.json" \
   --output "/another/download/root" \
   --materials-subdirectory "Course materials" \
-  --academic-year 2026-2027 \
   --verification sha256 \
   --courses G0S96A,G0R16A
 ```
@@ -97,21 +125,23 @@ Local verification is `sha256` by default. It compares file contents and preserv
 Preview remote changes first. This reads the remote files and compares them without writing course material into the download root:
 
 ```sh
-node src/cli.mjs check --config "/path/to/config.json"
+toledo-sync check --config "/path/to/config.json"
 ```
 
-The preview reports new, unchanged, locally modified, and failed files per course. The downloaded response bodies are kept in the Vault state cache at `_codex/toledo-sync/cache/`; applying the update reuses those cached bytes instead of downloading the same files again. A locally modified file is never overwritten in SHA-256 mode; applying the update creates a hash-suffixed copy beside it.
+The preview prints a course-by-course file tree with new, unchanged, locally modified, and failed files. In the interactive flow, each actionable file can be reviewed before applying: download or skip a new file; preserve both versions, keep local, replace with remote, or skip a conflict. Replacing a local file requires an additional confirmation.
+
+Remote response bodies are kept in the Vault state cache at `_codex/toledo-sync/cache/`; applying the update reuses those cached bytes instead of downloading the same files again. The default conflict action in SHA-256 mode keeps the local file and writes the remote version beside it with a hash suffix.
 
 Test with one course first:
 
 ```sh
-node src/cli.mjs sync --config "/path/to/config.json" --course G0S96A
+toledo-sync sync --config "/path/to/config.json" --course G0S96A
 ```
 
-Sync all selected courses for the configured year:
+Sync all selected courses:
 
 ```sh
-node src/cli.mjs sync --config "/path/to/config.json"
+toledo-sync sync --config "/path/to/config.json"
 ```
 
 Files are grouped under:
@@ -132,15 +162,16 @@ During discovery and synchronization, the CLI also prints the current course, st
 In Toledo Calendar, open **Calendar Settings → Share Calendar**. Then run:
 
 ```sh
-node src/cli.mjs set-calendar --config "/path/to/config.json"
-node src/cli.mjs sync-calendar --config "/path/to/config.json"
+toledo-sync set-calendar --config "/path/to/config.json"
+toledo-sync sync-calendar --config "/path/to/config.json"
 ```
 
 ## Troubleshooting
 
-- **No supported browser found:** install Chrome, Edge, or Chromium, set `browser.executablePath` in the config, or set `TOLEDO_BROWSER_PATH`.
-- **Course is skipped:** it is not currently available for the signed-in user or has not been discovered for the selected year. Run `discover --auto` after it opens.
-- **Login expired:** rerun `login`; use `--fresh` only when a normal login does not recover the session.
+- **No supported browser found:** run `toledo-sync doctor`. Install Chrome, Edge, Chromium, or Brave; use `--browser <path>` or set `TOLEDO_BROWSER_PATH`. Ubuntu Snap Chromium is normally `/snap/bin/chromium`.
+- **Browser session is stuck:** run `toledo-sync reset-browser --config "/path/to/config.json"`, then sign in again.
+- **Course is unavailable:** the signed-in account has a membership, but Toledo does not currently expose an open course link. The CLI shows the course but prevents selecting it.
+- **Login expired:** rerun `login`; use `--fresh` when a normal login does not recover the session.
 - **Files from an external tool are absent:** Ultra folders, learning modules, regular files, and Ultra Document attachments are supported. Files available only inside a third-party tool may need an adapter.
 
 ## Security

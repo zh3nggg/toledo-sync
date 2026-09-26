@@ -8,6 +8,13 @@ async function exists(filePath) {
   try { await fs.access(filePath); return true; } catch { return false; }
 }
 
+function pathExecutables(names) {
+  return String(process.env.PATH ?? '')
+    .split(path.delimiter)
+    .filter(Boolean)
+    .flatMap((directory) => names.map((name) => path.join(directory, name)));
+}
+
 export async function detectBrowser(configuredPath = null) {
   const candidates = [];
   if (configuredPath) candidates.push(configuredPath);
@@ -31,7 +38,14 @@ export async function detectBrowser(configuredPath = null) {
     candidates.push(
       '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable',
       '/usr/bin/microsoft-edge', '/usr/bin/microsoft-edge-stable',
-      '/usr/bin/chromium', '/usr/bin/chromium-browser'
+      '/usr/bin/chromium', '/usr/bin/chromium-browser',
+      '/usr/bin/brave-browser', '/snap/bin/chromium',
+      '/var/lib/flatpak/exports/bin/org.chromium.Chromium',
+      path.join(os.homedir(), '.local', 'share', 'flatpak', 'exports', 'bin', 'org.chromium.Chromium'),
+      ...pathExecutables([
+        'google-chrome', 'google-chrome-stable', 'microsoft-edge',
+        'microsoft-edge-stable', 'chromium', 'chromium-browser', 'brave-browser'
+      ])
     );
   }
 
@@ -39,9 +53,29 @@ export async function detectBrowser(configuredPath = null) {
     if (await exists(candidate)) return candidate;
   }
   throw new Error([
-    'No supported Chrome, Edge, or Chromium executable was found.',
-    'Install one, set browser.executablePath in config.json, or set TOLEDO_BROWSER_PATH.'
+    'No supported Chrome, Edge, Chromium, or Brave executable was found.',
+    'Install one, run `toledo-sync doctor`, pass --browser <path>, or set TOLEDO_BROWSER_PATH.'
   ].join(' '));
+}
+
+function isInside(parent, target) {
+  const relative = path.relative(path.resolve(parent), path.resolve(target));
+  return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+export async function resetBrowserSession(config, { lastLoginPath = null } = {}) {
+  const appStateRoot = path.join(os.homedir(), '.toledo-sync');
+  const profilePath = path.resolve(config.browser?.profilePath ?? path.join(appStateRoot, 'browser-profile'));
+  const authStatePath = config.browser?.authStatePath ? path.resolve(config.browser.authStatePath) : null;
+  const managedPaths = [profilePath, authStatePath].filter(Boolean);
+  const unmanaged = managedPaths.filter((target) => !isInside(appStateRoot, target));
+  if (unmanaged.length) {
+    throw new Error(`Refusing to remove a browser-session path outside ${appStateRoot}: ${unmanaged.join(', ')}`);
+  }
+  await fs.rm(profilePath, { recursive: true, force: true });
+  if (authStatePath) await fs.rm(authStatePath, { force: true });
+  if (lastLoginPath) await fs.rm(path.resolve(lastLoginPath), { force: true });
+  return { profilePath, authStatePath };
 }
 
 export async function launchBrowser(config) {

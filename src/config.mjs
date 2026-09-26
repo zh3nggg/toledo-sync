@@ -30,7 +30,8 @@ export function createConfig(vaultPath, options = {}) {
   const resolvedVault = path.resolve(vaultPath);
   if (!options.outputRoot) throw new Error('Choose the download root with --output <directory>. Course folders are created directly inside it.');
   const selectedCodes = new Set(options.selectedCodes ?? FALL_2026_COURSES.map((course) => course.code));
-  const academicYear = options.academicYear ?? '2026-2027';
+  const courseCatalog = options.courseCatalog ?? FALL_2026_COURSES;
+  const academicYear = options.academicYear ?? '';
   return {
     schemaVersion: 2,
     portalUrl: DEFAULT_PORTAL_URL,
@@ -43,7 +44,10 @@ export function createConfig(vaultPath, options = {}) {
       })
     },
     filters: {
-      academicYears: [academicYear]
+      academicYears: academicYear ? [academicYear] : []
+    },
+    ui: {
+      language: options.language ?? 'en'
     },
     stateRoot: path.join('_codex', 'toledo-sync'),
     browser: {
@@ -59,7 +63,7 @@ export function createConfig(vaultPath, options = {}) {
       settleTimeMs: 2500,
       verificationMode: normalizeVerificationMode(options.verificationMode)
     },
-    courses: FALL_2026_COURSES.map((course, index) => ({
+    courses: courseCatalog.map((course, index) => ({
       ...course,
       order: index + 1,
       term: '2026-fall',
@@ -98,6 +102,7 @@ export async function loadConfig(configPath) {
     requestTimeoutMs,
     verificationMode: normalizeVerificationMode(config.sync?.verificationMode)
   };
+  config.ui = { ...(config.ui ?? {}), language: config.ui?.language ?? 'en' };
   Object.assign(config.download, normalizeMaterialsLayout(config.download, {
     preserveLegacyDefault: config.download.materialsPlacement === undefined && config.download.materialsFolderName === undefined
   }));

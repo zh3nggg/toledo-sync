@@ -12,23 +12,28 @@ export async function askWithDefault(question, fallback = '') {
   return answer.trim() || String(fallback);
 }
 
-export async function choose(question, choices, fallbackIndex = 0) {
+export async function choose(question, choices, fallbackIndex = 0, labels = {}) {
   console.log(`\n${question}`);
-  choices.forEach((choice, index) => console.log(`  ${index + 1}) ${choice}`));
-  const raw = await ask(`选择 [${fallbackIndex + 1}]: `);
-  if (!raw.trim()) return choices[fallbackIndex];
-  const index = Number.parseInt(raw, 10) - 1;
-  if (!Number.isInteger(index) || index < 0 || index >= choices.length) {
-    throw new Error(`请输入 1 到 ${choices.length} 之间的数字。`);
+  const normalized = choices.map((choice) => typeof choice === 'string' ? { label: choice, value: choice } : choice);
+  normalized.forEach((choice, index) => console.log(`  ${index + 1}) ${choice.label}`));
+  while (true) {
+    const raw = await ask(`${labels.select ?? 'Select'} [${fallbackIndex + 1}]: `);
+    if (!raw.trim()) return normalized[fallbackIndex].value;
+    const index = Number.parseInt(raw, 10) - 1;
+    if (Number.isInteger(index) && index >= 0 && index < normalized.length) return normalized[index].value;
+    console.log(typeof labels.invalidChoice === 'function'
+      ? labels.invalidChoice(normalized.length)
+      : labels.invalidChoice ?? `Enter a number from 1 to ${normalized.length}.`);
   }
-  return choices[index];
 }
 
-export async function confirm(question, fallback = true) {
+export async function confirm(question, fallback = true, labels = {}) {
   const hint = fallback ? 'Y/n' : 'y/N';
-  const raw = (await ask(`${question} [${hint}]: `)).trim().toLowerCase();
-  if (!raw) return fallback;
-  if (['y', 'yes', '是', 'j', 'ja'].includes(raw)) return true;
-  if (['n', 'no', '否', 'nee'].includes(raw)) return false;
-  throw new Error('请输入 y 或 n。');
+  while (true) {
+    const raw = (await ask(`${question} [${hint}]: `)).trim().toLowerCase();
+    if (!raw) return fallback;
+    if (['y', 'yes', '是', 'j', 'ja'].includes(raw)) return true;
+    if (['n', 'no', '否', 'nee'].includes(raw)) return false;
+    console.log(labels.invalidConfirm ?? 'Enter y or n.');
+  }
 }
