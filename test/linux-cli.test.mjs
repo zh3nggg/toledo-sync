@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createTranslator, normalizeLanguage, resolveLanguage } from '../src/cli-i18n.mjs';
-import { formatUpdateTree } from '../src/linux-cli.mjs';
+import { formatUpdateTree, normalizeWatchInterval } from '../src/linux-cli.mjs';
 import { detectBrowser } from '../src/browser.mjs';
 import { createConfig } from '../src/config.mjs';
 
@@ -52,4 +52,11 @@ test('browser detection accepts an explicitly configured executable path', async
   } finally {
     await fs.rm(directory, { recursive: true, force: true });
   }
+});
+
+test('watch intervals are bounded for unattended Linux checks', () => {
+  assert.equal(normalizeWatchInterval(undefined), 60);
+  assert.equal(normalizeWatchInterval('30'), 30);
+  assert.throws(() => normalizeWatchInterval('0'), /1 to 1440/);
+  assert.throws(() => normalizeWatchInterval('1.5'), /1 to 1440/);
 });

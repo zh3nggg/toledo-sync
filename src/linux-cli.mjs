@@ -80,6 +80,7 @@ Usage:
   toledo-sync list --config <config.json>
   toledo-sync check --config <config.json> [--course <code>]
   toledo-sync sync --config <config.json> [--course <code>]
+  toledo-sync watch --config <config.json> [--interval <minutes>] [--apply]
   toledo-sync set-calendar --config <config.json>
   toledo-sync sync-calendar --config <config.json>
 
@@ -291,6 +292,60 @@ async function checkAndApply(config, selectedCode, context, { apply = true } = {
   return applied;
 }
 
+export function normalizeWatchInterval(value) {
+  const minutes = Number(value ?? 60);
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) {
+    throw new Error('Watch interval must be a whole number from 1 to 1440 minutes.');
+  }
+  return minutes;
+}
+
+function enabledOption(value) {
+  return value === true || ['1', 'true', 'yes', 'on'].includes(String(value ?? '').toLowerCase());
+}
+
+async function waitForNextCycle(milliseconds, stop) {
+  const deadline = Date.now() + milliseconds;
+  while (!stop.requested && Date.now() < deadline) {
+    await delay(Math.min(1000, deadline - Date.now()));
+  }
+}
+
+async function runMonitor(config, configPath, context, { intervalMinutes = 60, apply = false, once = false } = {}) {
+  const interval = normalizeWatchInterval(intervalMinutes);
+  if (!config.courses.some((course) => course.selected && availableCourse(course))) {
+    throw new Error(context.t('noSelectedCourses'));
+  }
+  const stop = { requested: false };
+  const stopHandler = () => { stop.requested = true; };
+  process.on('SIGINT', stopHandler);
+  console.log(context.t('monitorStarted'));
+  try {
+    do {
+      console.log(`\n${context.t('monitorCycle', { time: new Date().toLocaleString() })}`);
+      try {
+        await runDiscovery(config, configPath, context);
+        ({ config } = await loadConfig(configPath));
+        const results = await syncCourses(headlessConfig(config), null, (event) => console.log(`  ${event.message}`), { dryRun: true });
+        const counts = updateCounts(results);
+        console.log(context.t('summary', counts));
+        if (apply && (counts.newCount || counts.modified)) {
+          await syncCourses(headlessConfig(config), null, (event) => console.log(`  ${event.message}`));
+          console.log(context.t('updatesApplied'));
+        }
+      } catch (error) {
+        console.error(`Error: ${error.message}`);
+      }
+      if (once || stop.requested) break;
+      await waitForNextCycle(interval * 60 * 1000, stop);
+    } while (!stop.requested);
+  } finally {
+    process.removeListener('SIGINT', stopHandler);
+  }
+  console.log(context.t('monitorStopped'));
+  return config;
+}
+
 async function settingsMenu(config, configPath, context) {
   const action = await choose(context.t('settingsQuestion'), [
     { label: context.t('changeOutput'), value: 'output' },
@@ -396,6 +451,7 @@ async function runInteractive(options, settings, context) {
       { label: context.t('discoverCourses'), value: 'discover' },
       { label: context.t('selectCourses'), value: 'select' },
       { label: context.t('checkUpdates'), value: 'check' },
+      { label: context.t('monitorUpdates'), value: 'monitor' },
       { label: context.t('settings'), value: 'settings' },
       { label: context.t('resetBrowser'), value: 'reset' },
       { label: context.t('exit'), value: 'exit' }
@@ -425,6 +481,19 @@ async function runInteractive(options, settings, context) {
           continue;
         }
         await checkAndApply(config, null, context);
+      } else if (action === 'monitor') {
+        if (!signedIn) {
+          console.log(context.t('statusSignInRequired'));
+          continue;
+        }
+        const intervalMinutes = await choose(context.t('monitorInterval'), [
+          { label: context.t('interval30'), value: 30 },
+          { label: context.t('interval60'), value: 60 },
+          { label: context.t('interval360'), value: 360 },
+          { label: context.t('interval1440'), value: 1440 }
+        ], 1, context.labels);
+        const apply = await confirm(context.t('monitorApply'), false, context.labels);
+        config = await runMonitor(config, configPath, context, { intervalMinutes, apply });
       } else if (action === 'settings') {
         await settingsMenu(config, configPath, context);
         await saveCliSettings({ configPath, language: context.language });
@@ -576,6 +645,15 @@ export async function runCli(argv = process.argv.slice(2)) {
   if (command === 'sync') {
     const results = await syncCourses(headlessConfig(config), options.course || null, (event) => console.log(event.message));
     console.log(formatUpdateTree(results, context.t));
+    return;
+  }
+  if (command === 'watch') {
+    if (!await authenticated(config)) throw new Error(context.t('statusSignInRequired'));
+    await runMonitor(config, configPath, context, {
+      intervalMinutes: options.interval ?? 60,
+      apply: enabledOption(options.apply),
+      once: enabledOption(options.once)
+    });
     return;
   }
   if (command === 'set-calendar') {

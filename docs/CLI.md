@@ -157,6 +157,25 @@ Repeated runs compare SHA-256 hashes and report unchanged files without writing 
 
 During discovery and synchronization, the CLI also prints the current course, stage, file count, filename, and per-file result so a long run has visible progress.
 
+## Continuous monitoring
+
+The interactive menu can keep checking while the CLI stays open. Choose an interval of 30 minutes, 1 hour, 6 hours, or 1 day. Monitoring checks immediately on startup and then repeats until you press `Ctrl+C`. Automatic application is off by default; if enabled, it uses the same cached downloads and SHA-256 local-edit protection.
+
+For a terminal, service manager, or scheduled job:
+
+```sh
+# Check hourly and report changes without writing course files
+toledo-sync watch --config "/path/to/config.json" --interval 60
+
+# Check hourly and apply safe updates
+toledo-sync watch --config "/path/to/config.json" --interval 60 --apply
+
+# Perform one discovery-and-check cycle, useful for a systemd timer
+toledo-sync watch --config "/path/to/config.json" --once
+```
+
+The CLI does not install a boot service by itself. Linux users can run the one-cycle command from their existing user-level scheduler without granting Toledo Sync elevated privileges.
+
 ## Calendar (optional)
 
 In Toledo Calendar, open **Calendar Settings → Share Calendar**. Then run:

@@ -6,6 +6,7 @@
 - Added Linux browser diagnostics and detection for PATH, Snap Chromium, common Flatpak exports, and Brave.
 - Added a safe browser-session reset command without touching course materials or configuration.
 - Added course-by-course update trees, cached previews, and per-file conflict decisions before applying changes.
+- Added an interactive and command-line watch mode for immediate and periodic checks, with explicit opt-in automatic application.
 - Kept SHA-256 local-edit protection as the default and retained filename/path verification as an option.
 
 ## 1.0.0 — 2026-09-19

@@ -29,7 +29,7 @@ Toledo Sync 面向以下使用方式：
 | 课程内布局 | 可选直接放入课程文件夹，或放入你自定义名称的材料子文件夹。 |
 | 不可用课程 | 仍显示在列表中但不能选择，也不会用同编号的其他课程替代。 |
 | 文件变化 | 默认通过 SHA-256 识别内容变化，也可切换为文件名和路径校验。检查更新会先把远程副本放进 Vault 状态缓存，确认后直接复用，不重复下载。 |
-| 自动更新 | 可选开机启动、启动时检查，以及 30 分钟到每天的周期检查。 |
+| 自动更新 | Windows 桌面版支持开机启动；Linux CLI 可在前台持续监控，或由用户自己的定时器调用单次检查。 |
 | 登录凭据 | 密码和 MFA 只在 KU Leuven 官方登录页面完成。 |
 | 学习资料 | 下载本地副本；不会提交作业、参加测验、发送消息或改变 Toledo 内容。 |
 
@@ -103,7 +103,7 @@ It is designed for students who want to keep **only the courses they choose**, p
 | Course layout | Places material directly in each course folder or in a subfolder with your chosen name. |
 | Unavailable courses | Keeps them visible but disabled and never substitutes another course with the same code. |
 | Repeat runs | Uses SHA-256 to avoid duplicate copies of unchanged files. |
-| Automatic updates | Optionally starts with Windows, checks on launch, and runs a schedule while open. |
+| Automatic updates | The Windows app supports startup launch; the Linux CLI can monitor while open or run one cycle from a user scheduler. |
 | Credentials | KU Leuven password and MFA stay on KU Leuven sign-in pages. |
 | Toledo actions | Reads visible learning material only; it never submits, posts, tests, or modifies content. |
 
@@ -149,7 +149,7 @@ De toepassing is bedoeld voor studenten die eerst hun volledige cursuslijst will
 | Cursusindeling | Plaatst materiaal rechtstreeks in elke cursusmap of in een submap met jouw eigen naam. |
 | Niet-beschikbare cursussen | Blijven zichtbaar maar uitgeschakeld en worden nooit vervangen door een andere cursus met dezelfde code. |
 | Herhaald synchroniseren | Gebruikt SHA-256 om dubbele kopieën van ongewijzigde bestanden te vermijden. |
-| Automatische updates | Optioneel starten met Windows, controleren bij openen en periodiek controleren zolang de app open is. |
+| Automatische updates | De Windows-app kan bij het opstarten starten; de Linux-CLI kan open blijven controleren of één cyclus vanuit een gebruikersplanner uitvoeren. |
 | Aanmeldgegevens | KU Leuven-wachtwoord en MFA blijven op de officiële KU Leuven-aanmeldpagina. |
 | Acties in Toledo | Leest alleen zichtbaar cursusmateriaal; dient niets in en wijzigt geen Toledo-inhoud. |
 
