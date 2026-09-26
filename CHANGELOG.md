@@ -1,4 +1,4 @@
-## Unreleased — content engine reliability
+## 1.2.2 — 2026-09-26
 
 - Treat authorization failures, inaccessible content, malformed responses and incomplete pagination as failed checks, never as empty courses.
 - Read course contents through the signed-in browser, with a request fallback, bounded retries and an alternative public content endpoint.
@@ -7,6 +7,7 @@
 - Keep previous manifests on scan failure and continue checking the remaining courses; show course errors in the update tree.
 - Reject login/error pages returned as downloads and verify cached bytes before applying checked updates.
 - Store endpoint/status diagnostics for failed checks without recording authentication headers or login-page snapshots.
+- Merge Windows, Apple Silicon macOS, and Linux changes into one source tree and publish Windows/macOS installers from one release workflow.
 
 ## 1.2.1 — 2026-09-26
 
@@ -29,6 +30,13 @@
 - Preserved locally modified files and write-on-confirm update behavior.
 - Includes the Windows installer and portable Windows build.
 # Changelog
+
+## 1.2.0 — 2026-09-22
+
+- Added an Apple Silicon macOS desktop build with DMG and ZIP packaging.
+- Enabled macOS GUI configuration, sign-in, course discovery, update review, synchronization, and login-item automation.
+- Added a macOS application icon, release workflow, and installation guide.
+- Reworked the desktop layout for macOS Retina and larger text: content now uses the window scrollbar instead of a fixed-height blank region.
 
 ## 0.1.10 — 2026-09-16
 

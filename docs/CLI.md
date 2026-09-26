@@ -66,7 +66,7 @@ toledo-sync interactive
 toledo-sync interactive --config "/path/to/SemiCon/_codex/toledo-sync/config.json"
 ```
 
-The interactive CLI is the maintained Linux interface. The Windows desktop application remains available separately.
+The interactive CLI is maintained for Linux. Windows and Apple Silicon macOS desktop applications are also available.
 
 ## First-time setup
 

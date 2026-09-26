@@ -4,8 +4,7 @@
 
 [中文](#中文) · [English](#english) · [Nederlands](#nederlands)
 
-> **重要 / Important / Belangrijk — upgrade to 1.1 before syncing.**
-> Version 1.1 is the supported baseline for the complete course discovery, unavailable-course handling, and slow-network fixes. If you have 1.0.x installed, upgrade from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest) first.
+> **必须升级 / Required upgrade / Verplichte update: 1.2.2.** 旧版可能把 Toledo 的访问失败误报为“课程没有材料”。请先从 [最新发行版](https://github.com/zh3nggg/toledo-sync/releases/latest) 安装 1.2.2，再检查或下载课程材料。 / Older versions can report an access failure as an empty course. Install 1.2.2 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest) before checking or downloading materials. / Oudere versies kunnen een toegangsprobleem als een lege cursus tonen. Installeer eerst 1.2.2 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest).
 
 ## 中文
 
@@ -65,10 +64,12 @@ D:\Study\Leuven 2026 Fall\
 | 系统 | 推荐入口 | 状态 |
 | --- | --- | --- |
 | Windows 10/11 | 三语桌面应用（中文／English／Nederlands） | 已支持 |
-| macOS | 独立 GUI 版本 | 单独维护 |
+| macOS（Apple Silicon） | 三语桌面应用 | 已支持 |
 | Linux | 三语交互式 CLI；Firefox、Chrome、Chromium、Edge、Brave | 已支持 |
 
-**Windows 用户：** 请升级到 1.1 或更高版本，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.<version>.exe`；不想安装时请选择 `Toledo.Sync.<version>.exe` 便携版。不要从旧版本 Release 下载。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
+**Windows 用户：** 请升级到 1.2.2，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo Sync Setup <version>.exe`；不想安装时请选择 `Toledo Sync <version>.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
+
+**Mac 用户：** Apple Silicon 版本请从同一 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载 DMG，参阅 [macOS 安装指南](docs/GUI-MACOS.md)。
 
 **Linux 用户：** 参阅 [完整 CLI 指南](docs/CLI.md)。运行 `toledo-sync` 后可以选择中文、English 或 Nederlands，再依次配置 Vault、下载目录、登录和课程。在终端菜单中使用方向键和回车；课程列表可用空格勾选，支持长列表滚动。CLI 不按学年隐藏课程，而是读取账户中的完整课程列表，再由用户选择同步范围。“检查更新”会先显示文件树和冲突选项，确认后才写入课程目录。
 
@@ -119,10 +120,10 @@ Choose Vault and download root → sign in once → discover current courses
 | Platform | Recommended interface | Status |
 | --- | --- | --- |
 | Windows 10/11 | Desktop app in 中文, English, Nederlands | Supported |
-| macOS | Separate GUI build | Maintained separately |
+| macOS (Apple Silicon) | Desktop app in 中文, English, Nederlands | Supported |
 | Linux | Interactive CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Supported |
 
-For Windows, upgrade to 1.1 or later and always download the current installer from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.<version>.exe` for a normal installation or `Toledo.Sync.<version>.exe` for the portable build; older release assets should not be used. Then follow the [desktop-app guide](docs/GUI-WINDOWS.md). On Linux, run `toledo-sync` (or `npm start` from the repository) to open the trilingual interactive wizard. Navigate menus with the arrow keys, select courses with Space, and review the complete account course list and update tree before applying updates. See the [Linux CLI guide](docs/CLI.md).
+For Windows, upgrade to 1.2.2 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo Sync Setup <version>.exe` to install or `Toledo Sync <version>.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). For Apple Silicon Macs, download the DMG from the same release and follow the [macOS guide](docs/GUI-MACOS.md). On Linux, run `toledo-sync` (or `npm start` from the repository) to open the trilingual interactive wizard. See the [Linux CLI guide](docs/CLI.md).
 
 ### Current scope and privacy
 
@@ -158,10 +159,10 @@ De toepassing is bedoeld voor studenten die eerst hun volledige cursuslijst will
 | Platform | Aanbevolen interface | Status |
 | --- | --- | --- |
 | Windows 10/11 | Desktopapp in 中文, English, Nederlands | Ondersteund |
-| macOS | Afzonderlijke GUI-versie | Afzonderlijk onderhouden |
+| macOS (Apple Silicon) | Desktopapp in 中文, English, Nederlands | Ondersteund |
 | Linux | Interactieve CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Ondersteund |
 
-Download voor Windows altijd versie 1.1 of nieuwer via de [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Gebruik `Toledo.Sync.Setup.<version>.exe` voor een normale installatie of `Toledo.Sync.<version>.exe` als portable versie; gebruik geen assets uit oudere releases. Volg daarna de [handleiding voor de desktopapp](docs/GUI-WINDOWS.md). Op Linux start `toledo-sync` de drietalige interactieve wizard. Navigeer menu’s met de pijltjestoetsen en selecteer cursussen met de spatiebalk. De CLI leest de volledige cursuslijst, biedt browserdiagnose en sessiereset, en toont vóór het toepassen een bestandsboom met keuzes per conflict. Zie de [Linux CLI-handleiding](docs/CLI.md).
+Installeer op Windows versie 1.2.2 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo Sync Setup <version>.exe` voor installatie of `Toledo Sync <version>.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). Download op een Apple Silicon Mac de DMG van dezelfde release en volg de [macOS-handleiding](docs/GUI-MACOS.md). Op Linux start `toledo-sync` de drietalige interactieve wizard. Zie de [Linux CLI-handleiding](docs/CLI.md).
 
 ### Huidige ondersteuning en privacy
 
@@ -179,9 +180,9 @@ Course materials may be protected or licensed by KU Leuven, teaching staff, or o
 
 Cursusmateriaal kan beschermd of gelicentieerd zijn door KU Leuven, docenten of andere rechthebbenden. Gebruik Toledo Sync alleen voor materiaal waartoe je gemachtigd bent en voor toegestane studiedoeleinden. Verspreid, publiceer, verkoop of gebruik het niet commercieel zonder toestemming; verwijder geen rechtenvermeldingen en omzeil geen toegangscontroles. Examenmateriaal is alleen voor studiegebruik. Volg de KU Leuven-regels, cursuslicenties en toepasselijke wetgeving. De MIT-licentie geldt voor deze software en geeft geen extra rechten op cursusmateriaal.
 
-## Version 1.2.1 / 版本 1.2.1 / Versie 1.2.1
+## Version 1.2.2 / 版本 1.2.2 / Versie 1.2.2
 
-The 1.2 series includes an interactive file tree for update review. Version 1.2.1 aligns the maintained Linux CLI with that workflow: complete unrestricted course discovery, English/Chinese/Dutch interaction, Linux browser diagnostics and session reset, Firefox support through Playwright's compatible build, cached previews, and per-file conflict decisions before writing files.
+Version 1.2.2 fixes content checks that could report an inaccessible course as empty. It also adds retries, clearer course errors, and safer cache and session handling across the desktop apps and Linux CLI. Upgrade before checking course materials. The 1.2 series includes interactive file review and per-file conflict decisions.
 
 ## For contributors / 开发者
 

@@ -100,8 +100,8 @@ async function waitForSuccessfulPortalLogin(page, timeoutMs = 10 * 60 * 1000) {
 }
 
 function ensureDesktopPlatform() {
-  if (!['win32', 'linux'].includes(process.platform)) {
-    throw new Error('The desktop app supports Windows and Linux. Use the CLI on macOS.');
+  if (!['win32', 'linux', 'darwin'].includes(process.platform)) {
+    throw new Error('The desktop app supports Windows, macOS, and Linux.');
   }
 }
 
@@ -259,7 +259,7 @@ async function runAutomaticCheck(reason) {
 
 async function configureAutomation(automation) {
   const normalized = normalizeAutomation(automation);
-  if (process.platform === 'win32') {
+  if (process.platform === 'win32' || process.platform === 'darwin') {
     app.setLoginItemSettings({
       openAtLogin: normalized.autoStart,
       path: process.execPath,
@@ -303,11 +303,12 @@ async function initializeAutomation() {
 
 async function createWindow() {
   const demoMode = process.env.TOLEDO_DEMO === '1';
+  const windowIcon = process.platform === 'darwin' ? 'toledo-sync.png' : 'toledo-sync.ico';
   mainWindow = new BrowserWindow({
     width: demoMode ? 1280 : 860, height: demoMode ? 720 : 660,
     minWidth: demoMode ? 1280 : 720, minHeight: demoMode ? 720 : 540,
     resizable: !demoMode, autoHideMenuBar: demoMode, useContentSize: true, show: false,
-    icon: path.join(__dirname, '..', 'assets', 'toledo-sync.ico'),
+    icon: path.join(__dirname, '..', 'assets', windowIcon),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false }
   });
   await mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));

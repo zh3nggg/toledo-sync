@@ -1,6 +1,6 @@
 {
   "name": "toledo-sync",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Local-first KU Leuven Toledo course material synchronizer",
   "desktopName": "toledo-sync",
   "author": "Toledo Sync contributors",
@@ -10,13 +10,14 @@
     "toledo-sync": "./src/linux-cli.mjs"
   },
   "scripts": {
-    "test": "node --test",
-    "check": "node --check src/linux-cli.mjs && node --check src/cli.mjs && node --check src/cli-i18n.mjs && node --check src/browser.mjs && node --check src/sync.mjs && node --check desktop/main.mjs && node --check desktop/preload.cjs && node --check desktop/renderer/app.js",
+    "test": "node --test test/course-content.test.mjs test/linux-cli.test.mjs test/utils.test.mjs",
+    "check": "node --check src/linux-cli.mjs && node --check src/cli.mjs && node --check src/cli-i18n.mjs && node --check src/browser.mjs && node --check src/course-content.mjs && node --check src/sync.mjs && node --check desktop/main.mjs && node --check desktop/preload.cjs && node --check desktop/renderer/app.js",
     "start": "node src/linux-cli.mjs",
     "desktop": "electron .",
     "make:win": "electron-builder --win nsis portable --publish never",
     "make:linux": "electron-builder --linux AppImage --publish never",
-    "make:linux:portable": "electron-builder --linux tar.gz --publish never"
+    "make:linux:portable": "electron-builder --linux tar.gz --publish never",
+    "make:mac": "electron-builder --mac dmg zip --arm64 --publish never"
   },
   "engines": {
     "node": ">=20"
@@ -31,6 +32,7 @@
     "directories": {
       "output": "release"
     },
+    "afterPack": "scripts/after-pack.mjs",
     "files": [
       "assets/**/*",
       "desktop/**/*",
@@ -39,7 +41,6 @@
       "README.md",
       "docs/**/*"
     ],
-    "icon": "assets/toledo-sync.ico",
     "linux": {
       "icon": "assets/toledo-sync.svg",
       "target": [
@@ -56,6 +57,17 @@
         "portable"
       ],
       "icon": "assets/toledo-sync.ico"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["arm64"] },
+        { "target": "zip", "arch": ["arm64"] }
+      ],
+      "icon": "assets/toledo-sync.png",
+      "category": "public.app-category.education",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "artifactName": "Toledo.Sync-${version}-macOS-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

@@ -24,6 +24,6 @@ Each check stores `diagnostics.json` under the state directory's `previews/<cour
 
 The validated route is Blackboard Ultra. Unsupported page layouts fail explicitly; a shallow page scan is not presented as a complete course scan. External video/LTI players and access-controlled external services are not automatically converted into downloadable files. Upstream schema or permission changes may still require an engine update.
 
-Windows live checks and mock-based regression tests cover this change. A separately maintained macOS GUI must integrate the shared module and error-summary changes and run a macOS smoke test before distributing a new build.
+Windows live checks and mock-based regression tests cover this change. The shared module is included in the macOS build; run a macOS smoke test on the published artifact before relying on it for a full course sync.
 
 Relevant upstream references: [Playwright request/session cookies](https://playwright.dev/docs/api/class-apirequestcontext) and [Blackboard content API documentation](https://github.com/blackboard/anthologydevdocs/blob/main/docs/blackboard/rest-apis/hands-on/content.md).

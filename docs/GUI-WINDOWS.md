@@ -1,5 +1,7 @@
 # Windows desktop app
 
+**Required upgrade: install [Toledo Sync 1.2.2](https://github.com/zh3nggg/toledo-sync/releases/latest) before checking course materials. Older versions can report an inaccessible course as empty.**
+
 The Windows desktop app packages the same synchronization core as the CLI. It is available in Chinese, English, and Dutch.
 
 1. Download the newest `Toledo.Sync.Setup.<version>.exe` from the GitHub Release and install it, or use the portable `.exe`.
@@ -20,4 +22,4 @@ The Windows desktop app packages the same synchronization core as the CLI. It is
 
 The app needs Node.js only when run from source. Installed release builds include the runtime, but still use an installed Chrome, Edge, or Chromium for KU Leuven login.
 
-Use the CLI on macOS and Linux; see [CLI.md](CLI.md).
+Apple Silicon Macs also have a desktop app; see [GUI-MACOS.md](GUI-MACOS.md). The CLI remains available on Windows, macOS, and Linux; see [CLI.md](CLI.md).
