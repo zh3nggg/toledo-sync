@@ -28,6 +28,7 @@
         <section class="tab-panel" data-panel="courses"><section class="card auth-card" id="authCard">
           <div class="section-heading"><div><span class="eyebrow" data-i18n="authStep"></span><h2 data-i18n="authTitle"></h2><p data-i18n="authText" data-i18n-title="authHint"></p></div><span class="auth-state" id="authState" data-i18n="authRequired"></span></div>
           <div class="actions"><button id="login" data-i18n="login"></button><button class="secondary" id="resetBrowser" data-i18n="resetBrowser" data-i18n-title="resetBrowserHint"></button></div>
+          <div id="linuxBrowser" hidden><div class="field short"><label for="browserChoice" data-i18n="browserLabel" data-i18n-title="browserHint"></label><select id="browserChoice"><option value="auto" data-i18n="browserAuto"></option><option value="chromium">Chromium (Playwright)</option><option value="firefox">Firefox (Playwright)</option><option value="custom" hidden data-i18n="browserCustom"></option></select></div><div class="actions"><button class="secondary" id="prepareBrowser" data-i18n="prepareBrowser" data-i18n-title="browserHint"></button></div></div>
         </section><section class="card course-card" id="discoverCard">
           <div class="section-heading"><div><span class="eyebrow" data-i18n="discoverStep"></span><h2 data-i18n="coursesTitle"></h2><p data-i18n="coursesText" data-i18n-title="coursesHint"></p></div><button class="secondary" id="discover" data-i18n="discover"></button></div>
           <div id="courses" class="courses"></div>

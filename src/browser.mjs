@@ -17,13 +17,20 @@ function pathExecutables(names) {
 
 export async function detectBrowser(configuredPath = null) {
   const candidates = [];
-  if (String(configuredPath ?? '').toLowerCase() === 'firefox') {
-    const managedFirefox = firefox.executablePath();
-    if (await exists(managedFirefox)) return managedFirefox;
-    throw new Error('Firefox was selected, but Playwright needs its compatible Firefox build. Run `toledo-sync install-browser firefox` once.');
+  const requested = configuredPath || process.env.TOLEDO_BROWSER_PATH;
+  const managedName = String(requested ?? '').toLowerCase();
+  if (['chromium', 'firefox'].includes(managedName)) {
+    const executable = (managedName === 'firefox' ? firefox : chromium).executablePath();
+    if (await exists(executable)) return executable;
+    throw browserSetupError(`Install the compatible ${managedName} build in Browser settings, or run toledo-sync install-browser ${managedName}.`);
   }
-  if (configuredPath) candidates.push(configuredPath);
-  if (process.env.TOLEDO_BROWSER_PATH) candidates.push(process.env.TOLEDO_BROWSER_PATH);
+  if (requested) {
+    if (!await exists(requested)) throw browserSetupError(`The selected browser does not exist: ${requested}`);
+    if (!isFirefoxPath(requested)) return requested;
+    const executable = firefox.executablePath();
+    if (await exists(executable)) return executable;
+    throw browserSetupError('Firefox requires its Playwright-compatible build. Install it in Browser settings, or run toledo-sync install-browser firefox.');
+  }
 
   if (process.platform === 'win32') {
     for (const root of [process.env['PROGRAMFILES(X86)'], process.env.PROGRAMFILES, process.env.LOCALAPPDATA]) {
@@ -58,18 +65,33 @@ export async function detectBrowser(configuredPath = null) {
 
   for (const candidate of [...new Set(candidates.filter(Boolean))]) {
     if (await exists(candidate)) {
-      if (isFirefoxPath(candidate)) {
-        const managedFirefox = firefox.executablePath();
-        if (await exists(managedFirefox)) return managedFirefox;
-        throw new Error('Firefox was found, but Playwright needs its compatible Firefox build. Run `toledo-sync install-browser firefox` once.');
-      }
+      // A stock Firefox cannot be automated by Playwright. Keep searching:
+      // a later Chromium candidate or a managed browser may still work.
+      if (isFirefoxPath(candidate)) continue;
       return candidate;
     }
   }
-  throw new Error([
+  for (const browser of [chromium, firefox]) {
+    if (await exists(browser.executablePath())) return browser.executablePath();
+  }
+  throw browserSetupError([
     'No supported Chrome, Edge, Chromium, Brave, or Firefox executable was found.',
-    'Install one, run `toledo-sync doctor`, pass --browser <path>, or set TOLEDO_BROWSER_PATH.'
+    'Choose a browser in Browser settings, or run toledo-sync install-browser chromium.'
   ].join(' '));
+}
+
+function browserSetupError(message) {
+  return Object.assign(new Error(message), { code: 'BROWSER_SETUP_REQUIRED' });
+}
+
+export function browserChoice(config) {
+  if (['chromium', 'firefox'].includes(config.browser?.type)) return config.browser.type;
+  return config.browser?.executablePath ? 'custom' : 'auto';
+}
+
+export function setBrowserChoice(config, choice) {
+  if (!['auto', 'chromium', 'firefox'].includes(choice)) throw new Error('Choose auto, chromium, or firefox.');
+  config.browser = { ...config.browser, type: choice === 'auto' ? null : choice, executablePath: null };
 }
 
 function isFirefoxPath(value) {
@@ -86,19 +108,26 @@ function browserSessionPaths(config, firefoxSelected) {
   };
 }
 
-export async function installManagedBrowser(name) {
-  if (name !== 'firefox') throw new Error('Only the Playwright Firefox build can be installed by this command.');
-  const executablePath = firefox.executablePath();
+export async function installManagedBrowser(name, { onProgress = message => process.stdout.write(message) } = {}) {
+  if (!['chromium', 'firefox'].includes(name)) throw new Error('Choose chromium or firefox.');
+  const executablePath = (name === 'firefox' ? firefox : chromium).executablePath();
   if (await exists(executablePath)) return { name, executablePath, installed: false };
-  const { spawnSync } = await import('node:child_process');
+  const { spawn } = await import('node:child_process');
   const { createRequire } = await import('node:module');
   const require = createRequire(import.meta.url);
   const packageJson = require.resolve('playwright-core/package.json');
-  const cliPath = path.join(path.dirname(packageJson), 'cli.js');
-  const result = spawnSync(process.execPath, [cliPath, 'install', 'firefox'], { stdio: 'inherit' });
-  if (result.error) throw new Error(`Could not start the Playwright Firefox installer: ${result.error.message}`);
-  if (result.status !== 0) throw new Error(`Playwright Firefox installation failed with exit code ${result.status}.`);
-  if (!await exists(executablePath)) throw new Error(`Firefox installation completed, but the browser was not found at ${executablePath}.`);
+  const cliPath = path.join(path.dirname(packageJson), 'cli.js').replace(/app\.asar([\\/])/, 'app.asar.unpacked$1');
+  await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [cliPath, 'install', name], {
+      env: { ...process.env, ...(process.versions.electron ? { ELECTRON_RUN_AS_NODE: '1' } : {}) },
+      stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true
+    });
+    child.stdout.on('data', chunk => onProgress(chunk.toString()));
+    child.stderr.on('data', chunk => onProgress(chunk.toString()));
+    child.on('error', reject);
+    child.on('close', code => code === 0 ? resolve() : reject(new Error(`${name} installation failed (exit ${code}). Check the download log and Linux dependencies.`)));
+  });
+  if (!await exists(executablePath)) throw new Error(`Browser installation completed, but no executable was found at ${executablePath}.`);
   return { name, executablePath, installed: true };
 }
 
@@ -143,7 +172,7 @@ export function missingSessionCookies(savedCookies, currentCookies, now = Date.n
 }
 
 export async function launchBrowser(config) {
-  const requestedBrowser = config.browser?.type === 'firefox' ? 'firefox' : config.browser?.executablePath;
+  const requestedBrowser = ['firefox', 'chromium'].includes(config.browser?.type) ? config.browser.type : config.browser?.executablePath;
   const executablePath = await detectBrowser(requestedBrowser);
   const firefoxSelected = isFirefoxPath(executablePath) || config.browser?.type === 'firefox';
   const browserType = firefoxSelected ? firefox : chromium;

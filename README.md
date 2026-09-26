@@ -8,6 +8,8 @@
 
 ## 中文
 
+**Linux 适配：** 基于 1.3.0 的 Linux GUI 与交互式 CLI 已更新，安装包尚未发布到 GitHub。构建与使用说明见 [Linux GUI](docs/GUI-LINUX.md) 和 [Linux CLI](docs/CLI.md)。
+
 ### 适合什么场景？
 
 Toledo 适合发布课程内容，却不一定适合成为整个学期的学习工作台：材料分散在不同课程、课程页会随学年变化、文件夹层级不统一，而你又可能想把文件连同 Obsidian 笔记、复习计划和个人知识库放在一起。
@@ -65,7 +67,7 @@ D:\Study\Leuven 2026 Fall\
 | --- | --- | --- |
 | Windows 10/11 | 三语桌面应用（中文／English／Nederlands） | 已支持 |
 | macOS（Apple Silicon） | 三语桌面应用 | 已支持 |
-| Linux | 三语交互式 CLI；Firefox、Chrome、Chromium、Edge、Brave | 已支持 |
+| Linux x86-64 | 三语 GUI（AppImage / tar.gz）与交互式 CLI | 本地构建；待发布 |
 
 **Windows 用户：** 请升级到 1.3.0，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.1.3.0.exe`；不想安装时请选择 `Toledo.Sync.1.3.0.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
 
@@ -88,6 +90,8 @@ D:\Study\Leuven 2026 Fall\
 ---
 
 ## English
+
+**Linux update:** the GUI and interactive CLI have been updated from the 1.3.0 engine. Linux packages are not yet published on GitHub. See the [Linux GUI guide](docs/GUI-LINUX.md) and [CLI guide](docs/CLI.md) for building and using them.
 
 ### The problem it solves
 
@@ -121,7 +125,7 @@ Choose Vault and download root → sign in once → discover current courses
 | --- | --- | --- |
 | Windows 10/11 | Desktop app in 中文, English, Nederlands | Supported |
 | macOS (Apple Silicon) | Desktop app in 中文, English, Nederlands | Supported |
-| Linux | Interactive CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Supported |
+| Linux x86-64 | GUI (AppImage / tar.gz) and interactive CLI in 中文, English, Nederlands | Local builds; publication pending |
 
 For Windows, upgrade to 1.3.0 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.1.3.0.exe` to install or `Toledo.Sync.1.3.0.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). The 1.3 macOS and Linux releases are still pending. Existing macOS releases and Linux CLI instructions remain available in the [release archive](https://github.com/zh3nggg/toledo-sync/releases) and [Linux CLI guide](docs/CLI.md).
 
@@ -134,6 +138,8 @@ Authentication state stays locally in `~/.toledo-sync/`; Vault-side manifests an
 ---
 
 ## Nederlands
+
+**Linux-update:** de GUI en interactieve CLI zijn bijgewerkt op basis van 1.3.0. De Linux-pakketten zijn nog niet op GitHub gepubliceerd. Zie de [Linux GUI-handleiding](docs/GUI-LINUX.md) en [CLI-handleiding](docs/CLI.md) voor bouwen en gebruik.
 
 ### Voor welk probleem?
 
@@ -160,7 +166,7 @@ De toepassing is bedoeld voor studenten die eerst hun volledige cursuslijst will
 | --- | --- | --- |
 | Windows 10/11 | Desktopapp in 中文, English, Nederlands | Ondersteund |
 | macOS (Apple Silicon) | Desktopapp in 中文, English, Nederlands | Ondersteund |
-| Linux | Interactieve CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Ondersteund |
+| Linux x86-64 | GUI (AppImage / tar.gz) en interactieve CLI in 中文, English, Nederlands | Lokale builds; publicatie volgt |
 
 Installeer op Windows versie 1.3.0 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo.Sync.Setup.1.3.0.exe` voor installatie of `Toledo.Sync.1.3.0.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). De 1.3-versies voor macOS en Linux volgen later. Bestaande macOS-versies en Linux-instructies staan in het [releasearchief](https://github.com/zh3nggg/toledo-sync/releases) en de [Linux CLI-handleiding](docs/CLI.md).
 

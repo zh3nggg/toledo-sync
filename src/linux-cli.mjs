@@ -8,7 +8,7 @@ import {
   defaultConfigPath, initializeConfig, loadConfig, normalizeMaterialsLayout,
   normalizeVerificationMode, saveConfig, statePath
 } from './config.mjs';
-import { detectBrowser, installManagedBrowser, launchBrowser, resetBrowserSession } from './browser.mjs';
+import { browserChoice, setBrowserChoice, detectBrowser, installManagedBrowser, launchBrowser, resetBrowserSession } from './browser.mjs';
 import { discoverCourses } from './discover.mjs';
 import { ask, askWithDefault, choose, chooseMany, confirm } from './prompt.mjs';
 import { setCalendarUrl, syncCalendar } from './calendar.mjs';
@@ -72,10 +72,10 @@ Usage:
   toledo-sync                         Interactive setup and update flow
   toledo-sync interactive [--config <config.json>]
   toledo-sync doctor
-  toledo-sync install-browser firefox
+  toledo-sync install-browser chromium|firefox
   toledo-sync init --vault <vault> --output <download-root>
                    [--materials-in-course | --materials-subdirectory <name>]
-                   [--verification sha256|filename] [--browser <path|firefox>]
+                   [--verification sha256|filename] [--browser <path|chromium|firefox>]
                    [--language en|zh|nl]
   toledo-sync configure --config <config.json> [options]
   toledo-sync login --config <config.json> [--fresh]
@@ -90,7 +90,7 @@ Usage:
 
 Global options:
   --language en|zh|nl       Interface language (or TOLEDO_LANG)
-  --browser <path|firefox>  Chromium-based executable or Playwright Firefox
+  --browser <path|chromium|firefox>  System executable or managed browser
   --config <path>           Existing Toledo Sync configuration
 
 ${t('copyrightShort')}`;
@@ -243,7 +243,7 @@ function fileStatusLabel(status, t) {
   return t('statusOther');
 }
 
-function updateCounts(results) {
+export function updateCounts(results) {
   const files = results.flatMap((result) => result.files ?? []);
   return {
     newCount: files.filter((file) => file.status === 'new' || file.status === 'downloaded').length,
@@ -306,14 +306,15 @@ async function checkAndApply(config, selectedCode, context, { apply = true } = {
   console.log(`\n${formatUpdateTree(results, context.t)}`);
   const counts = updateCounts(results);
   console.log(`\n${context.t('summary', counts)}`);
-  console.log(context.t('checkComplete'));
+  console.log(context.t(counts.errors ? 'checkIncomplete' : 'checkComplete'));
   if (!apply || (!counts.newCount && !counts.modified)) return results;
   const decisions = await collectFileDecisions(results, context);
   if (Object.values(decisions).includes('replace')
       && !await confirm(context.t('replaceWarning'), false, context.labels)) return results;
   if (!await confirm(context.t('applyUpdates'), true, context.labels)) return results;
   const applied = await syncCourses(headlessConfig(config), selectedCode, (event) => console.log(`  ${event.message}`), { decisions });
-  console.log(context.t('updatesApplied'));
+  console.log(formatUpdateTree(applied, context.t));
+  console.log(context.t(updateCounts(applied).errors ? 'applyIncomplete' : 'updatesApplied'));
   return applied;
 }
 
@@ -354,12 +355,20 @@ async function runMonitor(config, configPath, context, { intervalMinutes = 60, a
         const results = await syncCourses(headlessConfig(config), null, (event) => console.log(`  ${event.message}`), { dryRun: true });
         const counts = updateCounts(results);
         console.log(context.t('summary', counts));
+        if (counts.errors) {
+          console.log(formatUpdateTree(results, context.t));
+          console.error(context.t('checkIncomplete'));
+          if (once) process.exitCode = 1;
+        }
         if (apply && (counts.newCount || counts.modified)) {
-          await syncCourses(headlessConfig(config), null, (event) => console.log(`  ${event.message}`));
-          console.log(context.t('updatesApplied'));
+          const applied = await syncCourses(headlessConfig(config), null, (event) => console.log(`  ${event.message}`));
+          const errors = updateCounts(applied).errors;
+          console.log(context.t(errors ? 'applyIncomplete' : 'updatesApplied'));
+          if (errors && once) process.exitCode = 1;
         }
       } catch (error) {
         console.error(`Error: ${error.message}`);
+        if (once) process.exitCode = 1;
       }
       if (once || stop.requested) break;
       await waitForNextCycle(interval * 60 * 1000, stop);
@@ -398,9 +407,11 @@ async function settingsMenu(config, configPath, context) {
       { label: context.t('filenameMode'), value: 'filename' }
     ], config.sync.verificationMode === 'filename' ? 1 : 0, context.labels);
   } else if (action === 'browser') {
-    const current = config.browser.type === 'firefox' ? 'firefox' : config.browser.executablePath || context.t('autoDetect');
-    const value = (await ask(`${context.t('browserPath')} [${current}]: `)).trim();
-    if (value) setBrowserOption(config, value);
+    const previous = `${browserChoice(config)}|${config.browser.executablePath || ''}`;
+    await configureBrowser(config, context);
+    if (previous !== `${browserChoice(config)}|${config.browser.executablePath || ''}`) {
+      await fs.rm(statePath(config, 'auth', 'last-login.json'), { force: true });
+    }
   } else if (action === 'language') {
     const language = await choose(context.t('languageQuestion'), LANGUAGE_CHOICES, LANGUAGE_CHOICES.findIndex((item) => item.value === context.language), context.labels);
     setLanguage(context, language);
@@ -409,6 +420,33 @@ async function settingsMenu(config, configPath, context) {
   }
   await saveConfig(configPath, config);
   console.log(context.t('settingsSaved'));
+}
+
+async function configureBrowser(config, context) {
+  const choices = [
+    { value: 'auto', label: context.t('autoDetect') },
+    { value: 'chromium', label: 'Chromium (Playwright)' },
+    { value: 'firefox', label: 'Firefox (Playwright)' },
+    { value: 'custom', label: context.t('customBrowser') }
+  ];
+  const choice = await choose(context.t('changeBrowser'), choices,
+    Math.max(0, choices.findIndex(item => item.value === browserChoice(config))), context.labels);
+  if (choice === 'custom') {
+    const value = await askWithDefault(context.t('browserPath'), config.browser?.executablePath || '');
+    if (!value.trim()) return;
+    setBrowserOption(config, value);
+  } else {
+    setBrowserChoice(config, choice);
+  }
+  try {
+    console.log(context.t('browserLine', { path: await detectBrowser(config.browser.type || config.browser.executablePath) }));
+  } catch (error) {
+    if (!['chromium', 'firefox'].includes(choice)) throw error;
+    if (!await confirm(context.t('installBrowserQuestion', { name: choice }), true, context.labels)) return;
+    console.log(context.t('installingBrowser', { name: choice }));
+    const installed = await installManagedBrowser(choice);
+    console.log(context.t('browserLine', { path: installed.executablePath }));
+  }
 }
 
 function printStatus(config, signedIn, context) {
@@ -484,6 +522,13 @@ async function runInteractive(options, settings, context) {
     if (action === 'exit') break;
     try {
       if (action === 'login') {
+        try { await detectBrowser(config.browser?.type || config.browser?.executablePath); }
+        catch (error) {
+          if (error.code !== 'BROWSER_SETUP_REQUIRED') throw error;
+          console.log(context.t('browserSetupRequired'));
+          await configureBrowser(config, context);
+          await saveConfig(configPath, config);
+        }
         await runLogin(config, context);
         if (await confirm(context.t('discoverAfterLogin'), true, context.labels)) {
           await runDiscovery(config, configPath, context);
@@ -561,9 +606,8 @@ async function chooseInitialLanguage(options, settings, interactive) {
 
 function setBrowserOption(config, value) {
   const browser = String(value).trim();
-  if (browser.toLowerCase() === 'firefox') {
-    config.browser.type = 'firefox';
-    config.browser.executablePath = null;
+  if (['chromium', 'firefox'].includes(browser.toLowerCase())) {
+    setBrowserChoice(config, browser.toLowerCase());
     return;
   }
   config.browser.type = null;
@@ -590,8 +634,9 @@ export async function runCli(argv = process.argv.slice(2)) {
     console.log(context.t('doctorNode', { version: process.version }));
     try {
       console.log(context.t('doctorBrowser', { path: await detectBrowser(options.browser) }));
-    } catch {
+    } catch (error) {
       console.log(context.t('doctorBrowserMissing'));
+      console.log(error.message);
       console.log(context.t('doctorHint'));
       process.exitCode = 1;
     }
@@ -599,10 +644,10 @@ export async function runCli(argv = process.argv.slice(2)) {
   }
   if (command === 'install-browser') {
     const browserName = String(positional[1] ?? '').toLowerCase();
-    if (browserName !== 'firefox') throw new Error('Usage: toledo-sync install-browser firefox');
-    console.log('Installing the Playwright-compatible Firefox build…');
+    if (!['chromium', 'firefox'].includes(browserName)) throw new Error('Usage: toledo-sync install-browser chromium|firefox');
+    console.log(context.t('installingBrowser', { name: browserName }));
     const result = await installManagedBrowser(browserName);
-    console.log(result.installed ? `Firefox is ready: ${result.executablePath}` : `Firefox is already installed: ${result.executablePath}`);
+    console.log(context.t('browserLine', { path: result.executablePath }));
     return;
   }
   if (interactive) {
@@ -686,12 +731,14 @@ export async function runCli(argv = process.argv.slice(2)) {
     return;
   }
   if (command === 'check') {
-    await checkAndApply(config, options.course || null, context, { apply: false });
+    const results = await checkAndApply(config, options.course || null, context, { apply: false });
+    if (updateCounts(results).errors) process.exitCode = 1;
     return;
   }
   if (command === 'sync') {
     const results = await syncCourses(headlessConfig(config), options.course || null, (event) => console.log(event.message));
     console.log(formatUpdateTree(results, context.t));
+    if (updateCounts(results).errors) process.exitCode = 1;
     return;
   }
   if (command === 'watch') {

@@ -141,6 +141,31 @@ const messages = {
   }
 };
 
+Object.assign(messages.en, {
+  changeBrowser: 'Browser settings', customBrowser: 'Choose an executable path',
+  browserSetupRequired: 'Choose a browser before signing in.',
+  installBrowserQuestion: 'Download the compatible {name} browser now?',
+  installingBrowser: 'Installing {name}…',
+  checkIncomplete: 'Check incomplete. Review the errors above and retry. Course files were not changed.',
+  applyIncomplete: 'Some updates failed. Review the errors and retry.'
+});
+Object.assign(messages.zh, {
+  changeBrowser: '浏览器设置', customBrowser: '指定可执行文件路径',
+  browserSetupRequired: '请先选择用于登录的浏览器。',
+  installBrowserQuestion: '现在下载兼容的 {name} 浏览器吗？',
+  installingBrowser: '正在安装 {name}…',
+  checkIncomplete: '检查未完成。请查看上方错误并重试；课程文件未修改。',
+  applyIncomplete: '部分更新失败，请查看错误并重试。'
+});
+Object.assign(messages.nl, {
+  changeBrowser: 'Browserinstellingen', customBrowser: 'Pad naar een uitvoerbaar bestand kiezen',
+  browserSetupRequired: 'Kies een browser voordat je je aanmeldt.',
+  installBrowserQuestion: 'De compatibele {name}-browser nu downloaden?',
+  installingBrowser: '{name} installeren…',
+  checkIncomplete: 'Controle onvolledig. Bekijk de fouten hierboven en probeer opnieuw. Cursusbestanden zijn niet gewijzigd.',
+  applyIncomplete: 'Sommige updates zijn mislukt. Bekijk de fouten en probeer opnieuw.'
+});
+
 export function normalizeLanguage(value) {
   const normalized = String(value ?? '').trim().toLowerCase().replace('_', '-');
   if (/^(zh|cn)(-|$)/.test(normalized)) return 'zh';

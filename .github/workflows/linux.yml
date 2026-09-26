@@ -1,0 +1,47 @@
+name: Verify and build Linux
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'desktop/**'
+      - 'test/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/linux.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run check
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - run: npm run make:linux
+      - name: Verify packaged GUI and interactive CLI
+        run: xvfb-run -a npm run test:linux-gui
+        env:
+          TOLEDO_ELECTRON_PATH: ${{ github.workspace }}/release/linux-unpacked/toledo-sync
+          PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
+      - run: npm run make:cli
+      - name: Checksums
+        run: cd release && sha256sum *.AppImage *.tar.gz *.tgz > SHA256SUMS-linux.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: toledo-sync-linux-x64
+          path: |
+            release/*.AppImage
+            release/*.tar.gz
+            release/*.tgz
+            release/SHA256SUMS-linux.txt
+          if-no-files-found: error

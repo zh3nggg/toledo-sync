@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('toledo', {
   saveConfig: (values) => ipcRenderer.invoke('config:save', values),
   login: () => ipcRenderer.invoke('toledo:login'),
   resetBrowser: () => ipcRenderer.invoke('browser:reset'),
+  installBrowser: (name) => ipcRenderer.invoke('browser:install', name),
   discover: () => ipcRenderer.invoke('toledo:discover'),
   sync: (courseCode, selectedCodes) => ipcRenderer.invoke('toledo:sync', { courseCode, selectedCodes }),
   checkUpdates: (courseCode, selectedCodes) => ipcRenderer.invoke('toledo:check-updates', { courseCode, selectedCodes }),
