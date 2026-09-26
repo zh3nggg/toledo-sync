@@ -30,13 +30,6 @@ jobs:
             command: npm run make:win
             artifact: windows-installers
             files: release/*.exe
-          - name: macOS Apple Silicon
-            runner: macos-15
-            command: npm run make:mac
-            artifact: macos-arm64-installers
-            files: |
-              release/*-macOS-arm64.dmg
-              release/*-macOS-arm64.zip
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +53,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish one cross-platform release
+    name: Publish Windows release
     needs: build
     runs-on: ubuntu-latest
     steps:

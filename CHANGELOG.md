@@ -1,7 +1,8 @@
 ## 1.3.0 — 2026-09-26
 
-- Make the repaired content engine the recommended release across Windows and Apple Silicon macOS desktop apps and the Linux interactive CLI.
-- Publish platform builds and checksums together, with updated installation and upgrade guidance in all three languages.
+- Release the substantially strengthened course-content engine as the recommended Windows desktop version.
+- Publish Windows installer and portable builds with checksums and updated installation and upgrade guidance in all three languages.
+- Defer macOS and Linux 1.3 packaging and validation to later releases.
 - Keep 1.2.2 available as the transitional release that first included the content-engine fix.
 
 ## 1.2.2 — 2026-09-26

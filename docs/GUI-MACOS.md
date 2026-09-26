@@ -1,6 +1,6 @@
 # macOS desktop app (Apple Silicon)
 
-**Recommended release: install [Toledo Sync 1.3.0](https://github.com/zh3nggg/toledo-sync/releases/latest) before checking course materials. Versions 1.2.1 and earlier can report an inaccessible course as empty.**
+**macOS 1.3 is pending. For now, use the [1.2.2 macOS release](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.2.2). Versions 1.2.1 and earlier can report an inaccessible course as empty.**
 
 The macOS desktop app packages the same synchronization core and multilingual interface as the Windows release. It supports Apple Silicon Macs (`arm64`).
 
