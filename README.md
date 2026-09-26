@@ -4,7 +4,7 @@
 
 [中文](#中文) · [English](#english) · [Nederlands](#nederlands)
 
-> **Windows 推荐升级 / Recommended Windows update / Aanbevolen Windows-update: 1.3.0.** 1.2.1 及更早版本可能把 Toledo 访问失败误报为“课程没有材料”。请安装 [最新发行版](https://github.com/zh3nggg/toledo-sync/releases/latest)。Mac 与 Linux 的 1.3 版稍后发布。 / Versions 1.2.1 and earlier can report an access failure as an empty course. Install the [latest Windows release](https://github.com/zh3nggg/toledo-sync/releases/latest); macOS and Linux 1.3 releases will follow. / Versies 1.2.1 en ouder kunnen een toegangsprobleem als een lege cursus tonen. Installeer de [nieuwste Windows-versie](https://github.com/zh3nggg/toledo-sync/releases/latest); macOS en Linux volgen later.
+> **Windows 推荐升级 / Recommended Windows update / Aanbevolen Windows-update: 1.3.0.** 1.2.1 及更早版本可能把 Toledo 访问失败误报为“课程没有材料”。请安装 [最新发行版](https://github.com/zh3nggg/toledo-sync/releases/latest)。Apple Silicon Mac 1.3.0 已在同一 Release 提供；Linux 1.3 稍后发布。 / Versions 1.2.1 and earlier can report an access failure as an empty course. Install the [latest Windows release](https://github.com/zh3nggg/toledo-sync/releases/latest); Apple Silicon macOS 1.3.0 is available in the same release; Linux 1.3 will follow. / Versies 1.2.1 en ouder kunnen een toegangsprobleem als een lege cursus tonen. Installeer de [nieuwste Windows-versie](https://github.com/zh3nggg/toledo-sync/releases/latest); Apple Silicon macOS 1.3.0 staat in dezelfde release; Linux volgt later.
 
 ## 中文
 
@@ -71,7 +71,7 @@ D:\Study\Leuven 2026 Fall\
 
 **Windows 用户：** 请升级到 1.3.0，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.1.3.0.exe`；不想安装时请选择 `Toledo.Sync.1.3.0.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
 
-**Mac 用户：** 1.3 的 Mac 版尚未发布；现有 Apple Silicon 版本可从 [v1.2.2 发行版](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.2.2) 下载 DMG，参阅 [macOS 安装指南](docs/GUI-MACOS.md)。
+**Mac 用户：** 从同一 [v1.3.0 发行版](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0) 下载 `Toledo.Sync-1.3.0-macOS-arm64.dmg` 或 ZIP。Mac 版直接使用 Windows v1.3.0 的原始抓取引擎，校验文件为 `SHA256SUMS-macOS.txt`。安装与首次运行放行方法见 [macOS 安装指南](docs/GUI-MACOS.md)。
 
 **Linux 用户：** 参阅 [完整 CLI 指南](docs/CLI.md)。运行 `toledo-sync` 后可以选择中文、English 或 Nederlands，再依次配置 Vault、下载目录、登录和课程。在终端菜单中使用方向键和回车；课程列表可用空格勾选，支持长列表滚动。CLI 不按学年隐藏课程，而是读取账户中的完整课程列表，再由用户选择同步范围。“检查更新”会先显示文件树和冲突选项，确认后才写入课程目录。
 
@@ -127,7 +127,7 @@ Choose Vault and download root → sign in once → discover current courses
 | macOS (Apple Silicon) | Desktop app in 中文, English, Nederlands | Supported |
 | Linux x86-64 | GUI (AppImage / tar.gz) and interactive CLI in 中文, English, Nederlands | Local builds; publication pending |
 
-For Windows, upgrade to 1.3.0 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.1.3.0.exe` to install or `Toledo.Sync.1.3.0.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). The 1.3 macOS and Linux releases are still pending. Existing macOS releases and Linux CLI instructions remain available in the [release archive](https://github.com/zh3nggg/toledo-sync/releases) and [Linux CLI guide](docs/CLI.md).
+For Windows, upgrade to 1.3.0 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.1.3.0.exe` to install or `Toledo.Sync.1.3.0.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). Apple Silicon macOS 1.3.0 is available in the same release as `Toledo.Sync-1.3.0-macOS-arm64.dmg` and ZIP, using the unchanged Windows v1.3.0 engine. Mac checksums are in `SHA256SUMS-macOS.txt`; see the [macOS guide](docs/GUI-MACOS.md). Linux 1.3 remains pending; see the [Linux CLI guide](docs/CLI.md).
 
 ### Current scope and privacy
 
@@ -168,7 +168,7 @@ De toepassing is bedoeld voor studenten die eerst hun volledige cursuslijst will
 | macOS (Apple Silicon) | Desktopapp in 中文, English, Nederlands | Ondersteund |
 | Linux x86-64 | GUI (AppImage / tar.gz) en interactieve CLI in 中文, English, Nederlands | Lokale builds; publicatie volgt |
 
-Installeer op Windows versie 1.3.0 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo.Sync.Setup.1.3.0.exe` voor installatie of `Toledo.Sync.1.3.0.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). De 1.3-versies voor macOS en Linux volgen later. Bestaande macOS-versies en Linux-instructies staan in het [releasearchief](https://github.com/zh3nggg/toledo-sync/releases) en de [Linux CLI-handleiding](docs/CLI.md).
+Installeer op Windows versie 1.3.0 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo.Sync.Setup.1.3.0.exe` voor installatie of `Toledo.Sync.1.3.0.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). Apple Silicon macOS 1.3.0 staat in dezelfde release als `Toledo.Sync-1.3.0-macOS-arm64.dmg` en ZIP, met de ongewijzigde Windows v1.3.0-engine. Mac-controlesommen staan in `SHA256SUMS-macOS.txt`; zie de [macOS-handleiding](docs/GUI-MACOS.md). Linux 1.3 volgt later; zie de [Linux CLI-handleiding](docs/CLI.md).
 
 ### Huidige ondersteuning en privacy
 
@@ -188,7 +188,7 @@ Cursusmateriaal kan beschermd of gelicentieerd zijn door KU Leuven, docenten of 
 
 ## Version 1.3.0 / 版本 1.3.0 / Versie 1.3.0
 
-Version 1.3.0 is the recommended Windows release, centered on the substantially strengthened course-content engine. The engine repair first shipped in the transitional 1.2.2 release: inaccessible courses now show an error instead of a misleading empty result, with safer retries, cache validation, and session handling. Upgrade from 1.2.1 or earlier before checking course materials. The 1.3 macOS and Linux releases will follow.
+Version 1.3.0 is the recommended Windows release, centered on the substantially strengthened course-content engine. The engine repair first shipped in the transitional 1.2.2 release: inaccessible courses now show an error instead of a misleading empty result, with safer retries, cache validation, and session handling. Upgrade from 1.2.1 or earlier before checking course materials. Apple Silicon macOS 1.3.0 now uses the same unmodified engine in the same release. Linux 1.3 will follow.
 
 ## For contributors / 开发者
 

@@ -1,0 +1,82 @@
+name: Build macOS companion release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing Windows release tag to build unchanged for Apple Silicon
+        required: true
+        default: v1.3.0
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macos-companion-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Verify release and version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          gh release view "$RELEASE_TAG"
+          node --input-type=module -e 'import fs from "node:fs"; const p = JSON.parse(fs.readFileSync("package.json")); if (`v${p.version}` !== process.env.RELEASE_TAG) throw new Error("Tag and package version differ");'
+      - run: npm ci
+      - run: npm test
+      - run: npm run check
+      - run: npm run make:mac
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Verify arm64 bundle, signature, and unchanged engine
+        run: |
+          APP='release/mac-arm64/Toledo Sync.app'
+          test "$(lipo -archs "$APP/Contents/MacOS/Toledo Sync")" = arm64
+          codesign --verify --deep --strict "$APP"
+          node --input-type=module <<'NODE'
+          import { createRequire } from 'node:module';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const require = createRequire(import.meta.url);
+          const asar = require('@electron/asar');
+          function verify(directory) {
+            for (const item of fs.readdirSync(directory, { withFileTypes: true })) {
+              const file = path.posix.join(directory, item.name);
+              if (item.isDirectory()) verify(file);
+              else if (!fs.readFileSync(file).equals(asar.extractFile('release/mac-arm64/Toledo Sync.app/Contents/Resources/app.asar', file))) throw new Error(`Packaged source differs: ${file}`);
+            }
+          }
+          verify('src');
+          console.log('All packaged engine/CLI source files match the release tag byte for byte.');
+          NODE
+          hdiutil verify release/*-macOS-arm64.dmg
+      - name: Write separate macOS checksums
+        run: |
+          cd release
+          shasum -a 256 *-macOS-arm64.dmg *-macOS-arm64.zip > SHA256SUMS-macOS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64
+          path: |
+            release/*-macOS-arm64.dmg
+            release/*-macOS-arm64.zip
+            release/SHA256SUMS-macOS.txt
+          if-no-files-found: error
+      - name: Add macOS assets to the existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          gh release upload "$RELEASE_TAG" release/*-macOS-arm64.dmg release/*-macOS-arm64.zip release/SHA256SUMS-macOS.txt

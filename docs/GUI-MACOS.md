@@ -1,12 +1,12 @@
 # macOS desktop app (Apple Silicon)
 
-**macOS 1.3 is pending. For now, use the [1.2.2 macOS release](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.2.2). Versions 1.2.1 and earlier can report an inaccessible course as empty.**
+**Apple Silicon macOS 1.3.0 uses the unchanged Windows v1.3.0 source and content engine. Download it from the same [v1.3.0 release](https://github.com/zh3nggg/toledo-sync/releases/tag/v1.3.0). Versions 1.2.1 and earlier can report an inaccessible course as empty.**
 
 The macOS desktop app packages the same synchronization core and multilingual interface as the Windows release. It supports Apple Silicon Macs (`arm64`).
 
 ## Install a release build
 
-1. Download `Toledo.Sync.<version>-macOS-arm64.dmg` only from the matching GitHub Release.
+1. Download `Toledo.Sync-1.3.0-macOS-arm64.dmg` only from the matching GitHub Release. A ZIP is also available; macOS checksums are in `SHA256SUMS-macOS.txt` (the original `SHA256SUMS.txt` covers Windows).
 2. Open the disk image and drag **Toledo Sync** into **Applications**.
 3. The current community build is ad-hoc signed rather than notarized with an Apple Developer ID. On first launch, control-click the app in Finder, choose **Open**, then confirm **Open**. macOS only requires this confirmation once for that build.
 4. Install Google Chrome, Microsoft Edge, or Chromium if none is already available. Toledo Sync uses that browser for KU Leuven SSO/MFA.
@@ -58,3 +58,7 @@ npm run make:mac
 ```
 
 The Apple Silicon `.dmg` and `.zip` are written to `release/`.
+
+## Release provenance
+
+The macOS companion workflow builds the existing `v1.3.0` tag, checks every packaged `src/` file against that checkout, verifies the ARM64 executable and ad-hoc signature, and uploads only macOS assets. It does not rebuild Windows or move the release tag. See [macOS 1.3 validation notes](RELEASE-NOTES-1.3.0-MACOS.md).
