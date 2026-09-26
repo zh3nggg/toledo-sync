@@ -1,3 +1,9 @@
+## 1.3.0 — 2026-09-26
+
+- Make the repaired content engine the recommended release across Windows and Apple Silicon macOS desktop apps and the Linux interactive CLI.
+- Publish platform builds and checksums together, with updated installation and upgrade guidance in all three languages.
+- Keep 1.2.2 available as the transitional release that first included the content-engine fix.
+
 ## 1.2.2 — 2026-09-26
 
 - Treat authorization failures, inaccessible content, malformed responses and incomplete pagination as failed checks, never as empty courses.

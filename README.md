@@ -4,7 +4,7 @@
 
 [中文](#中文) · [English](#english) · [Nederlands](#nederlands)
 
-> **必须升级 / Required upgrade / Verplichte update: 1.2.2.** 旧版可能把 Toledo 的访问失败误报为“课程没有材料”。请先从 [最新发行版](https://github.com/zh3nggg/toledo-sync/releases/latest) 安装 1.2.2，再检查或下载课程材料。 / Older versions can report an access failure as an empty course. Install 1.2.2 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest) before checking or downloading materials. / Oudere versies kunnen een toegangsprobleem als een lege cursus tonen. Installeer eerst 1.2.2 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest).
+> **推荐升级 / Recommended update / Aanbevolen update: 1.3.0.** 1.2.1 及更早版本可能把 Toledo 访问失败误报为“课程没有材料”。请安装 [最新发行版](https://github.com/zh3nggg/toledo-sync/releases/latest)。 / Versions 1.2.1 and earlier can report an access failure as an empty course. Install the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). / Versies 1.2.1 en ouder kunnen een toegangsprobleem als een lege cursus tonen. Installeer de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest).
 
 ## 中文
 
@@ -67,7 +67,7 @@ D:\Study\Leuven 2026 Fall\
 | macOS（Apple Silicon） | 三语桌面应用 | 已支持 |
 | Linux | 三语交互式 CLI；Firefox、Chrome、Chromium、Edge、Brave | 已支持 |
 
-**Windows 用户：** 请升级到 1.2.2，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.1.2.2.exe`；不想安装时请选择 `Toledo.Sync.1.2.2.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
+**Windows 用户：** 请升级到 1.3.0，并始终从 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载。长期使用请选择 `Toledo.Sync.Setup.1.3.0.exe`；不想安装时请选择 `Toledo.Sync.1.3.0.exe` 便携版。首次使用选择 Vault、下载根目录和课程，点击“登录 Toledo”，完成 KU Leuven SSO/MFA，再“发现课程”并同步即可。详细说明见 [Windows 桌面应用指南](docs/GUI-WINDOWS.md)。
 
 **Mac 用户：** Apple Silicon 版本请从同一 [最新 Release](https://github.com/zh3nggg/toledo-sync/releases/latest) 下载 DMG，参阅 [macOS 安装指南](docs/GUI-MACOS.md)。
 
@@ -123,7 +123,7 @@ Choose Vault and download root → sign in once → discover current courses
 | macOS (Apple Silicon) | Desktop app in 中文, English, Nederlands | Supported |
 | Linux | Interactive CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Supported |
 
-For Windows, upgrade to 1.2.2 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.1.2.2.exe` to install or `Toledo.Sync.1.2.2.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). For Apple Silicon Macs, download the DMG from the same release and follow the [macOS guide](docs/GUI-MACOS.md). On Linux, run `toledo-sync` (or `npm start` from the repository) to open the trilingual interactive wizard. See the [Linux CLI guide](docs/CLI.md).
+For Windows, upgrade to 1.3.0 from the [latest release](https://github.com/zh3nggg/toledo-sync/releases/latest). Use `Toledo.Sync.Setup.1.3.0.exe` to install or `Toledo.Sync.1.3.0.exe` as a portable app; follow the [Windows guide](docs/GUI-WINDOWS.md). For Apple Silicon Macs, download the DMG from the same release and follow the [macOS guide](docs/GUI-MACOS.md). On Linux, run `toledo-sync` (or `npm start` from the repository) to open the trilingual interactive wizard. See the [Linux CLI guide](docs/CLI.md).
 
 ### Current scope and privacy
 
@@ -162,7 +162,7 @@ De toepassing is bedoeld voor studenten die eerst hun volledige cursuslijst will
 | macOS (Apple Silicon) | Desktopapp in 中文, English, Nederlands | Ondersteund |
 | Linux | Interactieve CLI in 中文, English, Nederlands; Firefox, Chrome, Chromium, Edge, Brave | Ondersteund |
 
-Installeer op Windows versie 1.2.2 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo.Sync.Setup.1.2.2.exe` voor installatie of `Toledo.Sync.1.2.2.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). Download op een Apple Silicon Mac de DMG van dezelfde release en volg de [macOS-handleiding](docs/GUI-MACOS.md). Op Linux start `toledo-sync` de drietalige interactieve wizard. Zie de [Linux CLI-handleiding](docs/CLI.md).
+Installeer op Windows versie 1.3.0 via de [nieuwste release](https://github.com/zh3nggg/toledo-sync/releases/latest). Kies `Toledo.Sync.Setup.1.3.0.exe` voor installatie of `Toledo.Sync.1.3.0.exe` als draagbare versie; zie de [Windows-handleiding](docs/GUI-WINDOWS.md). Download op een Apple Silicon Mac de DMG van dezelfde release en volg de [macOS-handleiding](docs/GUI-MACOS.md). Op Linux start `toledo-sync` de drietalige interactieve wizard. Zie de [Linux CLI-handleiding](docs/CLI.md).
 
 ### Huidige ondersteuning en privacy
 
@@ -180,9 +180,9 @@ Course materials may be protected or licensed by KU Leuven, teaching staff, or o
 
 Cursusmateriaal kan beschermd of gelicentieerd zijn door KU Leuven, docenten of andere rechthebbenden. Gebruik Toledo Sync alleen voor materiaal waartoe je gemachtigd bent en voor toegestane studiedoeleinden. Verspreid, publiceer, verkoop of gebruik het niet commercieel zonder toestemming; verwijder geen rechtenvermeldingen en omzeil geen toegangscontroles. Examenmateriaal is alleen voor studiegebruik. Volg de KU Leuven-regels, cursuslicenties en toepasselijke wetgeving. De MIT-licentie geldt voor deze software en geeft geen extra rechten op cursusmateriaal.
 
-## Version 1.2.2 / 版本 1.2.2 / Versie 1.2.2
+## Version 1.3.0 / 版本 1.3.0 / Versie 1.3.0
 
-Version 1.2.2 fixes content checks that could report an inaccessible course as empty. It also adds retries, clearer course errors, and safer cache and session handling across the desktop apps and Linux CLI. Upgrade before checking course materials. The 1.2 series includes interactive file review and per-file conflict decisions.
+Version 1.3.0 is the recommended Windows, Apple Silicon macOS, and Linux CLI release. The content-engine fix first shipped in the transitional 1.2.2 release: inaccessible courses now show an error instead of a misleading empty result, with safer retries, cache validation, and session handling. Upgrade from 1.2.1 or earlier before checking course materials. Interactive file review and per-file conflict decisions remain available.
 
 ## For contributors / 开发者
 

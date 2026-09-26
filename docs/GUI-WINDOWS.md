@@ -1,6 +1,6 @@
 # Windows desktop app
 
-**Required upgrade: install [Toledo Sync 1.2.2](https://github.com/zh3nggg/toledo-sync/releases/latest) before checking course materials. Older versions can report an inaccessible course as empty.**
+**Recommended release: install [Toledo Sync 1.3.0](https://github.com/zh3nggg/toledo-sync/releases/latest) before checking course materials. Versions 1.2.1 and earlier can report an inaccessible course as empty.**
 
 The Windows desktop app packages the same synchronization core as the CLI. It is available in Chinese, English, and Dutch.
 
